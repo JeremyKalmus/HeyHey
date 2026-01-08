@@ -11,6 +11,9 @@ import {
   type SetupConfig,
 } from '@heyhey/shared';
 
+/** Sound effect types that can be triggered during setup */
+export type SetupSoundType = 'cardSelect' | 'cardPlace' | 'cardFlip' | 'error';
+
 export interface UseSetupControllerOptions {
   /** Player's deck ID for card identification */
   deckId: string;
@@ -20,6 +23,8 @@ export interface UseSetupControllerOptions {
   interactionDelay?: number;
   /** Callback when setup is complete */
   onSetupComplete?: () => void;
+  /** Callback to play sound effects */
+  onSound?: (sound: SetupSoundType) => void;
 }
 
 export interface SetupControllerState {
@@ -67,6 +72,7 @@ export function useSetupController(options: UseSetupControllerOptions): UseSetup
     nertzPileSize = 13,
     interactionDelay = 150,
     onSetupComplete,
+    onSound,
   } = options;
 
   // Create state machine with config
@@ -130,6 +136,7 @@ export function useSetupController(options: UseSetupControllerOptions): UseSetup
     if (currentState === 'idle') {
       const result = machine.start();
       if (result.success) {
+        onSound?.('cardSelect');
         disableInteractionsTemporarily();
         syncState();
       }
@@ -143,6 +150,7 @@ export function useSetupController(options: UseSetupControllerOptions): UseSetup
       const placed = machine.placeNertzCard();
       if (!placed) return;
 
+      onSound?.('cardPlace');
       disableInteractionsTemporarily();
 
       // Move card from deck to nertz pile
@@ -175,6 +183,7 @@ export function useSetupController(options: UseSetupControllerOptions): UseSetup
       const placed = machine.placeWorkPile();
       if (!placed) return;
 
+      onSound?.('cardPlace');
       disableInteractionsTemporarily();
 
       const pileIndex = nextWorkPileIndexRef.current;
@@ -214,6 +223,7 @@ export function useSetupController(options: UseSetupControllerOptions): UseSetup
     disableInteractionsTemporarily,
     syncState,
     onSetupComplete,
+    onSound,
   ]);
 
   /**
@@ -230,10 +240,11 @@ export function useSetupController(options: UseSetupControllerOptions): UseSetup
 
     const result = machine.flipNertz();
     if (result.success) {
+      onSound?.('cardFlip');
       disableInteractionsTemporarily();
       syncState();
     }
-  }, [isInteractionDisabled, disableInteractionsTemporarily, syncState]);
+  }, [isInteractionDisabled, disableInteractionsTemporarily, syncState, onSound]);
 
   /**
    * Handle work pile click - provided for flexibility but not used in standard flow

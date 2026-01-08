@@ -4,6 +4,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { SetupArea } from '../SetupArea';
 import { useSetupController } from '../../../hooks/useSetupController';
+import { useAudio } from '../../../audio';
 import type { PlayerColor } from '../../Card/CardBack';
 
 // Wrapper component that uses the hook
@@ -11,9 +12,14 @@ interface InteractiveSetupProps {
   backColor: PlayerColor;
   nertzPileSize: 10 | 13;
   interactionDelay: number;
+  soundEnabled: boolean;
 }
 
-function InteractiveSetup({ backColor, nertzPileSize, interactionDelay }: InteractiveSetupProps) {
+function InteractiveSetup({ backColor, nertzPileSize, interactionDelay, soundEnabled }: InteractiveSetupProps) {
+  const { play, volume, setVolume, enabled, setEnabled } = useAudio({
+    initialEnabled: soundEnabled,
+  });
+
   const {
     state,
     progress,
@@ -32,6 +38,7 @@ function InteractiveSetup({ backColor, nertzPileSize, interactionDelay }: Intera
     onSetupComplete: () => {
       console.log('Setup complete!');
     },
+    onSound: play,
   });
 
   return (
@@ -60,6 +67,7 @@ function InteractiveSetup({ backColor, nertzPileSize, interactionDelay }: Intera
           display: 'flex',
           gap: '24px',
           alignItems: 'center',
+          flexWrap: 'wrap',
         }}
       >
         <div>
@@ -76,6 +84,26 @@ function InteractiveSetup({ backColor, nertzPileSize, interactionDelay }: Intera
         </div>
         <div>
           <strong>Disabled:</strong> {isInteractionDisabled ? 'Yes' : 'No'}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={enabled}
+              onChange={(e) => setEnabled(e.target.checked)}
+            />
+            Sound
+          </label>
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.1"
+            value={volume}
+            onChange={(e) => setVolume(parseFloat(e.target.value))}
+            style={{ width: '60px' }}
+            disabled={!enabled}
+          />
         </div>
         <button
           onClick={reset}
@@ -120,6 +148,10 @@ const meta: Meta<typeof InteractiveSetup> = {
     interactionDelay: {
       control: { type: 'range', min: 0, max: 500, step: 50 },
     },
+    soundEnabled: {
+      control: 'boolean',
+      description: 'Enable sound effects for card interactions',
+    },
   },
 };
 
@@ -143,6 +175,7 @@ export const FullFlow: Story = {
     backColor: 'blue',
     nertzPileSize: 13,
     interactionDelay: 150,
+    soundEnabled: true,
   },
 };
 
@@ -154,6 +187,7 @@ export const TenCardVariant: Story = {
     backColor: 'green',
     nertzPileSize: 10,
     interactionDelay: 150,
+    soundEnabled: true,
   },
 };
 
@@ -166,6 +200,7 @@ export const NoDelay: Story = {
     backColor: 'purple',
     nertzPileSize: 13,
     interactionDelay: 0,
+    soundEnabled: true,
   },
 };
 
@@ -177,5 +212,6 @@ export const SlowInteractions: Story = {
     backColor: 'teal',
     nertzPileSize: 13,
     interactionDelay: 500,
+    soundEnabled: true,
   },
 };
