@@ -1,10 +1,12 @@
 import type { PlayerColor } from '../Card/CardBack';
+import type { Avatar } from './AvatarSelector';
 import styles from './PlayerList.module.css';
 
 export interface LobbyPlayer {
   id: string;
   name: string;
   color: PlayerColor;
+  avatar?: Avatar;
   isHost: boolean;
   isReady: boolean;
 }
@@ -35,10 +37,10 @@ export function PlayerList({
         {players.map((player) => (
           <li key={player.id} className={styles.player}>
             <div
-              className={styles.avatar}
+              className={`${styles.avatar} ${player.avatar ? styles.avatarEmoji : ''}`}
               style={{ backgroundColor: getColorValue(player.color) }}
             >
-              {player.name.charAt(0).toUpperCase()}
+              {player.avatar || player.name.charAt(0).toUpperCase()}
             </div>
             <div className={styles.info}>
               <span className={styles.name}>

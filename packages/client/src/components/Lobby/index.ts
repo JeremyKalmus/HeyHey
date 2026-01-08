@@ -8,3 +8,8 @@ export { PlayerList, type PlayerListProps, type LobbyPlayer } from './PlayerList
 export { Button, type ButtonProps } from './Button';
 export { Modal, type ModalProps } from './Modal';
 export { Input, type InputProps } from './Input';
+
+// Player Customization
+export { ColorSelector, type ColorSelectorProps } from './ColorSelector';
+export { AvatarSelector, type AvatarSelectorProps, type Avatar } from './AvatarSelector';
+export { PlayerCustomization, type PlayerCustomizationProps, type PlayerCustomizationData } from './PlayerCustomization';

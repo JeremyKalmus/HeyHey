@@ -2,6 +2,7 @@ import type { GameConfig } from '@heyhey/shared';
 import { Button } from './Button';
 import { PlayerList, type LobbyPlayer } from './PlayerList';
 import { GameSettings } from './GameSettings';
+import { PlayerCustomization, type PlayerCustomizationData } from './PlayerCustomization';
 import styles from './RoomLobby.module.css';
 
 export interface RoomLobbyProps {
@@ -15,6 +16,8 @@ export interface RoomLobbyProps {
   onLeaveRoom: () => void;
   onToggleReady?: () => void;
   isReady?: boolean;
+  playerCustomization?: PlayerCustomizationData;
+  onPlayerCustomizationChange?: (data: PlayerCustomizationData) => void;
 }
 
 export function RoomLobby({
@@ -28,10 +31,17 @@ export function RoomLobby({
   onLeaveRoom,
   onToggleReady,
   isReady = false,
+  playerCustomization,
+  onPlayerCustomizationChange,
 }: RoomLobbyProps) {
   const minPlayers = 2;
   const canStart = isHost && players.length >= minPlayers;
   const allReady = players.every((p) => p.isHost || p.isReady);
+
+  // Get colors taken by other players (not the current player)
+  const disabledColors = players
+    .filter((p) => p.id !== currentPlayerId)
+    .map((p) => p.color);
 
   const handleCopyCode = async () => {
     try {
@@ -65,6 +75,13 @@ export function RoomLobby({
 
       <div className={styles.content}>
         <div className={styles.leftPanel}>
+          {playerCustomization && onPlayerCustomizationChange && (
+            <PlayerCustomization
+              value={playerCustomization}
+              onChange={onPlayerCustomizationChange}
+              disabledColors={disabledColors}
+            />
+          )}
           <PlayerList
             players={players}
             currentPlayerId={currentPlayerId}
