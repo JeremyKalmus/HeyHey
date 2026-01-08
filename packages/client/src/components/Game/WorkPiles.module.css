@@ -1,0 +1,97 @@
+/* WorkPiles Component Styles */
+
+.workPiles {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.pileContainer {
+  position: relative;
+  min-width: 78px;
+  min-height: 108px;
+  border-radius: 8px;
+  padding: 4px;
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
+  cursor: default;
+}
+
+/* Valid destination highlight */
+.pileContainer.validDestination {
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.6);
+  animation: pulseDestination 1.5s ease-in-out infinite;
+}
+
+.pileContainer.validDestination:hover {
+  transform: translateY(-2px);
+  cursor: pointer;
+}
+
+/* Empty pile slot */
+.emptyPile {
+  width: 70px;
+  height: 100px;
+  border: 2px dashed rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s ease, background 0.2s ease;
+  cursor: pointer;
+}
+
+.emptyPile:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(0, 0, 0, 0.15);
+}
+
+/* Highlighted empty pile (valid destination) */
+.emptyPile.emptyHighlight {
+  border-color: rgba(76, 175, 80, 0.6);
+  background: rgba(76, 175, 80, 0.15);
+  box-shadow: inset 0 0 12px rgba(76, 175, 80, 0.2);
+}
+
+.emptyPile.emptyHighlight:hover {
+  border-color: rgba(76, 175, 80, 0.8);
+  background: rgba(76, 175, 80, 0.25);
+}
+
+.emptyLabel {
+  font-size: 1rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.emptyHighlight .emptyLabel {
+  color: rgba(76, 175, 80, 0.7);
+}
+
+/* Animations */
+@keyframes pulseDestination {
+  0%, 100% {
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(76, 175, 80, 0.2);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 500px) {
+  .workPiles {
+    gap: 8px;
+  }
+
+  .pileContainer {
+    min-width: 66px;
+    min-height: 94px;
+  }
+
+  .emptyPile {
+    width: 58px;
+    height: 86px;
+  }
+}
