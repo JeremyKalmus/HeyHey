@@ -34,3 +34,5 @@ storybook-static/
 # Misc
 .cache/
 tmp/
+
+*storybook.log
