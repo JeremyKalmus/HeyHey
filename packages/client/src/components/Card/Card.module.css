@@ -1,0 +1,211 @@
+/* Card Component Library - CSS Modules */
+
+/* Base card styles */
+.card {
+  --card-width: 70px;
+  --card-height: 100px;
+  --card-radius: 6px;
+  --card-border: 1px solid #333;
+
+  width: var(--card-width);
+  height: var(--card-height);
+  border-radius: var(--card-radius);
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  user-select: none;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Face-up card styles */
+.cardFace {
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  border: var(--card-border);
+  border-radius: var(--card-radius);
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  box-sizing: border-box;
+}
+
+.cardFaceContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Rank and suit in corner */
+.cornerLabel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+}
+
+.cornerLabelTop {
+  align-self: flex-start;
+}
+
+.cornerLabelBottom {
+  align-self: flex-end;
+  transform: rotate(180deg);
+}
+
+.rank {
+  font-size: 14px;
+  font-weight: bold;
+  font-family: 'Georgia', serif;
+}
+
+.suitSmall {
+  font-size: 12px;
+}
+
+/* Center suit display */
+.centerSuit {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+}
+
+/* Suit colors */
+.red {
+  color: #d32f2f;
+}
+
+.black {
+  color: #212121;
+}
+
+/* Card back styles */
+.cardBack {
+  width: 100%;
+  height: 100%;
+  border: var(--card-border);
+  border-radius: var(--card-radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+/* Player color variations for card backs */
+.cardBackRed {
+  background: linear-gradient(135deg, #c62828 0%, #b71c1c 100%);
+}
+
+.cardBackBlue {
+  background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%);
+}
+
+.cardBackGreen {
+  background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+}
+
+.cardBackYellow {
+  background: linear-gradient(135deg, #f9a825 0%, #f57f17 100%);
+}
+
+.cardBackPurple {
+  background: linear-gradient(135deg, #7b1fa2 0%, #4a148c 100%);
+}
+
+.cardBackOrange {
+  background: linear-gradient(135deg, #ef6c00 0%, #e65100 100%);
+}
+
+.cardBackPink {
+  background: linear-gradient(135deg, #c2185b 0%, #880e4f 100%);
+}
+
+.cardBackTeal {
+  background: linear-gradient(135deg, #00796b 0%, #004d40 100%);
+}
+
+/* Card back pattern */
+.cardBackPattern {
+  width: 80%;
+  height: 85%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  background:
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 4px,
+      rgba(255, 255, 255, 0.1) 4px,
+      rgba(255, 255, 255, 0.1) 8px
+    );
+}
+
+/* Card stack styles */
+.cardStack {
+  position: relative;
+  display: inline-block;
+}
+
+.stackedCard {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/* Stack direction variations */
+.stackHorizontal .stackedCard {
+  top: 0;
+}
+
+.stackVertical .stackedCard {
+  left: 0;
+}
+
+/* Fan spread for hand display */
+.stackFan {
+  transform-origin: bottom center;
+}
+
+.stackFan .stackedCard {
+  transform-origin: bottom center;
+}
+
+/* Empty slot placeholder */
+.emptySlot {
+  width: var(--card-width);
+  height: var(--card-height);
+  border: 2px dashed rgba(255, 255, 255, 0.3);
+  border-radius: var(--card-radius);
+  background: rgba(0, 0, 0, 0.1);
+}
+
+/* Dragging state */
+.dragging {
+  opacity: 0.7;
+  transform: scale(1.05);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+}
+
+/* Selected state */
+.selected {
+  box-shadow: 0 0 0 3px #2196f3;
+}
+
+/* Disabled state */
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
