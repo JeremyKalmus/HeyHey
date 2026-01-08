@@ -1,0 +1,293 @@
+/* SetupArea Component Styles */
+
+.setupArea {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  min-width: 600px;
+}
+
+/* Instructions Overlay */
+.instructions {
+  text-align: center;
+  padding: 16px 24px;
+  background: linear-gradient(135deg, rgba(33, 150, 243, 0.2) 0%, rgba(33, 150, 243, 0.1) 100%);
+  border: 1px solid rgba(33, 150, 243, 0.3);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.instructions.complete {
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.2) 0%, rgba(76, 175, 80, 0.1) 100%);
+  border-color: rgba(76, 175, 80, 0.3);
+}
+
+.instructionTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: #fff;
+}
+
+.instructionText {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
+}
+
+/* Progress Indicator */
+.progressContainer {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+}
+
+.progressBar {
+  flex: 1;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+
+.progressBar.active {
+  opacity: 1;
+}
+
+.progressHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.progressLabel {
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.progressCount {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.progressTrack {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #2196f3 0%, #42a5f5 100%);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.progressFill.progressComplete {
+  background: linear-gradient(90deg, #4caf50 0%, #66bb6a 100%);
+}
+
+.progressDivider {
+  width: 1px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Board Layout */
+.boardLayout {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 32px;
+}
+
+/* Section Labels */
+.sectionLabel {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+/* Deck Section */
+.deckSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.deckArea {
+  position: relative;
+  cursor: default;
+  transition: transform 0.15s ease;
+}
+
+.deckArea.clickable {
+  cursor: pointer;
+}
+
+.deckArea.clickable:hover {
+  transform: translateY(-2px);
+}
+
+.cardCount {
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(0, 0, 0, 0.5);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+/* Nertz Section */
+.nertzSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.nertzPile {
+  position: relative;
+  cursor: default;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  border-radius: 8px;
+  padding: 4px;
+  min-width: 78px;
+  min-height: 108px;
+}
+
+.nertzPile.clickable {
+  cursor: pointer;
+}
+
+.nertzPile.clickable:hover {
+  transform: translateY(-2px);
+}
+
+.nertzPile.highlight {
+  animation: pulse 1.5s ease-in-out infinite;
+  box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.5);
+}
+
+.nertzStack {
+  position: relative;
+}
+
+.topCard {
+  position: absolute;
+  left: 0;
+}
+
+/* Work Piles Section */
+.workPilesSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.workPiles {
+  display: flex;
+  gap: 12px;
+}
+
+.workPile {
+  cursor: default;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  border-radius: 8px;
+  padding: 4px;
+  min-width: 78px;
+  min-height: 108px;
+}
+
+.workPile.clickable {
+  cursor: pointer;
+}
+
+.workPile.clickable:hover {
+  transform: translateY(-2px);
+}
+
+.workPile.highlight {
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.5);
+}
+
+/* Empty Slot */
+.emptySlot {
+  width: 70px;
+  height: 100px;
+  border: 2px dashed rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.clickable .emptySlot {
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.clickable:hover .emptySlot {
+  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.highlight .emptySlot {
+  border-color: rgba(76, 175, 80, 0.6);
+  background: rgba(76, 175, 80, 0.1);
+}
+
+.emptyLabel {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+}
+
+/* Animations */
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(255, 193, 7, 0.1);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 700px) {
+  .setupArea {
+    min-width: auto;
+    padding: 16px;
+  }
+
+  .boardLayout {
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .workPiles {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
