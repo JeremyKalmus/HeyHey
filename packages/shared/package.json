@@ -21,6 +21,10 @@
     "./room": {
       "types": "./dist/room/index.d.ts",
       "import": "./dist/room/index.js"
+    },
+    "./deck": {
+      "types": "./dist/deck/index.d.ts",
+      "import": "./dist/deck/index.js"
     }
   },
   "scripts": {

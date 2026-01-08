@@ -3,3 +3,4 @@
 
 export * from './types/index.js';
 export * from './room/index.js';
+export * from './deck/index.js';
