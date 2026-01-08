@@ -17,6 +17,10 @@
     "./types": {
       "types": "./dist/types/index.d.ts",
       "import": "./dist/types/index.js"
+    },
+    "./room": {
+      "types": "./dist/room/index.d.ts",
+      "import": "./dist/room/index.js"
     }
   },
   "scripts": {
