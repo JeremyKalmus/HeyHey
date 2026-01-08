@@ -54,8 +54,8 @@ export interface ServerToClientEvents {
   gameStarted: (payload: GameStartedPayload) => void;
   error: (payload: ErrorPayload) => void;
   hostChanged: (payload: HostChangedPayload) => void;
-  playerSetupComplete: (payload: PlayerSetupCompletePayload) => void;
-  allPlayersReady: (payload: AllPlayersReadyPayload) => void;
+  allPlayersReady: (payload: { gameId: string }) => void;
+  playerSetupComplete: (payload: { playerId: string; playersReady: number; totalPlayers: number }) => void;
 }
 
 // Event Payloads - Client to Server
@@ -108,12 +108,81 @@ export interface HostChangedPayload {
   newHostId: string;
 }
 
-export interface PlayerSetupCompletePayload {
-  playerId: string;
-  playersReady: number;
-  totalPlayers: number;
+// Game State Types
+export interface CardPile {
+  cards: Card[];
+  faceUp: boolean;
 }
 
-export interface AllPlayersReadyPayload {
-  gameId: string;
+export interface PlayerGameState {
+  playerId: string;
+  deckId: string;
+  nertzPile: Card[]; // Top card is last element (face up)
+  workPiles: Card[][]; // 4 piles, top card is last element
+  stockPile: Card[]; // Face down, top is last
+  wastePile: Card[]; // Face up, top is last (visible cards)
 }
+
+export interface FoundationPile {
+  suit: Card['suit'];
+  cards: Card[]; // Bottom to top, starts with Ace
+}
+
+export interface GameState {
+  gameId: string;
+  phase: GamePhase;
+  players: PlayerGameState[];
+  foundations: FoundationPile[]; // 4 per suit, shared by all players
+  config: GameConfig;
+  calledBy?: string; // Player who called HeyHey
+}
+
+// Move Types
+export type MoveSource =
+  | { type: 'nertz' }
+  | { type: 'work'; pileIndex: number; cardIndex?: number }
+  | { type: 'waste' };
+
+export type MoveDestination =
+  | { type: 'work'; pileIndex: number }
+  | { type: 'foundation'; foundationIndex: number };
+
+export interface CardMove {
+  type: 'card';
+  playerId: string;
+  source: MoveSource;
+  destination: MoveDestination;
+  cardCount?: number; // For moving multiple cards from work pile
+}
+
+export interface DrawMove {
+  type: 'draw';
+  playerId: string;
+}
+
+export interface FlipStockMove {
+  type: 'flipStock';
+  playerId: string;
+}
+
+export type Move = CardMove | DrawMove | FlipStockMove;
+
+export type MoveValidationError =
+  | 'invalid_source'
+  | 'invalid_destination'
+  | 'empty_source'
+  | 'no_card_selected'
+  | 'wrong_color_for_work'
+  | 'wrong_rank_for_work'
+  | 'wrong_suit_for_foundation'
+  | 'wrong_rank_for_foundation'
+  | 'work_pile_full'
+  | 'foundation_full'
+  | 'stock_not_empty'
+  | 'waste_empty'
+  | 'player_not_found'
+  | 'invalid_card_count';
+
+export type MoveValidationResult =
+  | { valid: true }
+  | { valid: false; error: MoveValidationError };
