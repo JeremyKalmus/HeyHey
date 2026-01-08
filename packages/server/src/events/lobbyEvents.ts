@@ -8,11 +8,13 @@ import type {
   UpdateSettingsPayload,
 } from '@heyhey/shared';
 import { LobbyManager } from './LobbyManager.js';
+import { SetupManager } from './SetupManager.js';
 
 type TypedServer = Server<ClientToServerEvents, ServerToClientEvents>;
 type TypedSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
 
 const lobbyManager = new LobbyManager();
+const setupManager = new SetupManager();
 
 function generateGameId(): string {
   return `game-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
@@ -119,10 +121,59 @@ export function registerLobbyEvents(io: TypedServer): void {
 
       const gameId = generateGameId();
 
+      // Initialize setup tracking for this room
+      const playerIds = lobbyManager.getSocketsInRoom(result.roomCode);
+      setupManager.initializeRoom(result.roomCode, gameId, playerIds);
+
       // Broadcast game start to all players
       io.to(result.roomCode).emit('gameStarted', { gameId });
 
       console.log(`Game started in room ${result.roomCode}: ${gameId}`);
+    });
+
+    // Setup Complete
+    socket.on('setupComplete', () => {
+      const roomCode = lobbyManager.getRoomCode(socket.id);
+
+      if (!roomCode) {
+        socket.emit('error', {
+          code: 'not_in_room',
+          message: 'You are not in a room.',
+        });
+        return;
+      }
+
+      const result = setupManager.markPlayerComplete(roomCode, socket.id);
+
+      if (!result.success) {
+        socket.emit('error', {
+          code: result.error,
+          message: getSetupErrorMessage(result.error),
+        });
+        return;
+      }
+
+      // Broadcast setup progress to all players in room
+      io.to(roomCode).emit('playerSetupComplete', {
+        playerId: socket.id,
+        playersReady: result.playersReady,
+        totalPlayers: result.totalPlayers,
+      });
+
+      console.log(
+        `Player ${socket.id} completed setup in room ${roomCode} (${result.playersReady}/${result.totalPlayers})`
+      );
+
+      // Check if all players are ready
+      if (result.allReady) {
+        // Clean up setup state
+        setupManager.cleanupRoom(roomCode);
+
+        // Broadcast that all players are ready to start playing
+        io.to(roomCode).emit('allPlayersReady', { gameId: result.gameId });
+
+        console.log(`All players ready in room ${roomCode}, transitioning to play phase`);
+      }
     });
 
     // Handle disconnect
@@ -211,5 +262,16 @@ function getStartGameErrorMessage(error: string): string {
   }
 }
 
-// Export lobby manager for testing
-export { lobbyManager };
+function getSetupErrorMessage(error: string): string {
+  switch (error) {
+    case 'setup_not_initialized':
+      return 'Game setup has not been initialized.';
+    case 'already_complete':
+      return 'Setup has already been completed.';
+    default:
+      return 'Failed to complete setup.';
+  }
+}
+
+// Export managers for testing
+export { lobbyManager, setupManager };

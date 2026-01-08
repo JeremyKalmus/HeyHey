@@ -6,6 +6,12 @@ import { Card, CardStack } from '../Card';
 import type { PlayerColor } from '../Card/CardBack';
 import styles from './SetupArea.module.css';
 
+export interface SetupReadyState {
+  playersReady: number;
+  totalPlayers: number;
+  isAllReady: boolean;
+}
+
 export interface SetupAreaProps {
   /** Current setup state from SetupStateMachine */
   state: SetupState;
@@ -27,6 +33,8 @@ export interface SetupAreaProps {
   onNertzPileClick?: () => void;
   /** Called when a work pile slot is clicked */
   onWorkPileClick?: (pileIndex: number) => void;
+  /** Multiplayer ready state */
+  readyState?: SetupReadyState;
 }
 
 const SETUP_INSTRUCTIONS: Record<SetupState, { title: string; description: string }> = {
@@ -63,12 +71,37 @@ export function SetupArea({
   onDeckClick,
   onNertzPileClick,
   onWorkPileClick,
+  readyState,
 }: SetupAreaProps) {
-  const instructions = SETUP_INSTRUCTIONS[state] ?? SETUP_INSTRUCTIONS.idle;
   const isDeckClickable = state === 'idle' || state === 'placingNertz' || state === 'placingWork';
   const isNertzPileClickable = state === 'flipNertz';
   const isWorkPileClickable = state === 'placingWork';
   const isComplete = state === 'complete';
+
+  // Generate instruction text based on state and multiplayer progress
+  const getInstructions = () => {
+    if (state !== 'complete') {
+      return SETUP_INSTRUCTIONS[state] ?? SETUP_INSTRUCTIONS.idle;
+    }
+
+    // Complete state - show multiplayer progress
+    if (readyState && readyState.totalPlayers > 0) {
+      if (readyState.isAllReady) {
+        return {
+          title: 'All Players Ready!',
+          description: 'Starting game...',
+        };
+      }
+      return {
+        title: 'Setup Complete',
+        description: `Waiting for players... (${readyState.playersReady}/${readyState.totalPlayers} ready)`,
+      };
+    }
+
+    return SETUP_INSTRUCTIONS.complete;
+  };
+
+  const instructions = getInstructions();
 
   const handleDeckClick = () => {
     if (isDeckClickable && onDeckClick) {

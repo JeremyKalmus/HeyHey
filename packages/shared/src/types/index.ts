@@ -41,6 +41,7 @@ export interface ClientToServerEvents {
   leaveRoom: () => void;
   updateSettings: (payload: UpdateSettingsPayload) => void;
   startGame: () => void;
+  setupComplete: () => void;
 }
 
 // Socket Event Types - Server to Client
@@ -53,6 +54,8 @@ export interface ServerToClientEvents {
   gameStarted: (payload: GameStartedPayload) => void;
   error: (payload: ErrorPayload) => void;
   hostChanged: (payload: HostChangedPayload) => void;
+  playerSetupComplete: (payload: PlayerSetupCompletePayload) => void;
+  allPlayersReady: (payload: AllPlayersReadyPayload) => void;
 }
 
 // Event Payloads - Client to Server
@@ -103,4 +106,14 @@ export interface ErrorPayload {
 
 export interface HostChangedPayload {
   newHostId: string;
+}
+
+export interface PlayerSetupCompletePayload {
+  playerId: string;
+  playersReady: number;
+  totalPlayers: number;
+}
+
+export interface AllPlayersReadyPayload {
+  gameId: string;
 }
