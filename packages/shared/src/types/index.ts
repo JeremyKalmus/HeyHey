@@ -42,6 +42,7 @@ export interface ClientToServerEvents {
   updateSettings: (payload: UpdateSettingsPayload) => void;
   startGame: () => void;
   setupComplete: () => void;
+  foundationMove: (payload: FoundationMovePayload) => void;
 }
 
 // Socket Event Types - Server to Client
@@ -56,6 +57,8 @@ export interface ServerToClientEvents {
   hostChanged: (payload: HostChangedPayload) => void;
   allPlayersReady: (payload: { gameId: string }) => void;
   playerSetupComplete: (payload: { playerId: string; playersReady: number; totalPlayers: number }) => void;
+  foundationUpdated: (payload: FoundationUpdatedPayload) => void;
+  foundationMoveRejected: (payload: FoundationMoveRejectedPayload) => void;
 }
 
 // Event Payloads - Client to Server
@@ -106,6 +109,31 @@ export interface ErrorPayload {
 
 export interface HostChangedPayload {
   newHostId: string;
+}
+
+// Game Event Payloads - Client to Server
+export interface FoundationMovePayload {
+  card: Card;
+  foundationIndex: number;
+  source: MoveSource;
+  clientSequence: number; // Client's local sequence for this move
+}
+
+// Game Event Payloads - Server to Client
+export interface FoundationUpdatedPayload {
+  foundationIndex: number;
+  card: Card;
+  playerId: string;
+  sequence: number; // Server-authoritative sequence number
+}
+
+export interface FoundationMoveRejectedPayload {
+  reason: string;
+  clientSequence: number; // The client sequence of the rejected move
+  currentState: {
+    foundationIndex: number;
+    topRank: number | null; // null if empty, otherwise current top card rank
+  };
 }
 
 // Game State Types

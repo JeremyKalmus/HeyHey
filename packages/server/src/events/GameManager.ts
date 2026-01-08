@@ -1,60 +1,106 @@
 // HeyHey! Game Manager
 // Manages active game sessions with state synchronization
+// Includes foundation conflict resolution (first-received-wins)
 
 import type {
+  Card,
   GameState,
   Move,
   MoveRejection,
   StateUpdate,
+  FoundationPile,
+  FoundationMovePayload,
 } from '@heyhey/shared';
-import { StateManager, getErrorMessage } from '@heyhey/shared';
+import { StateManager, getErrorMessage, canPlaceOnFoundation } from '@heyhey/shared';
 
 interface ActiveGame {
   gameId: string;
   roomCode: string;
   stateManager: StateManager;
   playerSockets: Map<string, string>; // playerId -> socketId
+  sequence: number; // Global sequence number for foundation moves
 }
 
 export type BroadcastFn = (roomCode: string, update: StateUpdate) => void;
 export type RejectFn = (socketId: string, rejection: MoveRejection) => void;
 
+export type FoundationMoveResult =
+  | {
+      success: true;
+      foundationIndex: number;
+      card: Card;
+      playerId: string;
+      sequence: number;
+    }
+  | {
+      success: false;
+      error: string;
+      clientSequence: number;
+      currentState: {
+        foundationIndex: number;
+        topRank: number | null;
+      };
+    };
+
 /**
  * Manages active game sessions and state synchronization
  */
 export class GameManager {
-  private games: Map<string, ActiveGame> = new Map(); // gameId -> ActiveGame
-  private socketToGame: Map<string, string> = new Map(); // socketId -> gameId
+  private games: Map<string, ActiveGame> = new Map(); // roomCode -> ActiveGame
+  private socketToRoom: Map<string, string> = new Map(); // socketId -> roomCode
   private broadcast: BroadcastFn;
   private reject: RejectFn;
 
-  constructor(broadcast: BroadcastFn, reject: RejectFn) {
-    this.broadcast = broadcast;
-    this.reject = reject;
+  constructor(broadcast?: BroadcastFn, reject?: RejectFn) {
+    this.broadcast = broadcast ?? (() => {});
+    this.reject = reject ?? (() => {});
   }
 
   /**
-   * Initialize a new game
+   * Initialize a new game for a room
    */
   initializeGame(
-    gameId: string,
     roomCode: string,
-    initialState: GameState,
-    playerSockets: Map<string, string>
+    gameId: string,
+    playerIds: string[]
   ): void {
-    const stateManager = new StateManager(initialState);
+    // Create initial game state
+    const initialState: GameState = {
+      gameId,
+      phase: 'playing',
+      players: playerIds.map((playerId) => ({
+        playerId,
+        deckId: playerId,
+        nertzPile: [],
+        workPiles: [[], [], [], []],
+        stockPile: [],
+        wastePile: [],
+      })),
+      foundations: [
+        { suit: 'hearts', cards: [] },
+        { suit: 'diamonds', cards: [] },
+        { suit: 'clubs', cards: [] },
+        { suit: 'spades', cards: [] },
+      ],
+      config: { nertzPileSize: 13, drawCount: 3, targetScore: 100 },
+    };
 
-    this.games.set(gameId, {
+    const stateManager = new StateManager(initialState);
+    const playerSockets = new Map<string, string>();
+
+    // Map player IDs to socket IDs (they're the same in our setup)
+    for (const playerId of playerIds) {
+      playerSockets.set(playerId, playerId);
+      this.socketToRoom.set(playerId, roomCode);
+    }
+
+    this.games.set(roomCode, {
       gameId,
       roomCode,
       stateManager,
       playerSockets,
+      sequence: 0,
     });
-
-    // Track socket -> game mapping
-    for (const socketId of playerSockets.values()) {
-      this.socketToGame.set(socketId, gameId);
-    }
   }
 
   /**
@@ -62,12 +108,12 @@ export class GameManager {
    * Validates, applies, and broadcasts or rejects
    */
   processMove(socketId: string, move: Move): { success: boolean } {
-    const gameId = this.socketToGame.get(socketId);
-    if (!gameId) {
+    const roomCode = this.socketToRoom.get(socketId);
+    if (!roomCode) {
       return { success: false };
     }
 
-    const game = this.games.get(gameId);
+    const game = this.games.get(roomCode);
     if (!game) {
       return { success: false };
     }
@@ -89,10 +135,12 @@ export class GameManager {
 
     if (!result.success) {
       // Send rejection to the individual player
+      // Note: result.error is typed as string in ApplyMoveResult but values match MoveValidationError
+      const errorCode = result.error as import('@heyhey/shared').MoveValidationError;
       this.reject(socketId, {
         move,
-        error: result.error as any,
-        message: getErrorMessage(result.error as any),
+        error: errorCode,
+        message: getErrorMessage(errorCode),
         timestamp: Date.now(),
       });
       return { success: false };
@@ -106,15 +154,94 @@ export class GameManager {
   }
 
   /**
+   * Process a foundation move with first-received-wins conflict resolution
+   */
+  processFoundationMove(
+    roomCode: string,
+    playerId: string,
+    move: FoundationMovePayload
+  ): FoundationMoveResult {
+    const game = this.games.get(roomCode);
+
+    if (!game) {
+      return {
+        success: false,
+        error: 'game_not_found',
+        clientSequence: move.clientSequence,
+        currentState: {
+          foundationIndex: move.foundationIndex,
+          topRank: null,
+        },
+      };
+    }
+
+    // Validate player is in game
+    if (!game.playerSockets.has(playerId)) {
+      return {
+        success: false,
+        error: 'player_not_in_game',
+        clientSequence: move.clientSequence,
+        currentState: {
+          foundationIndex: move.foundationIndex,
+          topRank: this.getFoundationTopRank(game, move.foundationIndex),
+        },
+      };
+    }
+
+    const state = game.stateManager.getState();
+
+    // Validate foundation index
+    if (move.foundationIndex < 0 || move.foundationIndex >= state.foundations.length) {
+      return {
+        success: false,
+        error: 'invalid_foundation_index',
+        clientSequence: move.clientSequence,
+        currentState: {
+          foundationIndex: move.foundationIndex,
+          topRank: null,
+        },
+      };
+    }
+
+    const foundation = state.foundations[move.foundationIndex]!;
+
+    // Validate move using shared rules engine
+    // This is the conflict resolution point - first valid move received wins
+    if (!canPlaceOnFoundation(move.card, foundation)) {
+      return {
+        success: false,
+        error: 'invalid_move',
+        clientSequence: move.clientSequence,
+        currentState: {
+          foundationIndex: move.foundationIndex,
+          topRank: this.getFoundationTopRank(game, move.foundationIndex),
+        },
+      };
+    }
+
+    // Move is valid - apply it (first-received-wins)
+    foundation.cards.push(move.card);
+    game.sequence++;
+
+    return {
+      success: true,
+      foundationIndex: move.foundationIndex,
+      card: move.card,
+      playerId,
+      sequence: game.sequence,
+    };
+  }
+
+  /**
    * Process a Nertz call from a player
    */
   processNertzCall(socketId: string): { success: boolean } {
-    const gameId = this.socketToGame.get(socketId);
-    if (!gameId) {
+    const roomCode = this.socketToRoom.get(socketId);
+    if (!roomCode) {
       return { success: false };
     }
 
-    const game = this.games.get(gameId);
+    const game = this.games.get(roomCode);
     if (!game) {
       return { success: false };
     }
@@ -147,46 +274,40 @@ export class GameManager {
   }
 
   /**
-   * Get game state for a socket
+   * Get game state for a room
    */
-  getGameState(socketId: string): GameState | null {
-    const gameId = this.socketToGame.get(socketId);
-    if (!gameId) return null;
-
-    const game = this.games.get(gameId);
+  getGameState(roomCode: string): GameState | null {
+    const game = this.games.get(roomCode);
     if (!game) return null;
-
     return game.stateManager.getState();
+  }
+
+  /**
+   * Get foundations for a room
+   */
+  getFoundations(roomCode: string): FoundationPile[] | null {
+    const game = this.games.get(roomCode);
+    if (!game) return null;
+    return game.stateManager.getState().foundations;
   }
 
   /**
    * Get current sequence number for a game
    */
-  getSequence(socketId: string): number {
-    const gameId = this.socketToGame.get(socketId);
-    if (!gameId) return 0;
-
-    const game = this.games.get(gameId);
+  getSequence(roomCode: string): number {
+    const game = this.games.get(roomCode);
     if (!game) return 0;
-
-    return game.stateManager.getSequence();
-  }
-
-  /**
-   * Get game ID for a socket
-   */
-  getGameId(socketId: string): string | undefined {
-    return this.socketToGame.get(socketId);
+    return game.sequence;
   }
 
   /**
    * Handle player disconnect
    */
   handleDisconnect(socketId: string): { gameId?: string; roomCode?: string } {
-    const gameId = this.socketToGame.get(socketId);
-    if (!gameId) return {};
+    const roomCode = this.socketToRoom.get(socketId);
+    if (!roomCode) return {};
 
-    const game = this.games.get(gameId);
+    const game = this.games.get(roomCode);
     if (!game) return {};
 
     // Find and remove the player
@@ -197,30 +318,58 @@ export class GameManager {
       }
     }
 
-    this.socketToGame.delete(socketId);
+    this.socketToRoom.delete(socketId);
 
-    return { gameId, roomCode: game.roomCode };
+    return { gameId: game.gameId, roomCode: game.roomCode };
+  }
+
+  /**
+   * Handle player leaving during game
+   */
+  handlePlayerLeave(roomCode: string, playerId: string): void {
+    const game = this.games.get(roomCode);
+    if (!game) return;
+
+    game.playerSockets.delete(playerId);
+    this.socketToRoom.delete(playerId);
+
+    // If no players left, clean up the game
+    if (game.playerSockets.size === 0) {
+      this.games.delete(roomCode);
+    }
   }
 
   /**
    * Clean up a finished game
    */
-  cleanupGame(gameId: string): void {
-    const game = this.games.get(gameId);
+  cleanupGame(roomCode: string): void {
+    const game = this.games.get(roomCode);
     if (!game) return;
 
     // Remove all socket mappings
     for (const socketId of game.playerSockets.values()) {
-      this.socketToGame.delete(socketId);
+      this.socketToRoom.delete(socketId);
     }
 
-    this.games.delete(gameId);
+    this.games.delete(roomCode);
   }
 
   /**
-   * Get game by ID (for testing)
+   * Get game by room code (for testing)
    */
-  getGame(gameId: string): ActiveGame | undefined {
-    return this.games.get(gameId);
+  getGame(roomCode: string): ActiveGame | undefined {
+    return this.games.get(roomCode);
+  }
+
+  /**
+   * Get the top card rank of a foundation (for rejection messages)
+   */
+  private getFoundationTopRank(game: ActiveGame, foundationIndex: number): number | null {
+    const state = game.stateManager.getState();
+    const foundation = state.foundations[foundationIndex];
+    if (!foundation || foundation.cards.length === 0) {
+      return null;
+    }
+    return foundation.cards[foundation.cards.length - 1]!.rank;
   }
 }

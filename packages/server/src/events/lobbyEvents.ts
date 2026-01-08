@@ -9,6 +9,7 @@ import type {
   MakeMovePayload,
   StateUpdate,
   MoveRejection,
+  FoundationMovePayload,
 } from '@heyhey/shared';
 import { LobbyManager } from './LobbyManager.js';
 import { SetupManager } from './SetupManager.js';
@@ -194,6 +195,11 @@ export function registerLobbyEvents(io: TypedServer): void {
         // Clean up setup state
         setupManager.cleanupRoom(roomCode);
 
+        // Initialize game state with shared foundations
+        const playerIds = lobbyManager.getSocketsInRoom(roomCode);
+        const manager = getOrCreateGameManager(io);
+        manager.initializeGame(roomCode, result.gameId, playerIds);
+
         // Broadcast that all players are ready to start playing
         io.to(roomCode).emit('allPlayersReady', { gameId: result.gameId });
 
@@ -223,6 +229,47 @@ export function registerLobbyEvents(io: TypedServer): void {
       }
     });
 
+    // Foundation Move - handle shared foundation plays with conflict resolution
+    socket.on('foundationMove', (payload: FoundationMovePayload) => {
+      const roomCode = lobbyManager.getRoomCode(socket.id);
+
+      if (!roomCode) {
+        socket.emit('error', {
+          code: 'not_in_room',
+          message: 'You are not in a room.',
+        });
+        return;
+      }
+
+      const manager = getOrCreateGameManager(io);
+      const result = manager.processFoundationMove(roomCode, socket.id, payload);
+
+      if (result.success) {
+        // Broadcast foundation update to ALL players in room (including sender)
+        io.to(roomCode).emit('foundationUpdated', {
+          foundationIndex: result.foundationIndex,
+          card: result.card,
+          playerId: result.playerId,
+          sequence: result.sequence,
+        });
+
+        console.log(
+          `Foundation move: ${result.card.rank} of ${result.card.suit} to pile ${result.foundationIndex} by ${socket.id} (seq: ${result.sequence})`
+        );
+      } else {
+        // Send rejection to individual player only
+        socket.emit('foundationMoveRejected', {
+          reason: result.error,
+          clientSequence: result.clientSequence,
+          currentState: result.currentState,
+        });
+
+        console.log(
+          `Foundation move rejected for ${socket.id}: ${result.error}`
+        );
+      }
+    });
+
     // Handle disconnect
     socket.on('disconnect', () => {
       // Handle game disconnect
@@ -236,16 +283,26 @@ export function registerLobbyEvents(io: TypedServer): void {
 }
 
 function handleLeaveRoom(io: TypedServer, socket: TypedSocket): void {
+  const roomCode = lobbyManager.getRoomCode(socket.id);
   const result = lobbyManager.leaveRoom(socket.id);
 
   if (!result.success || !result.roomCode) {
     return;
   }
 
+  // Clean up game state for this player
+  if (roomCode && gameManager) {
+    gameManager.handlePlayerLeave(roomCode, socket.id);
+  }
+
   // Leave socket.io room
   socket.leave(result.roomCode);
 
   if (result.roomClosed) {
+    // Clean up game state when room closes
+    if (roomCode && gameManager) {
+      gameManager.cleanupGame(roomCode);
+    }
     console.log(`Room ${result.roomCode} closed (empty)`);
     return;
   }
