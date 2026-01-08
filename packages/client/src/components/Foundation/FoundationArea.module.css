@@ -1,0 +1,163 @@
+/* FoundationArea Component Styles */
+
+.foundationArea {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 12px;
+}
+
+.foundationArea.compact {
+  padding: 12px;
+  gap: 6px;
+}
+
+/* Area Label */
+.areaLabel {
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Piles Container */
+.pilesContainer {
+  display: flex;
+  gap: 12px;
+}
+
+.compact .pilesContainer {
+  gap: 8px;
+}
+
+/* Individual Pile Wrapper */
+.pileWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: default;
+  transition: transform 0.15s ease;
+  border-radius: 8px;
+  padding: 4px;
+}
+
+.pileWrapper.clickable {
+  cursor: pointer;
+}
+
+.pileWrapper.clickable:hover {
+  transform: translateY(-2px);
+}
+
+.pileWrapper.validTarget {
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.5);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Pile Area */
+.pile {
+  position: relative;
+  min-width: 70px;
+  min-height: 100px;
+}
+
+/* Empty Slot */
+.emptySlot {
+  width: 70px;
+  height: 100px;
+  border: 2px dashed rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.clickable .emptySlot {
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.clickable:hover .emptySlot {
+  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.validTarget .emptySlot {
+  border-color: rgba(76, 175, 80, 0.6);
+  background: rgba(76, 175, 80, 0.1);
+}
+
+/* Suit Symbol in Empty Slot */
+.suitSymbol {
+  font-size: 28px;
+  opacity: 0.4;
+  transition: opacity 0.2s ease;
+}
+
+.clickable:hover .suitSymbol {
+  opacity: 0.6;
+}
+
+.validTarget .suitSymbol {
+  opacity: 0.8;
+}
+
+/* Suit Colors */
+.hearts .suitSymbol,
+.diamonds .suitSymbol {
+  color: #d32f2f;
+}
+
+.clubs .suitSymbol,
+.spades .suitSymbol {
+  color: #424242;
+}
+
+/* Card Count Badge */
+.cardCount {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+  background: rgba(0, 0, 0, 0.4);
+  padding: 2px 8px;
+  border-radius: 10px;
+  min-width: 20px;
+  text-align: center;
+}
+
+/* Animations */
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(76, 175, 80, 0.1);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 400px) {
+  .pilesContainer {
+    gap: 6px;
+  }
+
+  .pile {
+    min-width: 60px;
+    min-height: 86px;
+  }
+
+  .emptySlot {
+    width: 60px;
+    height: 86px;
+  }
+
+  .suitSymbol {
+    font-size: 24px;
+  }
+}
