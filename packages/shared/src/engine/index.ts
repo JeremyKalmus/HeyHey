@@ -1,4 +1,6 @@
 // HeyHey! Game Engine
-// Placeholder - will be expanded in future issues
+// Core game logic shared between client and server
 
 export const VERSION = '0.1.0';
+
+export * from './SetupStateMachine.js';
