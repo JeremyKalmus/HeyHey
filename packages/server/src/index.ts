@@ -1,12 +1,12 @@
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
-import type { ClientToServerEvents, ServerToClientEvents } from '@heyhey/shared';
+import type { AllClientToServerEvents, AllServerToClientEvents } from '@heyhey/shared';
 import { registerLobbyEvents } from './events/index.js';
 
 const app = express();
 const httpServer = createServer(app);
-const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
+const io = new Server<AllClientToServerEvents, AllServerToClientEvents>(httpServer, {
   cors: {
     origin: process.env.CLIENT_URL || 'http://localhost:5173',
     methods: ['GET', 'POST'],
@@ -19,7 +19,7 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Register lobby socket events
+// Register lobby socket events (also handles game events)
 registerLobbyEvents(io);
 
 httpServer.listen(PORT, () => {

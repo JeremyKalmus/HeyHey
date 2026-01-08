@@ -1,23 +1,48 @@
 // Lobby Socket Event Handlers
 import type { Server, Socket } from 'socket.io';
 import type {
-  ClientToServerEvents,
-  ServerToClientEvents,
+  AllClientToServerEvents,
+  AllServerToClientEvents,
   CreateRoomPayload,
   JoinRoomPayload,
   UpdateSettingsPayload,
+  MakeMovePayload,
+  StateUpdate,
+  MoveRejection,
 } from '@heyhey/shared';
 import { LobbyManager } from './LobbyManager.js';
 import { SetupManager } from './SetupManager.js';
+import { GameManager } from './GameManager.js';
 
-type TypedServer = Server<ClientToServerEvents, ServerToClientEvents>;
-type TypedSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
+type TypedServer = Server<AllClientToServerEvents, AllServerToClientEvents>;
+type TypedSocket = Socket<AllClientToServerEvents, AllServerToClientEvents>;
 
 const lobbyManager = new LobbyManager();
 const setupManager = new SetupManager();
+let gameManager: GameManager | null = null;
 
 function generateGameId(): string {
   return `game-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+}
+
+function getOrCreateGameManager(io: TypedServer): GameManager {
+  if (!gameManager) {
+    // Broadcast function: send state updates to all players in a room
+    const broadcast = (roomCode: string, update: StateUpdate) => {
+      io.to(roomCode).emit('stateUpdate', update);
+    };
+
+    // Reject function: send rejection to individual player
+    const reject = (socketId: string, rejection: MoveRejection) => {
+      const socket = io.sockets.sockets.get(socketId);
+      if (socket) {
+        socket.emit('moveRejected', rejection);
+      }
+    };
+
+    gameManager = new GameManager(broadcast, reject);
+  }
+  return gameManager;
 }
 
 export function registerLobbyEvents(io: TypedServer): void {
@@ -176,8 +201,34 @@ export function registerLobbyEvents(io: TypedServer): void {
       }
     });
 
+    // === Game Play Events ===
+
+    // Make Move
+    socket.on('makeMove', (payload: MakeMovePayload) => {
+      const manager = getOrCreateGameManager(io);
+      const result = manager.processMove(socket.id, payload.move);
+
+      if (!result.success) {
+        console.log(`Move rejected for socket ${socket.id}`);
+      }
+    });
+
+    // Call Nertz
+    socket.on('callNertz', () => {
+      const manager = getOrCreateGameManager(io);
+      const result = manager.processNertzCall(socket.id);
+
+      if (result.success) {
+        console.log(`Nertz called by socket ${socket.id}`);
+      }
+    });
+
     // Handle disconnect
     socket.on('disconnect', () => {
+      // Handle game disconnect
+      const manager = getOrCreateGameManager(io);
+      manager.handleDisconnect(socket.id);
+
       handleLeaveRoom(io, socket);
       console.log(`Client disconnected: ${socket.id}`);
     });
@@ -274,4 +325,4 @@ function getSetupErrorMessage(error: string): string {
 }
 
 // Export managers for testing
-export { lobbyManager, setupManager };
+export { lobbyManager, setupManager, gameManager };

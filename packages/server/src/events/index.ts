@@ -2,3 +2,5 @@
 export { registerLobbyEvents, lobbyManager, setupManager } from './lobbyEvents.js';
 export { LobbyManager } from './LobbyManager.js';
 export { SetupManager } from './SetupManager.js';
+export { GameManager } from './GameManager.js';
+export { registerGameEvents, createGameManagerForServer } from './gameEvents.js';

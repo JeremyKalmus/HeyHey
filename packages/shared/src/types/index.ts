@@ -186,3 +186,70 @@ export type MoveValidationError =
 export type MoveValidationResult =
   | { valid: true }
   | { valid: false; error: MoveValidationError };
+
+// State Synchronization Types
+
+/**
+ * Atomic state changes (deltas) that can be applied to game state
+ */
+export type StateDelta =
+  | { type: 'cardMoved'; playerId: string; source: MoveSource; destination: MoveDestination; cards: Card[] }
+  | { type: 'cardsDrawn'; playerId: string; cards: Card[] }
+  | { type: 'stockFlipped'; playerId: string }
+  | { type: 'nertzCalled'; playerId: string }
+  | { type: 'phaseChanged'; phase: GamePhase }
+  | { type: 'playerJoinedGame'; player: PlayerGameState }
+  | { type: 'playerLeftGame'; playerId: string };
+
+/**
+ * A sequenced state update for ordering
+ */
+export interface StateUpdate {
+  sequence: number;
+  timestamp: number;
+  delta: StateDelta;
+  gameId: string;
+}
+
+/**
+ * Move rejection sent to individual player
+ */
+export interface MoveRejection {
+  move: Move;
+  error: MoveValidationError;
+  message: string;
+  timestamp: number;
+}
+
+/**
+ * Game play socket events - Client to Server
+ */
+export interface GameClientToServerEvents {
+  makeMove: (payload: MakeMovePayload) => void;
+  callNertz: () => void;
+}
+
+/**
+ * Game play socket events - Server to Client
+ */
+export interface GameServerToClientEvents {
+  stateUpdate: (payload: StateUpdate) => void;
+  moveRejected: (payload: MoveRejection) => void;
+  gameEnded: (payload: GameEndedPayload) => void;
+}
+
+export interface MakeMovePayload {
+  move: Move;
+}
+
+export interface GameEndedPayload {
+  gameId: string;
+  winner: string;
+  scores: { playerId: string; score: number }[];
+}
+
+/**
+ * Combined socket events for full game flow
+ */
+export interface AllClientToServerEvents extends ClientToServerEvents, GameClientToServerEvents {}
+export interface AllServerToClientEvents extends ServerToClientEvents, GameServerToClientEvents {}
