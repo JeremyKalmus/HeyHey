@@ -1,0 +1,47 @@
+.container {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+
+.title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #eee;
+  margin: 0 0 1.25rem;
+}
+
+.setting {
+  margin-bottom: 1.5rem;
+}
+
+.setting:last-of-type {
+  margin-bottom: 0;
+}
+
+.label {
+  display: block;
+  font-weight: 500;
+  color: #eee;
+  margin-bottom: 0.25rem;
+}
+
+.description {
+  font-size: 0.8125rem;
+  color: #888;
+  margin: 0 0 0.75rem;
+}
+
+.options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.hint {
+  font-size: 0.8125rem;
+  color: #888;
+  font-style: italic;
+  margin: 1rem 0 0;
+  text-align: center;
+}
