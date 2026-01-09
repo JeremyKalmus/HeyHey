@@ -1,0 +1,181 @@
+# HeyHey! Frontend Seeds
+# Established: 2026-01-09 (Founding Convoy)
+# Mode: seeding
+
+components:
+  # === Card Components (Core Visual Building Blocks) ===
+  Card:
+    location: packages/client/src/components/Card/Card.tsx
+    when_to_use: "Display a single playing card (face up or face down)"
+    props:
+      - card: Card (required)
+      - faceUp: boolean (default: true)
+      - backColor: PlayerColor
+      - selected: boolean
+      - disabled: boolean
+      - onClick: (card) => void
+      - onDoubleClick: (card) => void
+    justification: "Core visual primitive. Every card game needs this."
+    forbidden_extensions:
+      - drag-and-drop (CONSTITUTION requires click-to-select/click-to-place)
+      - animations (defer to Phase 7)
+
+  CardFace:
+    location: packages/client/src/components/Card/CardFace.tsx
+    when_to_use: "Render the face of a card with suit symbols and rank"
+    props:
+      - card: Card (required)
+    justification: "Card faces are static visual display, extracted for reuse."
+
+  CardBack:
+    location: packages/client/src/components/Card/CardBack.tsx
+    when_to_use: "Render a card back with player-specific color"
+    props:
+      - color: PlayerColor (default: 'blue')
+    justification: "Player deck identification. Each player has unique back color."
+
+  CardStack:
+    location: packages/client/src/components/Card/CardStack.tsx
+    when_to_use: "Display multiple overlapping cards (cascading or fanned)"
+    props:
+      - cards: Card[]
+      - direction: 'vertical' | 'horizontal' | 'fanned'
+      - faceUp: boolean
+      - spacing: number
+      - onCardClick: (card, index) => void
+    justification: "Work piles and waste piles need overlapping card display."
+
+  # === UI Primitives ===
+  Button:
+    location: packages/client/src/components/Lobby/Button.tsx
+    variants: [primary, secondary, ghost]
+    sizes: [small, medium, large]
+    when_to_use: "Any clickable action"
+    justification: "Universal UI primitive. Consistent styling across app."
+    forbidden_extensions:
+      - custom colors (use variants)
+      - icon-only buttons (defer until needed)
+
+  Modal:
+    location: packages/client/src/components/Lobby/Modal.tsx
+    sizes: [small, medium, large]
+    when_to_use: "Blocking user decisions requiring focused attention"
+    justification: "CreateRoom, JoinRoom dialogs. Consistent overlay behavior."
+    forbidden_extensions:
+      - non-blocking modals (use different component)
+
+  Input:
+    location: packages/client/src/components/Lobby/Input.tsx
+    when_to_use: "Text input fields (room codes, player names)"
+    justification: "Form input primitive with consistent styling."
+
+  # === Game Area Components ===
+  NertzPile:
+    location: packages/client/src/components/Game/NertzPile.tsx
+    when_to_use: "Display player's Nertz pile (goal to empty)"
+    justification: "Core game pile. Must show count and top card."
+
+  WorkPiles:
+    location: packages/client/src/components/Game/WorkPiles.tsx
+    when_to_use: "Display 4 work piles with cascading cards"
+    justification: "Build area. Descending/alternating color placement."
+
+  StockPile:
+    location: packages/client/src/components/Player/StockPile.tsx
+    when_to_use: "Display face-down stock pile, click to draw"
+    justification: "Draw pile. Shows count, clickable to draw 3."
+
+  WastePile:
+    location: packages/client/src/components/Player/WastePile.tsx
+    when_to_use: "Display drawn cards fanned, top card playable"
+    justification: "Drawn cards display. Only top card selectable."
+
+  FoundationArea:
+    location: packages/client/src/components/Foundation/FoundationArea.tsx
+    when_to_use: "Display shared foundation piles (4 suits, ace to king)"
+    justification: "Shared play area. Racing destination for all players."
+
+  # === Lobby Components ===
+  HomePage:
+    location: packages/client/src/components/Lobby/HomePage.tsx
+    when_to_use: "Landing page with Create/Join room options"
+    justification: "Entry point. Clear call-to-action."
+
+  CreateRoomModal:
+    location: packages/client/src/components/Lobby/CreateRoomModal.tsx
+    when_to_use: "Modal for creating a new room"
+    justification: "Room creation flow. Collects player name."
+
+  JoinRoomModal:
+    location: packages/client/src/components/Lobby/JoinRoomModal.tsx
+    when_to_use: "Modal for joining existing room by code"
+    justification: "Room join flow. Room code + player name."
+
+  RoomLobby:
+    location: packages/client/src/components/Lobby/RoomLobby.tsx
+    when_to_use: "Pre-game lobby showing players and settings"
+    justification: "Waiting room. Player list, settings, start button."
+
+  PlayerList:
+    location: packages/client/src/components/Lobby/PlayerList.tsx
+    when_to_use: "Display list of players in a room"
+    justification: "Shows who's joined. Host indicator."
+
+  GameSettings:
+    location: packages/client/src/components/Lobby/GameSettings.tsx
+    when_to_use: "Configuration panel for house rules"
+    justification: "Nertz pile size, draw count, target score."
+
+  PlayerCustomization:
+    location: packages/client/src/components/Lobby/PlayerCustomization.tsx
+    when_to_use: "Player profile setup (name, color, avatar)"
+    justification: "Personalization before game starts."
+
+  ColorSelector:
+    location: packages/client/src/components/Lobby/ColorSelector.tsx
+    when_to_use: "Pick deck back color"
+    justification: "Visual player identification."
+
+  AvatarSelector:
+    location: packages/client/src/components/Lobby/AvatarSelector.tsx
+    when_to_use: "Pick player avatar/emoji"
+    justification: "Optional personalization."
+
+  # === Setup Components ===
+  SetupArea:
+    location: packages/client/src/components/Setup/SetupArea.tsx
+    when_to_use: "Manual card placement during setup phase"
+    justification: "CONSTITUTION: Manual setup preserves physical game feel."
+
+hooks:
+  useCardSelection:
+    location: packages/client/src/hooks/useCardSelection.ts
+    when_to_use: "Manage card selection state during gameplay"
+    provides:
+      - selection: SelectionState | null
+      - validDestinations: ValidDestination[]
+      - selectCard(card, source)
+      - placeCard(destination)
+      - clearSelection()
+    justification: "Click-to-select, click-to-place interaction model."
+
+  useSetupController:
+    location: packages/client/src/hooks/useSetupController.ts
+    when_to_use: "Manage setup phase state machine on client"
+    justification: "Coordinates manual setup clicks with server state."
+
+  useSocket:
+    location: packages/client/src/hooks/useSocket.ts
+    when_to_use: "Socket.io connection management"
+    justification: "Multiplayer communication. Single connection per client."
+
+  useAudio:
+    location: packages/client/src/audio/useAudio.ts
+    when_to_use: "Play sound effects"
+    justification: "CONSTITUTION: Satisfying feedback for card actions."
+
+services:
+  SoundManager:
+    location: packages/client/src/audio/SoundManager.ts
+    when_to_use: "Load and play audio files"
+    justification: "Audio asset management singleton."

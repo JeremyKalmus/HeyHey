@@ -1,0 +1,156 @@
+# Founding Convoy Decision Record
+# HeyHey! Initial Seed Vault Establishment
+# Date: 2026-01-09
+# Bead: hh-5s2
+
+convoy:
+  name: "Founding Convoy"
+  bead_id: "hh-5s2"
+  status: approved
+  completed: "2026-01-09T14:51:00Z"
+
+roles_executed:
+  cartographer:
+    completed: true
+    findings:
+      domain_boundaries:
+        - card_domain: "Card, Deck, Suit, Rank - core game primitives"
+        - game_domain: "GameState, PlayerGameState, FoundationPile - game mechanics"
+        - room_domain: "Room, RoomPlayer, RoomState - multiplayer lobby"
+        - move_domain: "Move, MoveSource, MoveDestination - player actions"
+        - sync_domain: "StateDelta, StateUpdate - real-time synchronization"
+      core_entities:
+        - Card
+        - Player
+        - Room
+        - GameState
+        - Move
+      data_model_sketch: |
+        Player -> owns -> Deck -> contains -> Card[]
+        Player -> has -> PlayerGameState
+        Room -> contains -> Player[]
+        Game -> has -> shared Foundations
+        Move -> validates_against -> GameState
+
+  seed_planter:
+    completed: true
+    seeds_proposed:
+      frontend: 22 components, 4 hooks, 1 service
+      backend: 6 services, 2 utilities, 26 socket events
+      data: 5 enums, 28 types, 6 constants
+      auth: session-based identity model
+    justifications_required: true
+    all_justified: true
+
+  first_keeper:
+    completed: true
+    review_criteria:
+      - all_seeds_exist_in_codebase
+      - no_speculative_patterns
+      - justified_by_constitution_or_roadmap
+      - conservative_extension_policies
+    findings:
+      frontend_approved: true
+      backend_approved: true
+      data_approved: true
+      auth_approved: true
+    rejections: []
+    warnings: []
+
+rig_status: seeded
+
+initial_seeds:
+  frontend:
+    components:
+      - Card
+      - CardFace
+      - CardBack
+      - CardStack
+      - Button
+      - Modal
+      - Input
+      - NertzPile
+      - WorkPiles
+      - StockPile
+      - WastePile
+      - FoundationArea
+      - HomePage
+      - CreateRoomModal
+      - JoinRoomModal
+      - RoomLobby
+      - PlayerList
+      - GameSettings
+      - PlayerCustomization
+      - ColorSelector
+      - AvatarSelector
+      - SetupArea
+    hooks:
+      - useCardSelection
+      - useSetupController
+      - useSocket
+      - useAudio
+    services:
+      - SoundManager
+
+  backend:
+    services:
+      - RoomManager
+      - LobbyManager
+      - GameManager
+      - SetupManager
+      - StateManager
+      - RulesEngine
+      - SetupStateMachine
+    utilities:
+      - roomCode
+      - deck
+
+  data:
+    enums:
+      - Suit
+      - Rank
+      - GamePhase
+      - MoveValidationError
+      - PlayerColor
+    types:
+      - Card
+      - Player
+      - LobbyPlayer
+      - GameConfig
+      - RoomState
+      - PlayerGameState
+      - FoundationPile
+      - GameState
+      - MoveSource
+      - MoveDestination
+      - CardMove
+      - DrawMove
+      - FlipStockMove
+      - Move
+      - MoveValidationResult
+      - StateDelta
+      - StateUpdate
+      - MoveRejection
+      # ... and all socket event payloads
+
+  auth:
+    identity_model: session-based
+    identifier: socket.id
+    no_persistent_accounts: true
+    room_code_access_control: true
+
+keeper_activation:
+  status: active
+  mode: seeding
+  effective_date: "2026-01-09"
+
+notes:
+  - "All future convoys must pass through the Keeper"
+  - "Seeds were established from existing codebase (Phases 1-5 partially complete)"
+  - "Mode set to 'seeding' for early project flexibility"
+  - "Will transition to 'growth' mode after Phase 5 completion"
+
+approval:
+  approved_by: "First Keeper (Founding Convoy)"
+  date: "2026-01-09"
+  signature: "No new seeds without justification. Reuse first."

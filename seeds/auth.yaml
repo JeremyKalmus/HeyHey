@@ -1,0 +1,88 @@
+# HeyHey! Auth Seeds
+# Established: 2026-01-09 (Founding Convoy)
+# Mode: seeding
+
+identity_model:
+  type: session-based
+  description: >
+    HeyHey uses socket-based session identity. No persistent user accounts.
+    Players are identified by their socket connection ID for the session duration.
+  justification: >
+    Casual game design - players want to jump into games quickly without
+    registration friction. Room codes provide access control.
+
+player_identity:
+  identifier: socket.id
+  persistence: session (until disconnect)
+  properties:
+    - name: string (user-provided, not validated)
+    - deckId: string (same as socket.id)
+    - color: PlayerColor (user-selected)
+    - avatar: string | undefined (optional emoji)
+  justification: >
+    Socket ID is unique per connection. Provides natural session boundary.
+    No cross-session identity needed for MVP.
+
+access_control:
+  room_access:
+    create: anyone
+    join: anyone with valid room code
+    leave: room members only
+    justification: "Room codes are the access token. 6-char code = ~17M possibilities."
+
+  settings_access:
+    view: room members
+    modify: host only
+    justification: "Host controls game rules. Democratic settings could deadlock."
+
+  game_actions:
+    start_game: host only (requires 2+ players)
+    make_move: own piles only
+    foundation_move: any player to any foundation
+    call_nertz: own nertz pile must be empty
+    justification: >
+      Standard Nertz rules. Players control their own piles.
+      Foundations are shared/racing.
+
+authorization_checks:
+  host_only:
+    - updateSettings
+    - startGame
+  room_member:
+    - leaveRoom
+    - setupComplete
+    - makeMove
+    - foundationMove
+    - callNertz
+  anyone:
+    - createRoom
+    - joinRoom
+
+reconnection:
+  status: planned (Phase 7)
+  design: >
+    Will use session tokens stored in localStorage.
+    Server maintains grace period before removing disconnected players.
+  seed_reserved: true
+  justification: "Core functionality works without reconnection. Defer complexity."
+
+future_considerations:
+  persistent_accounts:
+    status: not planned for MVP
+    would_require:
+      - User registration flow
+      - Password/OAuth authentication
+      - Database for user storage
+      - Session token management
+    justification: "Out of scope. Would add significant complexity."
+
+  spectator_mode:
+    status: planned (Phase 7)
+    authorization: join as spectator (no game actions allowed)
+    justification: "Watch-only mode. Different role, not different auth."
+
+security_notes:
+  - Room codes should use CSPRNG (not Math.random)
+  - Player names are untrusted input (sanitize for display)
+  - All moves validated server-side (CONSTITUTION requirement)
+  - No sensitive data stored (no accounts = no breach risk)

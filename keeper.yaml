@@ -1,0 +1,60 @@
+# HeyHey! Keeper Configuration
+# Established: 2026-01-09 (Founding Convoy)
+
+keeper:
+  mode: seeding
+  # Modes:
+  # - seeding: Early project, allows new seeds freely, records them, warns instead of blocks
+  # - growth: Default mode, reuse-first, extension preferred, new seeds gated
+  # - conservation: Mature project, new seeds almost always rejected
+
+  established: "2026-01-09"
+  founding_convoy: "hh-5s2"
+
+seed_vault:
+  frontend: seeds/frontend.yaml
+  backend: seeds/backend.yaml
+  data: seeds/data.yaml
+  auth: seeds/auth.yaml
+
+decisions:
+  directory: decisions/
+  format: yaml
+
+rules:
+  # Keeper must answer these four questions for every feature:
+  # 1. What already exists?
+  # 2. Is it sufficient?
+  # 3. If not, what is the smallest extension?
+  # 4. If a new seed is required, how is it preserved?
+
+  frontend:
+    prefer_existing_components: true
+    require_variant_before_new: true
+    reject_if_breaks_design_system: true
+    promote_after_reuse_count: 2
+
+  backend:
+    prefer_existing_services: true
+    require_backward_compatible_extensions: true
+    require_rest_shape_for_new_routes: true
+    require_consistent_auth_model: true
+
+  data:
+    prefer_existing_enums: true
+    require_append_only_extensions: true
+    require_migration_plan_for_schema_changes: true
+
+  auth:
+    use_existing_identity_model: true
+    reject_new_auth_services: true
+    require_consistent_token_shape: true
+
+# Keeper prompt guidance:
+# - Prefer reuse over extension
+# - Prefer extension over creation
+# - Reject if uncertain
+# - You are accountable for long-term system coherence
+# - This is not a "helpful" agent. It is a librarian with veto power.
+
+# One rule: No Keeper, no convoy. No seeds, no Keeper.
