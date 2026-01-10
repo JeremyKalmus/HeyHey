@@ -1,0 +1,150 @@
+/* OpponentMini Component Styles */
+/* Compact opponent area display with card counts */
+
+.opponentMini {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  min-width: 80px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Color variants - subtle border tint */
+.opponentMini.red { border-color: rgba(244, 67, 54, 0.4); }
+.opponentMini.blue { border-color: rgba(33, 150, 243, 0.4); }
+.opponentMini.green { border-color: rgba(76, 175, 80, 0.4); }
+.opponentMini.yellow { border-color: rgba(255, 235, 59, 0.4); }
+.opponentMini.purple { border-color: rgba(156, 39, 176, 0.4); }
+.opponentMini.orange { border-color: rgba(255, 152, 0, 0.4); }
+.opponentMini.pink { border-color: rgba(233, 30, 99, 0.4); }
+.opponentMini.teal { border-color: rgba(0, 150, 136, 0.4); }
+
+/* Activity indicator - pulsing dot */
+.activityPulse {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4caf50;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.2);
+  }
+}
+
+/* Player identity section */
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.avatar {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.name {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  max-width: 60px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Nertz pile count - prominent display */
+.nertzCount {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  min-width: 40px;
+}
+
+.nertzLabel {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.nertzNumber {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+  line-height: 1;
+}
+
+/* Danger state - close to winning */
+.nertzCount.danger {
+  background: rgba(255, 152, 0, 0.3);
+  animation: dangerPulse 1.5s ease-in-out infinite;
+}
+
+.nertzCount.danger .nertzNumber {
+  color: #ffb74d;
+}
+
+@keyframes dangerPulse {
+  0%, 100% {
+    background: rgba(255, 152, 0, 0.3);
+  }
+  50% {
+    background: rgba(255, 152, 0, 0.5);
+  }
+}
+
+/* Empty state - opponent won! */
+.nertzCount.empty {
+  background: rgba(255, 193, 7, 0.4);
+  border: 1px solid rgba(255, 193, 7, 0.6);
+}
+
+.nertzCount.empty .nertzNumber {
+  color: #ffc107;
+}
+
+.nertzCount.empty .nertzLabel {
+  color: rgba(255, 193, 7, 0.8);
+}
+
+/* Other pile counts - compact row */
+.pileCounts {
+  display: flex;
+  gap: 8px;
+  font-size: 0.65rem;
+}
+
+.pileCount {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.pileIcon {
+  font-size: 0.7rem;
+  opacity: 0.8;
+}

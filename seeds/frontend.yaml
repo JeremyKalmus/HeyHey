@@ -95,6 +95,23 @@ components:
     when_to_use: "Display shared foundation piles (4 suits, ace to king)"
     justification: "Shared play area. Racing destination for all players."
 
+  OpponentMini:
+    location: packages/client/src/components/Game/OpponentMini.tsx
+    when_to_use: "Compact display of opponent's game state (card counts, not actual cards)"
+    props:
+      - playerState: PlayerGameState (required)
+      - name: string (required)
+      - avatar: string (emoji, default '😀')
+      - color: PlayerColor (required)
+      - isActive: boolean (activity indicator)
+      - className: string (optional CSS class)
+    justification: "Multiplayer visibility. Shows Nertz pile count prominently with danger states."
+    features:
+      - Nertz pile count with danger (<=3) and empty states
+      - Activity indicator pulse when opponent moves
+      - Secondary pile counts (stock, waste, work)
+      - Color-coded border per player
+
   # === Lobby Components ===
   HomePage:
     location: packages/client/src/components/Lobby/HomePage.tsx
