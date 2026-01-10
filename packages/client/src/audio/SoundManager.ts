@@ -1,7 +1,7 @@
 // SoundManager - Manages game sound effects using Web Audio API
 // Generates synthetic sounds for card interactions without external audio files
 
-export type SoundType = 'cardSelect' | 'cardPlace' | 'cardFlip' | 'error';
+export type SoundType = 'cardSelect' | 'cardPlace' | 'cardFlip' | 'error' | 'heyHey';
 
 interface SoundConfig {
   volume: number;
@@ -91,6 +91,9 @@ class SoundManager {
         break;
       case 'error':
         this.playError();
+        break;
+      case 'heyHey':
+        this.playHeyHey();
         break;
     }
   }
@@ -231,6 +234,59 @@ class SoundManager {
     osc1.stop(now + 0.2);
     osc2.start(now);
     osc2.stop(now + 0.2);
+  }
+
+  /**
+   * HeyHey call sound - Triumphant ascending fanfare
+   */
+  private playHeyHey(): void {
+    const ctx = this.audioContext!;
+    const now = ctx.currentTime;
+
+    // Three-note ascending triumphant chord
+    const notes = [
+      { freq: 523.25, delay: 0 }, // C5
+      { freq: 659.25, delay: 0.08 }, // E5
+      { freq: 783.99, delay: 0.16 }, // G5
+    ];
+
+    notes.forEach(({ freq, delay }) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      // Bright sine wave
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + delay);
+
+      // Envelope with sustain
+      gain.gain.setValueAtTime(0, now + delay);
+      gain.gain.linearRampToValueAtTime(this.config.volume * 0.4, now + delay + 0.02);
+      gain.gain.setValueAtTime(this.config.volume * 0.35, now + delay + 0.15);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.4);
+
+      osc.start(now + delay);
+      osc.stop(now + delay + 0.4);
+    });
+
+    // Add shimmer overlay
+    const shimmerOsc = ctx.createOscillator();
+    const shimmerGain = ctx.createGain();
+
+    shimmerOsc.connect(shimmerGain);
+    shimmerGain.connect(ctx.destination);
+
+    shimmerOsc.type = 'triangle';
+    shimmerOsc.frequency.setValueAtTime(1046.5, now + 0.2); // C6
+
+    shimmerGain.gain.setValueAtTime(0, now + 0.2);
+    shimmerGain.gain.linearRampToValueAtTime(this.config.volume * 0.2, now + 0.22);
+    shimmerGain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+
+    shimmerOsc.start(now + 0.2);
+    shimmerOsc.stop(now + 0.5);
   }
 
   /**
