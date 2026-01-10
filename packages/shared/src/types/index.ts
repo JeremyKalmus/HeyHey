@@ -227,7 +227,8 @@ export type StateDelta =
   | { type: 'nertzCalled'; playerId: string }
   | { type: 'phaseChanged'; phase: GamePhase }
   | { type: 'playerJoinedGame'; player: PlayerGameState }
-  | { type: 'playerLeftGame'; playerId: string };
+  | { type: 'playerLeftGame'; playerId: string }
+  | { type: 'roundScored'; roundResult: RoundResult; totalScores: { playerId: string; total: number }[] };
 
 /**
  * A sequenced state update for ordering
@@ -264,6 +265,7 @@ export interface GameServerToClientEvents {
   stateUpdate: (payload: StateUpdate) => void;
   moveRejected: (payload: MoveRejection) => void;
   gameEnded: (payload: GameEndedPayload) => void;
+  roundScored: (payload: RoundScoredPayload) => void;
 }
 
 export interface MakeMovePayload {
@@ -274,6 +276,48 @@ export interface GameEndedPayload {
   gameId: string;
   winner: string;
   scores: { playerId: string; score: number }[];
+}
+
+// === Scoring Types ===
+
+/**
+ * Score breakdown for a single player in a single round
+ */
+export interface PlayerRoundScore {
+  playerId: string;
+  foundationCards: number; // Cards this player played to foundations (+1 each)
+  nertzPenalty: number; // Cards remaining in nertz pile (-2 each)
+  roundScore: number; // Net score: foundationCards - (nertzPenalty * 2)
+}
+
+/**
+ * Complete scoring result for a round
+ */
+export interface RoundResult {
+  roundNumber: number;
+  calledBy: string; // Player who called Nertz
+  playerScores: PlayerRoundScore[];
+  timestamp: number;
+}
+
+/**
+ * Accumulated scores across multiple rounds
+ */
+export interface ScoringState {
+  rounds: RoundResult[];
+  totalScores: { playerId: string; total: number }[];
+  targetScore: number;
+  gameWinner?: string; // Set when a player reaches target score
+}
+
+/**
+ * Payload for round scored event
+ */
+export interface RoundScoredPayload {
+  roundResult: RoundResult;
+  totalScores: { playerId: string; total: number }[];
+  gameOver: boolean;
+  winner?: string;
 }
 
 /**

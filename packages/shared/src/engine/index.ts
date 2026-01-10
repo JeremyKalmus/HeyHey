@@ -6,3 +6,4 @@ export const VERSION = '0.1.0';
 export * from './SetupStateMachine.js';
 export * from './RulesEngine.js';
 export * from './StateManager.js';
+export * from './ScoringEngine.js';
