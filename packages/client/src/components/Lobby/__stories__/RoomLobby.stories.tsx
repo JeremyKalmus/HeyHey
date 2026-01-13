@@ -6,6 +6,7 @@ import type { PlayerColor } from '../../Card/CardBack';
 import { RoomLobby } from '../RoomLobby';
 import type { LobbyPlayer } from '../PlayerList';
 import type { PlayerCustomizationData } from '../PlayerCustomization';
+import { DEFAULT_AVATAR } from '../../ui/Avatar';
 
 /**
  * The RoomLobby component is the main lobby view where players wait before a game.
@@ -43,9 +44,9 @@ const defaultConfig: GameConfig = {
 };
 
 const samplePlayers: LobbyPlayer[] = [
-  { id: '1', name: 'Alice', color: 'blue', isHost: true, isReady: true },
-  { id: '2', name: 'Bob', color: 'red', isHost: false, isReady: true },
-  { id: '3', name: 'Charlie', color: 'green', isHost: false, isReady: false },
+  { id: '1', name: 'Alice', color: 'blue', avatar: 'user:circle', isHost: true, isReady: true },
+  { id: '2', name: 'Bob', color: 'red', avatar: 'smile:square', isHost: false, isReady: true },
+  { id: '3', name: 'Charlie', color: 'green', avatar: 'ghost:diamond', isHost: false, isReady: false },
 ];
 
 // Interactive host lobby
@@ -83,8 +84,8 @@ function PlayerLobbyDemo() {
     <RoomLobby
       roomCode="ABC123"
       players={[
-        { id: '1', name: 'Alice', color: 'blue', isHost: true, isReady: true },
-        { id: '2', name: 'You', color: 'red', isHost: false, isReady },
+        { id: '1', name: 'Alice', color: 'blue', avatar: 'crown:hexagon', isHost: true, isReady: true },
+        { id: '2', name: 'You', color: 'red', avatar: 'user:circle', isHost: false, isReady },
       ]}
       currentPlayerId="2"
       isHost={false}
@@ -125,7 +126,7 @@ export const WaitingForMorePlayers: Story = {
   args: {
     roomCode: 'XYZ789',
     players: [
-      { id: '1', name: 'Host', color: 'blue', isHost: true, isReady: true },
+      { id: '1', name: 'Host', color: 'blue', avatar: 'user:circle', isHost: true, isReady: true },
     ],
     currentPlayerId: '1',
     isHost: true,
@@ -144,10 +145,10 @@ export const AllPlayersReady: Story = {
   args: {
     roomCode: 'GAME42',
     players: [
-      { id: '1', name: 'Alice', color: 'blue', isHost: true, isReady: true },
-      { id: '2', name: 'Bob', color: 'red', isHost: false, isReady: true },
-      { id: '3', name: 'Charlie', color: 'green', isHost: false, isReady: true },
-      { id: '4', name: 'Diana', color: 'yellow', isHost: false, isReady: true },
+      { id: '1', name: 'Alice', color: 'blue', avatar: 'user:circle', isHost: true, isReady: true },
+      { id: '2', name: 'Bob', color: 'red', avatar: 'skull:diamond', isHost: false, isReady: true },
+      { id: '3', name: 'Charlie', color: 'green', avatar: 'ghost:hexagon', isHost: false, isReady: true },
+      { id: '4', name: 'Diana', color: 'yellow', avatar: 'crown:star', isHost: false, isReady: true },
     ],
     currentPlayerId: '1',
     isHost: true,
@@ -166,14 +167,14 @@ export const FullRoom: Story = {
   args: {
     roomCode: 'FULL00',
     players: [
-      { id: '1', name: 'Alice', color: 'blue', isHost: true, isReady: true },
-      { id: '2', name: 'Bob', color: 'red', isHost: false, isReady: true },
-      { id: '3', name: 'Charlie', color: 'green', isHost: false, isReady: true },
-      { id: '4', name: 'Diana', color: 'yellow', isHost: false, isReady: true },
-      { id: '5', name: 'Eve', color: 'purple', isHost: false, isReady: true },
-      { id: '6', name: 'Frank', color: 'orange', isHost: false, isReady: true },
-      { id: '7', name: 'Grace', color: 'pink', isHost: false, isReady: true },
-      { id: '8', name: 'Henry', color: 'teal', isHost: false, isReady: true },
+      { id: '1', name: 'Alice', color: 'blue', avatar: 'user:circle', isHost: true, isReady: true },
+      { id: '2', name: 'Bob', color: 'red', avatar: 'smile:square', isHost: false, isReady: true },
+      { id: '3', name: 'Charlie', color: 'green', avatar: 'ghost:diamond', isHost: false, isReady: true },
+      { id: '4', name: 'Diana', color: 'yellow', avatar: 'skull:hexagon', isHost: false, isReady: true },
+      { id: '5', name: 'Eve', color: 'purple', avatar: 'cat:star', isHost: false, isReady: true },
+      { id: '6', name: 'Frank', color: 'orange', avatar: 'bot:triangle', isHost: false, isReady: true },
+      { id: '7', name: 'Grace', color: 'pink', avatar: 'heart:circle', isHost: false, isReady: true },
+      { id: '8', name: 'Henry', color: 'teal', avatar: 'zap:square', isHost: false, isReady: true },
     ],
     currentPlayerId: '1',
     isHost: true,
@@ -194,14 +195,14 @@ function LobbyWithCustomizationDemo() {
   const [customization, setCustomization] = useState<PlayerCustomizationData>({
     name: '',
     color: 'purple' as PlayerColor,
-    avatar: '😎',
+    avatar: DEFAULT_AVATAR,
   });
   const [isReady, setIsReady] = useState(false);
 
   // Build players list including current player's customization
   const players: LobbyPlayer[] = [
-    { id: '1', name: 'Alice', color: 'blue', avatar: '🦊', isHost: true, isReady: true },
-    { id: '2', name: 'Bob', color: 'red', avatar: '🤖', isHost: false, isReady: true },
+    { id: '1', name: 'Alice', color: 'blue', avatar: 'cat:circle', isHost: true, isReady: true },
+    { id: '2', name: 'Bob', color: 'red', avatar: 'bot:square', isHost: false, isReady: true },
     {
       id: '3',
       name: customization.name || 'You',
@@ -243,12 +244,12 @@ export const WithPlayerCustomization: Story = {
 
 export const PlayersWithAvatars: Story = {
   args: {
-    roomCode: 'EMOJI1',
+    roomCode: 'AVATAR1',
     players: [
-      { id: '1', name: 'Alice', color: 'blue', avatar: '🦄', isHost: true, isReady: true },
-      { id: '2', name: 'Bob', color: 'red', avatar: '🐉', isHost: false, isReady: true },
-      { id: '3', name: 'Charlie', color: 'green', avatar: '🤖', isHost: false, isReady: false },
-      { id: '4', name: 'Diana', color: 'yellow', avatar: '👻', isHost: false, isReady: true },
+      { id: '1', name: 'Alice', color: 'blue', avatar: 'crown:star', isHost: true, isReady: true },
+      { id: '2', name: 'Bob', color: 'red', avatar: 'skull:diamond', isHost: false, isReady: true },
+      { id: '3', name: 'Charlie', color: 'green', avatar: 'bot:hexagon', isHost: false, isReady: false },
+      { id: '4', name: 'Diana', color: 'yellow', avatar: 'ghost:circle', isHost: false, isReady: true },
     ],
     currentPlayerId: '1',
     isHost: true,
@@ -257,7 +258,7 @@ export const PlayersWithAvatars: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Players with custom emoji avatars displayed in the player list.',
+        story: 'Players with custom icon avatars displayed in the player list.',
       },
     },
   },

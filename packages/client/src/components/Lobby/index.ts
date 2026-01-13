@@ -11,5 +11,16 @@ export { Input, type InputProps } from './Input';
 
 // Player Customization
 export { ColorSelector, type ColorSelectorProps } from './ColorSelector';
-export { AvatarSelector, type AvatarSelectorProps, type Avatar } from './AvatarSelector';
 export { PlayerCustomization, type PlayerCustomizationProps, type PlayerCustomizationData } from './PlayerCustomization';
+
+// Re-export Avatar components from ui
+export {
+  Avatar,
+  AvatarSelector,
+  type AvatarProps,
+  type AvatarSelectorProps,
+  type AvatarString,
+  type AvatarIcon,
+  type AvatarShape,
+  DEFAULT_AVATAR,
+} from '../ui/Avatar';

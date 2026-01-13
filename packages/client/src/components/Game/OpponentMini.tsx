@@ -3,6 +3,7 @@
 
 import type { PlayerGameState } from '@heyhey/shared';
 import type { PlayerColor } from '../Card/CardBack';
+import { Avatar, type AvatarString, DEFAULT_AVATAR } from '../ui/Avatar';
 import styles from './OpponentMini.module.css';
 
 export interface OpponentMiniProps {
@@ -10,8 +11,8 @@ export interface OpponentMiniProps {
   playerState: PlayerGameState;
   /** Opponent's display name */
   name: string;
-  /** Opponent's avatar emoji */
-  avatar?: string;
+  /** Opponent's avatar */
+  avatar?: AvatarString;
   /** Opponent's deck color */
   color: PlayerColor;
   /** Whether this opponent recently made a move (activity indicator) */
@@ -23,7 +24,7 @@ export interface OpponentMiniProps {
 export function OpponentMini({
   playerState,
   name,
-  avatar = '😀',
+  avatar = DEFAULT_AVATAR,
   color,
   isActive = false,
   className,
@@ -31,7 +32,7 @@ export function OpponentMini({
   const nertzCount = playerState.nertzPile.length;
   const stockCount = playerState.stockPile.length;
   const wasteCount = playerState.wastePile.length;
-  const workCount = playerState.workPiles.reduce((sum, pile) => sum + pile.length, 0);
+  const workCount = playerState.workPiles.reduce((sum: number, pile: unknown[]) => sum + pile.length, 0);
 
   // Nertz pile empty = close to winning!
   const nertzDanger = nertzCount <= 3 && nertzCount > 0;
@@ -47,7 +48,7 @@ export function OpponentMini({
 
       {/* Player identity */}
       <div className={styles.identity}>
-        <span className={styles.avatar}>{avatar}</span>
+        <Avatar avatar={avatar} color={color} size="sm" />
         <span className={styles.name}>{name}</span>
       </div>
 
@@ -63,15 +64,15 @@ export function OpponentMini({
       {/* Other pile counts */}
       <div className={styles.pileCounts}>
         <div className={styles.pileCount} title="Stock pile">
-          <span className={styles.pileIcon}>📥</span>
+          <span className={styles.pileIcon}>S</span>
           <span>{stockCount}</span>
         </div>
         <div className={styles.pileCount} title="Waste pile">
-          <span className={styles.pileIcon}>📤</span>
+          <span className={styles.pileIcon}>W</span>
           <span>{wasteCount}</span>
         </div>
         <div className={styles.pileCount} title="Work piles total">
-          <span className={styles.pileIcon}>🃏</span>
+          <span className={styles.pileIcon}>P</span>
           <span>{workCount}</span>
         </div>
       </div>

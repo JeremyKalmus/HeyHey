@@ -3,3 +3,4 @@ export * from './Game';
 export * from './Lobby';
 export * from './Player';
 export * from './Setup';
+export * from './ui';

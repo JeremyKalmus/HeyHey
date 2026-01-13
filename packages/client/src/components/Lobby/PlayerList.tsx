@@ -1,12 +1,12 @@
 import type { PlayerColor } from '../Card/CardBack';
-import type { Avatar } from './AvatarSelector';
+import { Avatar, type AvatarString, DEFAULT_AVATAR } from '../ui/Avatar';
 import styles from './PlayerList.module.css';
 
 export interface LobbyPlayer {
   id: string;
   name: string;
   color: PlayerColor;
-  avatar?: Avatar;
+  avatar?: AvatarString;
   isHost: boolean;
   isReady: boolean;
 }
@@ -36,12 +36,11 @@ export function PlayerList({
       <ul className={styles.list}>
         {players.map((player) => (
           <li key={player.id} className={styles.player}>
-            <div
-              className={`${styles.avatar} ${player.avatar ? styles.avatarEmoji : ''}`}
-              style={{ backgroundColor: getColorValue(player.color) }}
-            >
-              {player.avatar || player.name.charAt(0).toUpperCase()}
-            </div>
+            <Avatar
+              avatar={player.avatar || DEFAULT_AVATAR}
+              color={player.color}
+              size="sm"
+            />
             <div className={styles.info}>
               <span className={styles.name}>
                 {player.name}
@@ -71,18 +70,4 @@ export function PlayerList({
       </ul>
     </div>
   );
-}
-
-function getColorValue(color: PlayerColor): string {
-  const colors: Record<PlayerColor, string> = {
-    red: '#dc2626',
-    blue: '#2563eb',
-    green: '#16a34a',
-    yellow: '#ca8a04',
-    purple: '#9333ea',
-    orange: '#ea580c',
-    pink: '#db2777',
-    teal: '#0891b2',
-  };
-  return colors[color];
 }
