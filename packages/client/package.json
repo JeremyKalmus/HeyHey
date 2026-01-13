@@ -16,6 +16,9 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
+    "@fontsource/archivo-black": "^5.2.8",
+    "@fontsource/inter": "^5.2.8",
+    "@fontsource/jetbrains-mono": "^5.2.8",
     "@heyhey/shared": "*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

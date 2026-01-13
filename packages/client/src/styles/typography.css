@@ -1,0 +1,226 @@
+/* Typography System - HeyHey Neubrutalist Design */
+
+/* Font Imports */
+@import '@fontsource/archivo-black';
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+@import '@fontsource/inter/800.css';
+@import '@fontsource/inter/900.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/700.css';
+
+:root {
+  /* Font Families */
+  --font-display: 'Archivo Black', Impact, sans-serif;
+  --font-body: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+
+  /* Type Scale - Display to Tiny */
+  --text-display: 4rem;      /* 64px - Hero text, big numbers */
+  --text-title: 3rem;        /* 48px - Page titles */
+  --text-heading: 2rem;      /* 32px - Section headings */
+  --text-subheading: 1.5rem; /* 24px - Card titles */
+  --text-large: 1.25rem;     /* 20px - Emphasized body */
+  --text-body: 1rem;         /* 16px - Body text */
+  --text-small: 0.875rem;    /* 14px - Secondary text */
+  --text-tiny: 0.75rem;      /* 12px - Captions, labels */
+
+  /* Font Weights */
+  --weight-normal: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --weight-extrabold: 800;
+  --weight-black: 900;
+
+  /* Letter Spacing */
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.05em;
+  --tracking-wider: 0.1em;
+  --tracking-widest: 0.15em;
+
+  /* Line Heights */
+  --leading-none: 1;
+  --leading-tight: 1.1;
+  --leading-snug: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+}
+
+/* =============================================================================
+   HEADING STYLES - ALL CAPS, Heavy Weight, Tight Tracking
+   ============================================================================= */
+
+h1, h2, h3, h4, h5, h6,
+.heading {
+  font-family: var(--font-display);
+  font-weight: var(--weight-black);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--leading-tight);
+  color: var(--text-primary, #000000);
+}
+
+h1, .text-display {
+  font-size: var(--text-display);
+}
+
+h2, .text-title {
+  font-size: var(--text-title);
+}
+
+h3, .text-heading {
+  font-size: var(--text-heading);
+}
+
+h4, .text-subheading {
+  font-size: var(--text-subheading);
+}
+
+/* =============================================================================
+   BODY TEXT STYLES - Semibold to Bold Weight
+   ============================================================================= */
+
+body {
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-normal);
+  color: var(--text-primary, #000000);
+}
+
+p, .text-body {
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-normal);
+}
+
+.text-large {
+  font-size: var(--text-large);
+  font-weight: var(--weight-bold);
+}
+
+.text-small {
+  font-size: var(--text-small);
+  font-weight: var(--weight-semibold);
+}
+
+.text-tiny {
+  font-size: var(--text-tiny);
+  font-weight: var(--weight-semibold);
+}
+
+/* Bold body variants */
+.text-bold {
+  font-weight: var(--weight-bold);
+}
+
+.text-extrabold {
+  font-weight: var(--weight-extrabold);
+}
+
+/* =============================================================================
+   LABEL STYLES - UPPERCASE, Wide Spacing
+   ============================================================================= */
+
+.label,
+label {
+  font-family: var(--font-body);
+  font-size: var(--text-small);
+  font-weight: var(--weight-black);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  line-height: var(--leading-tight);
+}
+
+.label-small {
+  font-family: var(--font-body);
+  font-size: var(--text-tiny);
+  font-weight: var(--weight-black);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
+}
+
+.label-large {
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  font-weight: var(--weight-black);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+/* =============================================================================
+   MONOSPACE / SCORE STYLES - For codes, numbers, game scores
+   ============================================================================= */
+
+code, pre,
+.mono,
+.code {
+  font-family: var(--font-mono);
+  font-weight: var(--weight-normal);
+  letter-spacing: var(--tracking-wider);
+}
+
+.score,
+.number-display {
+  font-family: var(--font-mono);
+  font-size: var(--text-display);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-wider);
+  line-height: var(--leading-none);
+}
+
+.score-large {
+  font-family: var(--font-mono);
+  font-size: calc(var(--text-display) * 1.5);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-wider);
+  line-height: var(--leading-none);
+}
+
+.score-small {
+  font-family: var(--font-mono);
+  font-size: var(--text-heading);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-wider);
+  line-height: var(--leading-none);
+}
+
+/* Tabular numbers for aligned columns */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* =============================================================================
+   UTILITY CLASSES
+   ============================================================================= */
+
+/* Font family utilities */
+.font-display { font-family: var(--font-display); }
+.font-body { font-family: var(--font-body); }
+.font-mono { font-family: var(--font-mono); }
+
+/* Weight utilities */
+.font-normal { font-weight: var(--weight-normal); }
+.font-medium { font-weight: var(--weight-medium); }
+.font-semibold { font-weight: var(--weight-semibold); }
+.font-bold { font-weight: var(--weight-bold); }
+.font-extrabold { font-weight: var(--weight-extrabold); }
+.font-black { font-weight: var(--weight-black); }
+
+/* Tracking utilities */
+.tracking-tight { letter-spacing: var(--tracking-tight); }
+.tracking-normal { letter-spacing: var(--tracking-normal); }
+.tracking-wide { letter-spacing: var(--tracking-wide); }
+.tracking-wider { letter-spacing: var(--tracking-wider); }
+.tracking-widest { letter-spacing: var(--tracking-widest); }
+
+/* Case utilities */
+.uppercase { text-transform: uppercase; }
+.lowercase { text-transform: lowercase; }
+.capitalize { text-transform: capitalize; }
+.normal-case { text-transform: none; }
