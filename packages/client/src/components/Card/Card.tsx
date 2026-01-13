@@ -10,6 +10,8 @@ export interface CardProps {
   selected?: boolean;
   disabled?: boolean;
   dragging?: boolean;
+  dealing?: boolean;
+  flipping?: boolean;
   onClick?: (card: CardType) => void;
   onDoubleClick?: (card: CardType) => void;
   className?: string;
@@ -23,6 +25,8 @@ export function Card({
   selected = false,
   disabled = false,
   dragging = false,
+  dealing = false,
+  flipping = false,
   onClick,
   onDoubleClick,
   className,
@@ -33,6 +37,8 @@ export function Card({
     selected && styles.selected,
     disabled && styles.disabled,
     dragging && styles.dragging,
+    dealing && styles.dealing,
+    flipping && styles.flipping,
     className,
   ]
     .filter(Boolean)
