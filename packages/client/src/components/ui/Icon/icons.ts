@@ -109,3 +109,11 @@ export {
   Flame as FlameIcon,
   Sparkles as SparklesIcon,
 } from 'lucide-react';
+
+// Card Suit Icons
+export {
+  Heart as SuitHeartIcon,
+  Diamond as SuitDiamondIcon,
+  Club as SuitClubIcon,
+  Spade as SuitSpadeIcon,
+} from 'lucide-react';

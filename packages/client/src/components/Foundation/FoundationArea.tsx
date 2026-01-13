@@ -2,18 +2,27 @@
 // Displays the 4 foundation piles (one per suit) where players race to build up from Ace to King
 
 import type { Card as CardType } from '@heyhey/shared';
+import type { ComponentType } from 'react';
+import type { LucideProps } from 'lucide-react';
 import { Card } from '../Card';
+import {
+  Icon,
+  SuitHeartIcon,
+  SuitDiamondIcon,
+  SuitClubIcon,
+  SuitSpadeIcon,
+} from '../ui/Icon';
 import styles from './FoundationArea.module.css';
 
 export type Suit = 'hearts' | 'diamonds' | 'clubs' | 'spades';
 
 const SUITS: Suit[] = ['hearts', 'diamonds', 'clubs', 'spades'];
 
-const SUIT_SYMBOLS: Record<Suit, string> = {
-  hearts: '\u2665',
-  diamonds: '\u2666',
-  clubs: '\u2663',
-  spades: '\u2660',
+const SUIT_ICONS: Record<Suit, ComponentType<LucideProps>> = {
+  hearts: SuitHeartIcon,
+  diamonds: SuitDiamondIcon,
+  clubs: SuitClubIcon,
+  spades: SuitSpadeIcon,
 };
 
 export interface FoundationPile {
@@ -98,7 +107,12 @@ export function FoundationArea({
                   <Card card={topCard} faceUp={true} />
                 ) : (
                   <div className={`${styles.emptySlot} ${styles[suit]}`}>
-                    <span className={styles.suitSymbol}>{SUIT_SYMBOLS[suit]}</span>
+                    <Icon
+                      icon={SUIT_ICONS[suit]}
+                      size="xl"
+                      strokeWidth={3}
+                      className={styles.suitIcon}
+                    />
                   </div>
                 )}
               </div>
