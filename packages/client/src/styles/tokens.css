@@ -1,0 +1,264 @@
+/**
+ * HeyHey Design Tokens - 90s Neubrutalist Arcade Style
+ *
+ * All design tokens as CSS custom properties.
+ * Import this file before other styles.
+ */
+
+:root {
+  /* ============================================
+   * COLOR PALETTE - Arcade / High Contrast
+   * ============================================ */
+
+  /* Primary Colors */
+  --color-primary: #FF6B35;
+  --color-primary-dark: #E85528;
+  --color-secondary: #00FF88;
+  --color-secondary-dark: #00CC6A;
+
+  /* Arcade Color Palette (90s aesthetic) */
+  --arcade-orange: #FF6B35;
+  --arcade-green: #00FF88;
+  --arcade-yellow: #FFD23F;
+  --arcade-purple: #5E60CE;
+  --arcade-pink: #FF006E;
+  --arcade-cyan: #00F5FF;
+  --arcade-blue: #00B0FF;
+  --arcade-red: #FF1744;
+
+  /* Accent Colors - Bold & Clashing */
+  --color-accent-1: #FFD23F;
+  --color-accent-2: #5E60CE;
+  --color-accent-3: #FF006E;
+  --color-accent-4: #00F5FF;
+
+  /* Semantic Colors - High Contrast */
+  --color-error: #FF1744;
+  --color-error-dark: #D50000;
+  --color-warning: #FFC400;
+  --color-success: #00E676;
+  --color-info: #00B0FF;
+
+  /* Neutral Colors - Pure Contrast */
+  --color-black: #000000;
+  --color-white: #FFFFFF;
+  --color-gray-dark: #2A2A2A;
+  --color-gray: #555555;
+  --color-gray-light: #CCCCCC;
+
+  /* ============================================
+   * BACKGROUND COLORS - Dark Mode Base
+   * ============================================ */
+
+  --bg-primary: var(--color-white);
+  --bg-secondary: var(--color-accent-1);
+  --bg-tertiary: var(--color-secondary);
+  --bg-dark: var(--color-black);
+  --bg-gray: #F5F5F5;
+
+  /* Dark Mode Backgrounds */
+  --bg-dark-base: #1a1a2e;
+  --bg-dark-surface: #16213e;
+  --bg-dark-elevated: #0f3460;
+  --bg-dark-overlay: rgba(0, 0, 0, 0.7);
+
+  /* ============================================
+   * TEXT COLORS - Bold Contrast
+   * ============================================ */
+
+  --text-primary: var(--color-black);
+  --text-secondary: var(--color-gray-dark);
+  --text-inverse: var(--color-white);
+  --text-accent: var(--color-primary);
+  --text-muted: var(--color-gray);
+
+  /* ============================================
+   * BORDER TOKENS - Heavy Black Outlines
+   * ============================================ */
+
+  /* Border Weights */
+  --border-thin: 2px;
+  --border-medium: 3px;
+  --border-thick: 4px;
+  --border-chunky: 5px;
+
+  /* Aliases matching design spec */
+  --border-width-thin: var(--border-thin);
+  --border-width-medium: var(--border-medium);
+  --border-width-thick: var(--border-thick);
+  --border-width-xthick: var(--border-chunky);
+
+  /* Border Colors */
+  --border-color: var(--color-black);
+  --border-color-accent: var(--color-primary);
+  --border-color-light: var(--color-gray-light);
+
+  /* ============================================
+   * SHADOW SYSTEM - Hard Offset Only
+   * ============================================ */
+
+  /* Neubrutalist Shadows (no blur, hard offset) */
+  --shadow-sm: 2px 2px 0px var(--color-black);
+  --shadow-md: 4px 4px 0px var(--color-black);
+  --shadow-lg: 6px 6px 0px var(--color-black);
+  --shadow-xl: 8px 8px 0px var(--color-black);
+
+  /* Named shadows for states */
+  --shadow-neubrutalist: var(--shadow-md);
+  --shadow-neubrutalist-lg: var(--shadow-lg);
+  --shadow-neubrutalist-xl: var(--shadow-xl);
+  --shadow-neubrutalist-pressed: var(--shadow-sm);
+
+  /* Colored Shadows */
+  --shadow-primary: 4px 4px 0px var(--color-primary);
+  --shadow-secondary: 4px 4px 0px var(--color-secondary);
+  --shadow-accent: 4px 4px 0px var(--color-accent-3);
+
+  /* Arcade glow effects (for special elements) */
+  --shadow-arcade-glow: 0 0 10px var(--arcade-cyan), 0 0 20px var(--arcade-cyan);
+
+  /* ============================================
+   * SPACING SCALE
+   * ============================================ */
+
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+  --space-2xl: 32px;
+  --space-3xl: 48px;
+  --space-4xl: 64px;
+
+  /* ============================================
+   * BORDER RADIUS - Minimal Rounding
+   * ============================================ */
+
+  --radius-none: 0;
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-full: 9999px;
+
+  /* Irregular radii (Neubrutalist asymmetry) */
+  --radius-irregular-1: 4px 8px 4px 8px;
+  --radius-irregular-2: 8px 4px 8px 4px;
+
+  /* ============================================
+   * TYPOGRAPHY
+   * ============================================ */
+
+  /* Font Families */
+  --font-family-base: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  --font-family-bold: 'Inter Black', 'Helvetica Neue', Arial, sans-serif;
+  --font-family-mono: 'Courier New', Courier, monospace;
+  --font-family-arcade: 'Press Start 2P', 'Courier New', monospace;
+
+  /* Font Sizes - Large Scale */
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.25rem;
+  --font-size-xl: 1.5rem;
+  --font-size-2xl: 2rem;
+  --font-size-3xl: 3rem;
+  --font-size-4xl: 4rem;
+  --font-size-5xl: 5rem;
+  --font-size-6xl: 6rem;
+
+  /* Font Weights - Heavy Emphasis */
+  --font-weight-normal: 400;
+  --font-weight-medium: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+  --font-weight-black: 900;
+
+  /* Letter Spacing */
+  --letter-spacing-tight: -0.02em;
+  --letter-spacing-normal: 0;
+  --letter-spacing-wide: 0.05em;
+  --letter-spacing-wider: 0.1em;
+
+  /* Line Heights */
+  --line-height-tight: 1.1;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  /* ============================================
+   * TRANSITION TIMING - Minimal & Snappy
+   * ============================================ */
+
+  --transition-none: none;
+  --transition-fast: 0.1s ease-out;
+  --transition-base: 0.2s ease-out;
+  --transition-slow: 0.3s ease-out;
+
+  /* Specific transitions */
+  --transition-shadow: box-shadow var(--transition-fast);
+  --transition-transform: transform var(--transition-fast);
+  --transition-colors: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+  --transition-all: all var(--transition-base);
+
+  /* ============================================
+   * Z-INDEX SCALE
+   * ============================================ */
+
+  --z-base: 1;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-overlay: 300;
+  --z-modal: 400;
+  --z-popover: 500;
+  --z-tooltip: 600;
+  --z-max: 9999;
+
+  /* ============================================
+   * COMPONENT-SPECIFIC TOKENS
+   * ============================================ */
+
+  /* Card tokens */
+  --card-border: var(--border-thick) solid var(--border-color);
+  --card-shadow: var(--shadow-neubrutalist);
+  --card-radius: var(--radius-md);
+  --card-padding: var(--space-lg);
+
+  /* Button tokens */
+  --button-border: var(--border-thick) solid var(--border-color);
+  --button-shadow: var(--shadow-neubrutalist);
+  --button-shadow-hover: var(--shadow-neubrutalist-lg);
+  --button-shadow-active: var(--shadow-neubrutalist-pressed);
+  --button-radius: var(--radius-md);
+  --button-padding: var(--space-sm) var(--space-lg);
+  --button-font-weight: var(--font-weight-black);
+
+  /* Input tokens */
+  --input-border: var(--border-thick) solid var(--border-color);
+  --input-shadow: var(--shadow-neubrutalist);
+  --input-radius: var(--radius-md);
+  --input-padding: var(--space-sm) var(--space-md);
+  --input-focus-border-width: var(--border-chunky);
+}
+
+/* ============================================
+ * DARK MODE OVERRIDES
+ * ============================================ */
+
+[data-theme="dark"],
+.dark {
+  --bg-primary: var(--bg-dark-base);
+  --bg-secondary: var(--bg-dark-surface);
+  --bg-tertiary: var(--bg-dark-elevated);
+  --bg-gray: var(--color-gray-dark);
+
+  --text-primary: var(--color-white);
+  --text-secondary: var(--color-gray-light);
+  --text-inverse: var(--color-black);
+
+  --border-color: var(--color-white);
+
+  --shadow-neubrutalist: 4px 4px 0px var(--color-white);
+  --shadow-neubrutalist-lg: 6px 6px 0px var(--color-white);
+  --shadow-neubrutalist-xl: 8px 8px 0px var(--color-white);
+  --shadow-neubrutalist-pressed: 2px 2px 0px var(--color-white);
+}
