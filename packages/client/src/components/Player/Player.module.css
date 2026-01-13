@@ -1,4 +1,4 @@
-/* Player Area Components - CSS Modules */
+/* Player Area Components - Neubrutalist Arcade Style */
 
 /* Stock Pile Styles */
 .stockPile {
@@ -6,70 +6,79 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-xs);
 }
 
 .stockArea {
   position: relative;
   cursor: pointer;
-  border-radius: 8px;
-  padding: 4px;
-  transition: background-color 0.15s ease;
+  padding: var(--space-xs);
+  transition: var(--transition-transform), var(--transition-shadow);
 }
 
 .stockArea.clickable:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
 }
 
 .stockArea:focus {
-  outline: 2px solid #2196f3;
+  outline: var(--border-thick) solid var(--arcade-cyan);
   outline-offset: 2px;
 }
 
 .stockEmpty {
   width: 70px;
   height: 100px;
-  border: 2px dashed rgba(255, 255, 255, 0.3);
-  border-radius: 6px;
-  background: rgba(0, 0, 0, 0.1);
+  border: var(--border-thick) dashed var(--color-gray);
+  background: rgba(0, 0, 0, 0.05);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: border-color 0.15s ease, background-color 0.15s ease;
+  transition: var(--transition-colors), var(--transition-shadow);
 }
 
 .stockEmpty.canRecycle {
-  border-color: rgba(76, 175, 80, 0.6);
-  background: rgba(76, 175, 80, 0.1);
+  border-color: var(--arcade-green);
+  border-style: solid;
+  background: rgba(0, 255, 136, 0.1);
+  box-shadow: var(--shadow-secondary);
+  animation: recyclePulse 1.2s ease-in-out infinite;
 }
 
 .stockEmpty.canRecycle:hover {
-  border-color: #4caf50;
-  background: rgba(76, 175, 80, 0.2);
+  background: rgba(0, 255, 136, 0.2);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
 }
 
 .recycleIcon {
-  font-size: 24px;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--arcade-green);
 }
 
-.stockEmpty.canRecycle .recycleIcon {
-  color: #4caf50;
+.emptyIcon {
+  color: var(--color-gray);
 }
 
 .cardCount {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.7);
-  font-weight: 500;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-black);
+  font-family: var(--font-family-mono);
+  color: var(--color-black);
+  background: var(--arcade-yellow);
+  padding: var(--space-xs) var(--space-sm);
+  border: var(--border-medium) solid var(--color-black);
+  box-shadow: var(--shadow-sm);
+  min-width: 24px;
+  text-align: center;
 }
 
 .sectionLabel {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-black);
+  font-family: var(--font-family-mono);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: rgba(255, 255, 255, 0.5);
-  margin-bottom: 4px;
+  letter-spacing: var(--letter-spacing-wide);
+  color: var(--text-secondary);
 }
 
 /* Waste Pile Styles */
@@ -78,7 +87,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-xs);
 }
 
 .wasteArea {
@@ -90,17 +99,15 @@
 .wasteEmpty {
   width: 70px;
   height: 100px;
-  border: 2px dashed rgba(255, 255, 255, 0.2);
-  border-radius: 6px;
+  border: var(--border-thick) dashed var(--color-gray);
   background: rgba(0, 0, 0, 0.05);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.wasteEmptyLabel {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.3);
+.wasteEmptyIcon {
+  color: var(--color-gray);
 }
 
 .wasteStack {
@@ -110,7 +117,7 @@
 .wasteCard {
   position: absolute;
   top: 0;
-  transition: transform 0.15s ease;
+  transition: var(--transition-transform);
 }
 
 .wasteCard.selectable {
@@ -125,6 +132,16 @@
 .stockWasteContainer {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-md);
   align-items: center;
+}
+
+/* Animations */
+@keyframes recyclePulse {
+  0%, 100% {
+    box-shadow: var(--shadow-secondary);
+  }
+  50% {
+    box-shadow: var(--shadow-lg), 0 0 12px var(--arcade-green);
+  }
 }

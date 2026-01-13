@@ -1,9 +1,11 @@
 // NertzPile - Gameplay component for the Nertz pile
 // Displays a stack with top card face-up, supports selection
+// Neubrutalist arcade style with heavy borders and bold elements
 
 import type { Card as CardType } from '@heyhey/shared';
 import { Card, CardStack } from '../Card';
 import type { PlayerColor } from '../Card/CardBack';
+import { Icon, ZapIcon } from '../ui/Icon';
 import styles from './NertzPile.module.css';
 
 export interface NertzPileProps {
@@ -48,13 +50,13 @@ export function NertzPile({
     }
   };
 
-  // Empty state
+  // Empty state - neubrutalist celebration for clearing the pile
   if (isEmpty) {
     return (
       <div className={`${styles.nertzPile} ${styles.empty} ${className ?? ''}`}>
         <div className={styles.emptySlot}>
-          <span className={styles.emptyLabel}>Nertz</span>
-          <span className={styles.emptyIcon}>!</span>
+          <span className={styles.emptyLabel}>NERTZ!</span>
+          <Icon icon={ZapIcon} size="xl" className={styles.emptyIcon} />
         </div>
       </div>
     );
