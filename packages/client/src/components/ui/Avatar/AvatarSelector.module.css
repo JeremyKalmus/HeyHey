@@ -1,0 +1,179 @@
+/* AvatarSelector - Neubrutalist avatar customization */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md, 12px);
+}
+
+.label {
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: var(--font-weight-bold, 700);
+  color: var(--text-secondary, #2a2a2a);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide, 0.05em);
+}
+
+.preview {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-md, 12px);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm, 8px);
+}
+
+.sectionLabel {
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: var(--font-weight-bold, 700);
+  color: var(--text-secondary, #555);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide, 0.05em);
+}
+
+/* Icon grid */
+.iconGrid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: var(--space-sm, 8px);
+}
+
+.iconButton {
+  aspect-ratio: 1;
+  min-width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-primary, #fff);
+  border: var(--border-width-medium, 3px) solid var(--border-color, #000);
+  border-radius: var(--radius-md, 4px);
+  box-shadow: 2px 2px 0 #000;
+  cursor: pointer;
+  transition: transform var(--transition-fast, 0.1s), box-shadow var(--transition-fast, 0.1s);
+  padding: 0;
+}
+
+.iconButton:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 #000;
+}
+
+.iconButton:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 #000;
+}
+
+.iconButton:focus {
+  outline: none;
+  border-color: var(--color-primary, #FF6B35);
+}
+
+.iconButton.selected {
+  background: var(--color-accent-1, #FFD23F);
+  border-color: var(--color-black, #000);
+  box-shadow: 3px 3px 0 #000;
+}
+
+/* Shape grid */
+.shapeGrid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: var(--space-sm, 8px);
+}
+
+.shapeButton {
+  aspect-ratio: 1;
+  min-width: 40px;
+  background: var(--bg-gray, #f5f5f5);
+  border: var(--border-width-medium, 3px) solid var(--border-color, #000);
+  box-shadow: 2px 2px 0 #000;
+  cursor: pointer;
+  transition: transform var(--transition-fast, 0.1s), box-shadow var(--transition-fast, 0.1s);
+}
+
+.shapeButton:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 #000;
+  background: var(--bg-primary, #fff);
+}
+
+.shapeButton:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 #000;
+}
+
+.shapeButton:focus {
+  outline: none;
+  border-color: var(--color-primary, #FF6B35);
+}
+
+.shapeButton.selected {
+  background: var(--color-accent-1, #FFD23F);
+}
+
+/* Shape previews */
+.shape-circle {
+  border-radius: 50%;
+}
+
+.shape-square {
+  border-radius: var(--radius-md, 4px);
+}
+
+.shape-diamond {
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  border: none;
+  box-shadow: none;
+}
+
+.shape-diamond:hover,
+.shape-diamond:active {
+  box-shadow: none;
+}
+
+.shape-hexagon {
+  clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+  border: none;
+  box-shadow: none;
+}
+
+.shape-hexagon:hover,
+.shape-hexagon:active {
+  box-shadow: none;
+}
+
+.shape-star {
+  clip-path: polygon(
+    50% 0%,
+    61% 35%,
+    98% 35%,
+    68% 57%,
+    79% 91%,
+    50% 70%,
+    21% 91%,
+    32% 57%,
+    2% 35%,
+    39% 35%
+  );
+  border: none;
+  box-shadow: none;
+}
+
+.shape-star:hover,
+.shape-star:active {
+  box-shadow: none;
+}
+
+.shape-triangle {
+  clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+  border: none;
+  box-shadow: none;
+}
+
+.shape-triangle:hover,
+.shape-triangle:active {
+  box-shadow: none;
+}

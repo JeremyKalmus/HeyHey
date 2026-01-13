@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { OpponentMini } from '../OpponentMini';
 import type { PlayerGameState, Card } from '@heyhey/shared';
+import type { AvatarString } from '../../ui/Avatar';
 
 /**
  * The OpponentMini component displays a compact view of an opponent's game state.
@@ -43,7 +44,7 @@ const meta: Meta<typeof OpponentMini> = {
       options: ['red', 'blue', 'green', 'yellow', 'purple', 'orange', 'pink', 'teal'],
     },
     avatar: {
-      description: 'Player avatar emoji',
+      description: 'Player avatar (icon:shape format)',
       control: 'text',
     },
     name: {
@@ -91,7 +92,7 @@ export const Default: Story = {
   args: {
     playerState: createPlayerState({}),
     name: 'Alice',
-    avatar: '😎',
+    avatar: 'smile:circle' as AvatarString,
     color: 'red',
   },
 };
@@ -103,7 +104,7 @@ export const Active: Story = {
   args: {
     playerState: createPlayerState({ nertz: 10 }),
     name: 'Bob',
-    avatar: '🤠',
+    avatar: 'crown:hexagon' as AvatarString,
     color: 'blue',
     isActive: true,
   },
@@ -123,7 +124,7 @@ export const Danger: Story = {
   args: {
     playerState: createPlayerState({ nertz: 3, stock: 20, waste: 3, work: [3, 4, 5, 2] }),
     name: 'Charlie',
-    avatar: '🔥',
+    avatar: 'flame:diamond' as AvatarString,
     color: 'orange',
     isActive: true,
   },
@@ -143,7 +144,7 @@ export const Won: Story = {
   args: {
     playerState: createPlayerState({ nertz: 0, stock: 15, waste: 5, work: [5, 6, 4, 5] }),
     name: 'Diana',
-    avatar: '🏆',
+    avatar: 'crown:star' as AvatarString,
     color: 'yellow',
   },
   parameters: {
@@ -164,26 +165,26 @@ export const MultipleOpponents: Story = {
       <OpponentMini
         playerState={createPlayerState({ nertz: 10 })}
         name="Alice"
-        avatar="😀"
+        avatar="user:circle"
         color="red"
       />
       <OpponentMini
         playerState={createPlayerState({ nertz: 7, stock: 25, waste: 5 })}
         name="Bob"
-        avatar="😎"
+        avatar="smile:square"
         color="blue"
         isActive={true}
       />
       <OpponentMini
         playerState={createPlayerState({ nertz: 3 })}
         name="Charlie"
-        avatar="🤠"
+        avatar="skull:diamond"
         color="green"
       />
       <OpponentMini
         playerState={createPlayerState({ nertz: 12 })}
         name="Diana"
-        avatar="🥳"
+        avatar="ghost:hexagon"
         color="purple"
       />
     </div>
@@ -201,19 +202,31 @@ export const MultipleOpponents: Story = {
  * All player colors.
  */
 export const AllColors: Story = {
-  render: () => (
-    <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-      {(['red', 'blue', 'green', 'yellow', 'purple', 'orange', 'pink', 'teal'] as const).map((color, i) => (
-        <OpponentMini
-          key={color}
-          playerState={createPlayerState({ nertz: 13 - i })}
-          name={color.charAt(0).toUpperCase() + color.slice(1)}
-          avatar={['😀', '😎', '🤠', '🥳', '😺', '🐶', '🦊', '🐸'][i]}
-          color={color}
-        />
-      ))}
-    </div>
-  ),
+  render: () => {
+    const avatars: AvatarString[] = [
+      'user:circle',
+      'smile:square',
+      'ghost:diamond',
+      'skull:hexagon',
+      'cat:star',
+      'bot:triangle',
+      'heart:circle',
+      'zap:square',
+    ];
+    return (
+      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+        {(['red', 'blue', 'green', 'yellow', 'purple', 'orange', 'pink', 'teal'] as const).map((color, i) => (
+          <OpponentMini
+            key={color}
+            playerState={createPlayerState({ nertz: 13 - i })}
+            name={color.charAt(0).toUpperCase() + color.slice(1)}
+            avatar={avatars[i]}
+            color={color}
+          />
+        ))}
+      </div>
+    );
+  },
   parameters: {
     docs: {
       description: {
@@ -230,7 +243,7 @@ export const LongName: Story = {
   args: {
     playerState: createPlayerState({}),
     name: 'SomeSuperLongPlayerName123',
-    avatar: '👽',
+    avatar: 'bot:hexagon' as AvatarString,
     color: 'teal',
   },
   parameters: {

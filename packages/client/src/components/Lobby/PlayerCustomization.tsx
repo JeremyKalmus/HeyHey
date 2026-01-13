@@ -1,13 +1,13 @@
 import type { PlayerColor } from '../Card/CardBack';
 import { Input } from './Input';
 import { ColorSelector } from './ColorSelector';
-import { AvatarSelector, type Avatar } from './AvatarSelector';
+import { Avatar, AvatarSelector, type AvatarString, DEFAULT_AVATAR } from '../ui/Avatar';
 import styles from './PlayerCustomization.module.css';
 
 export interface PlayerCustomizationData {
   name: string;
   color: PlayerColor;
-  avatar: Avatar;
+  avatar: AvatarString;
 }
 
 export interface PlayerCustomizationProps {
@@ -33,7 +33,7 @@ export function PlayerCustomization({
     onChange({ ...value, color });
   };
 
-  const handleAvatarChange = (avatar: Avatar) => {
+  const handleAvatarChange = (avatar: AvatarString) => {
     onChange({ ...value, avatar });
   };
 
@@ -42,12 +42,11 @@ export function PlayerCustomization({
       <h3 className={styles.title}>Customize Your Player</h3>
 
       <div className={styles.preview}>
-        <div
-          className={styles.avatarPreview}
-          style={{ borderColor: getColorValue(value.color) }}
-        >
-          <span className={styles.avatarEmoji}>{value.avatar}</span>
-        </div>
+        <Avatar
+          avatar={value.avatar || DEFAULT_AVATAR}
+          color={value.color}
+          size="lg"
+        />
         <span className={styles.previewName}>
           {value.name || 'Your Name'}
         </span>
@@ -71,24 +70,11 @@ export function PlayerCustomization({
         />
 
         <AvatarSelector
-          value={value.avatar}
+          value={value.avatar || DEFAULT_AVATAR}
           onChange={handleAvatarChange}
+          color={value.color}
         />
       </div>
     </div>
   );
-}
-
-function getColorValue(color: PlayerColor): string {
-  const colors: Record<PlayerColor, string> = {
-    red: '#dc2626',
-    blue: '#2563eb',
-    green: '#16a34a',
-    yellow: '#ca8a04',
-    purple: '#9333ea',
-    orange: '#ea580c',
-    pink: '#db2777',
-    teal: '#0891b2',
-  };
-  return colors[color];
 }

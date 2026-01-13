@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { useState } from 'react';
 import { PlayerCustomization, type PlayerCustomizationData } from '../PlayerCustomization';
 import type { PlayerColor } from '../../Card/CardBack';
+import { DEFAULT_AVATAR } from '../../ui/Avatar';
 
 const meta: Meta<typeof PlayerCustomization> = {
   title: 'Lobby/PlayerCustomization',
@@ -12,7 +13,7 @@ const meta: Meta<typeof PlayerCustomization> = {
   },
   decorators: [
     (Story) => (
-      <div style={{ width: 350, padding: 20 }}>
+      <div style={{ width: 400, padding: 20 }}>
         <Story />
       </div>
     ),
@@ -23,7 +24,7 @@ export default meta;
 type Story = StoryObj<typeof PlayerCustomization>;
 
 function PlayerCustomizationWithState({
-  initialData = { name: '', color: 'blue' as PlayerColor, avatar: '😀' },
+  initialData = { name: '', color: 'blue' as PlayerColor, avatar: DEFAULT_AVATAR },
   disabledColors = [],
 }: {
   initialData?: PlayerCustomizationData;
@@ -46,7 +47,7 @@ export const Default: Story = {
 export const WithNameEntered: Story = {
   render: () => (
     <PlayerCustomizationWithState
-      initialData={{ name: 'Player1', color: 'purple', avatar: '🤖' }}
+      initialData={{ name: 'Player1', color: 'purple', avatar: 'bot:hexagon' }}
     />
   ),
 };
@@ -54,7 +55,7 @@ export const WithNameEntered: Story = {
 export const WithSomeColorsTaken: Story = {
   render: () => (
     <PlayerCustomizationWithState
-      initialData={{ name: 'Alice', color: 'green', avatar: '🦊' }}
+      initialData={{ name: 'Alice', color: 'green', avatar: 'cat:circle' }}
       disabledColors={['red', 'blue', 'yellow']}
     />
   ),
@@ -63,7 +64,7 @@ export const WithSomeColorsTaken: Story = {
 export const FullCustomization: Story = {
   render: () => (
     <PlayerCustomizationWithState
-      initialData={{ name: 'CoolPlayer', color: 'teal', avatar: '🐉' }}
+      initialData={{ name: 'CoolPlayer', color: 'teal', avatar: 'skull:diamond' }}
     />
   ),
 };
@@ -71,7 +72,7 @@ export const FullCustomization: Story = {
 export const LongName: Story = {
   render: () => (
     <PlayerCustomizationWithState
-      initialData={{ name: 'SuperLongPlayerName', color: 'orange', avatar: '🌟' }}
+      initialData={{ name: 'SuperLongPlayerName', color: 'orange', avatar: 'crown:star' }}
     />
   ),
 };

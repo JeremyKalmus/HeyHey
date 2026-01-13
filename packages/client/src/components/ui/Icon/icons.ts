@@ -97,3 +97,15 @@ export {
   Timer as TimerIcon,
   Zap as ZapIcon,
 } from 'lucide-react';
+
+// Avatar Icons
+export {
+  Smile as SmileIcon,
+  Ghost as GhostIcon,
+  Skull as SkullIcon,
+  Cat as CatIcon,
+  Bot as BotIcon,
+  Heart as HeartIcon,
+  Flame as FlameIcon,
+  Sparkles as SparklesIcon,
+} from 'lucide-react';
