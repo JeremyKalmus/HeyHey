@@ -1,0 +1,288 @@
+/* ScoreDisplay - 90s Arcade Style Score/Stats Display */
+
+/* =============================================================================
+   SCORE POP ANIMATION - Number tick-up effect
+   ============================================================================= */
+
+@keyframes score-pop {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    text-shadow:
+      0 0 4px currentColor,
+      0 0 8px currentColor;
+  }
+  50% {
+    text-shadow:
+      0 0 8px currentColor,
+      0 0 16px currentColor,
+      0 0 24px currentColor;
+  }
+}
+
+/* =============================================================================
+   BASE SCORE DISPLAY
+   ============================================================================= */
+
+.scoreDisplay {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+/* =============================================================================
+   SINGLE SCORE VALUE
+   ============================================================================= */
+
+.scoreValue {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs, 4px);
+}
+
+.scoreLabel {
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: var(--text-tiny, 0.75rem);
+  font-weight: var(--weight-black, 900);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider, 0.1em);
+  color: var(--text-secondary, #2a2a2a);
+}
+
+.scoreNumber {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-weight: var(--weight-bold, 700);
+  font-variant-numeric: tabular-nums;
+  color: var(--arcade-green, #00FF88);
+  text-shadow:
+    0 0 4px var(--arcade-green, #00FF88),
+    0 0 8px var(--arcade-green, #00FF88),
+    2px 2px 0 var(--color-black, #000);
+}
+
+.scoreNumber.animate {
+  animation: score-pop 0.3s ease-out;
+}
+
+/* Size variants */
+.size-sm .scoreNumber {
+  font-size: var(--text-heading, 2rem);
+}
+
+.size-md .scoreNumber {
+  font-size: var(--text-title, 3rem);
+}
+
+.size-lg .scoreNumber {
+  font-size: var(--text-display, 4rem);
+}
+
+.size-xl .scoreNumber {
+  font-size: calc(var(--text-display, 4rem) * 1.5);
+}
+
+/* =============================================================================
+   PLAYER SCORE BOARD
+   ============================================================================= */
+
+.playerBoard {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-md, 12px) var(--space-lg, 16px);
+  background: var(--bg-dark-surface, #16213e);
+  border: var(--border-width-thick, 4px) solid var(--border-color, #000);
+  box-shadow: var(--shadow-neubrutalist, 4px 4px 0 #000);
+}
+
+.playerBoard.isActive {
+  border-color: var(--arcade-green, #00FF88);
+  box-shadow:
+    var(--shadow-neubrutalist, 4px 4px 0 #000),
+    0 0 12px var(--arcade-green, #00FF88);
+}
+
+.playerName {
+  font-family: var(--font-display, 'Archivo Black', sans-serif);
+  font-size: var(--text-small, 0.875rem);
+  font-weight: var(--weight-black, 900);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide, 0.05em);
+  color: var(--text-inverse, #fff);
+  margin-bottom: var(--space-xs, 4px);
+}
+
+.playerScore {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: var(--text-title, 3rem);
+  font-weight: var(--weight-bold, 700);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+/* Player color variants */
+.color-green .playerScore {
+  color: var(--arcade-green, #00FF88);
+  text-shadow:
+    0 0 4px var(--arcade-green, #00FF88),
+    0 0 8px var(--arcade-green, #00FF88),
+    2px 2px 0 var(--color-black, #000);
+}
+
+.color-orange .playerScore {
+  color: var(--arcade-orange, #FF6B35);
+  text-shadow:
+    0 0 4px var(--arcade-orange, #FF6B35),
+    0 0 8px var(--arcade-orange, #FF6B35),
+    2px 2px 0 var(--color-black, #000);
+}
+
+.color-cyan .playerScore {
+  color: var(--arcade-cyan, #00F5FF);
+  text-shadow:
+    0 0 4px var(--arcade-cyan, #00F5FF),
+    0 0 8px var(--arcade-cyan, #00F5FF),
+    2px 2px 0 var(--color-black, #000);
+}
+
+.color-yellow .playerScore {
+  color: var(--arcade-yellow, #FFD23F);
+  text-shadow:
+    0 0 4px var(--arcade-yellow, #FFD23F),
+    0 0 8px var(--arcade-yellow, #FFD23F),
+    2px 2px 0 var(--color-black, #000);
+}
+
+.color-pink .playerScore {
+  color: var(--arcade-pink, #FF006E);
+  text-shadow:
+    0 0 4px var(--arcade-pink, #FF006E),
+    0 0 8px var(--arcade-pink, #FF006E),
+    2px 2px 0 var(--color-black, #000);
+}
+
+.color-purple .playerScore {
+  color: var(--arcade-purple, #5E60CE);
+  text-shadow:
+    0 0 4px var(--arcade-purple, #5E60CE),
+    0 0 8px var(--arcade-purple, #5E60CE),
+    2px 2px 0 var(--color-black, #000);
+}
+
+.playerScore.animate {
+  animation: score-pop 0.3s ease-out;
+}
+
+/* =============================================================================
+   SCOREBOARD (Multiple Players)
+   ============================================================================= */
+
+.scoreboard {
+  display: flex;
+  gap: var(--space-md, 12px);
+}
+
+.scoreboard.vertical {
+  flex-direction: column;
+}
+
+.scoreboard.horizontal {
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+/* =============================================================================
+   ROUND COUNTER
+   ============================================================================= */
+
+.roundCounter {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm, 8px);
+  padding: var(--space-sm, 8px) var(--space-md, 12px);
+  background: var(--bg-dark-surface, #16213e);
+  border: var(--border-width-thick, 4px) solid var(--border-color, #000);
+  box-shadow: var(--shadow-neubrutalist, 4px 4px 0 #000);
+}
+
+.roundLabel {
+  font-family: var(--font-display, 'Archivo Black', sans-serif);
+  font-size: var(--text-small, 0.875rem);
+  font-weight: var(--weight-black, 900);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide, 0.05em);
+  color: var(--text-inverse, #fff);
+}
+
+.roundNumber {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: var(--text-heading, 2rem);
+  font-weight: var(--weight-bold, 700);
+  font-variant-numeric: tabular-nums;
+  color: var(--arcade-cyan, #00F5FF);
+  text-shadow:
+    0 0 4px var(--arcade-cyan, #00F5FF),
+    0 0 8px var(--arcade-cyan, #00F5FF),
+    2px 2px 0 var(--color-black, #000);
+}
+
+.roundSeparator {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: var(--text-large, 1.25rem);
+  font-weight: var(--weight-bold, 700);
+  color: var(--text-inverse, #fff);
+}
+
+.roundTotal {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: var(--text-large, 1.25rem);
+  font-weight: var(--weight-bold, 700);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted, #555);
+}
+
+/* =============================================================================
+   STAT ROW (Label + Value inline)
+   ============================================================================= */
+
+.statRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-md, 12px);
+  min-width: 120px;
+}
+
+.statLabel {
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: var(--text-small, 0.875rem);
+  font-weight: var(--weight-bold, 700);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide, 0.05em);
+  color: var(--text-muted, #555);
+}
+
+.statValue {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: var(--text-large, 1.25rem);
+  font-weight: var(--weight-bold, 700);
+  font-variant-numeric: tabular-nums;
+  color: var(--arcade-green, #00FF88);
+  text-shadow:
+    0 0 2px var(--arcade-green, #00FF88),
+    1px 1px 0 var(--color-black, #000);
+}
+
+.statValue.animate {
+  animation: score-pop 0.3s ease-out;
+}
