@@ -1,3 +1,5 @@
+@import './styles/tokens.css';
+
 * {
   margin: 0;
   padding: 0;
@@ -5,9 +7,9 @@
 }
 
 body {
-  font-family: system-ui, -apple-system, sans-serif;
-  background: #1a1a2e;
-  color: #eee;
+  font-family: var(--font-family-base);
+  background: var(--bg-dark-base);
+  color: var(--text-inverse);
   min-height: 100vh;
 }
 
