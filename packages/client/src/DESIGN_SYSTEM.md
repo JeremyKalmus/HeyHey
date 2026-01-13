@@ -263,3 +263,66 @@ The design system has been completely redesigned for Neubrutalism:
 - **Added**: Raw, unpolished aesthetic
 
 All components should use design tokens instead of hardcoded values.
+
+## Icon System
+
+The icon system uses [Lucide React](https://lucide.dev/) with neubrutalist defaults.
+
+### Icon Wrapper Component
+
+```tsx
+import { Icon, CheckIcon, XIcon, PlayIcon } from '@/components/ui/Icon';
+
+// Basic usage - default size (24px) and strokeWidth (3)
+<Icon icon={CheckIcon} />
+
+// Size variants
+<Icon icon={PlayIcon} size="sm" />  // 16px
+<Icon icon={PlayIcon} size="md" />  // 20px
+<Icon icon={PlayIcon} size="lg" />  // 24px (default)
+<Icon icon={PlayIcon} size="xl" />  // 32px
+
+// Custom size in pixels
+<Icon icon={XIcon} size={28} />
+
+// Custom stroke width (default is 3 for neubrutalist style)
+<Icon icon={CheckIcon} strokeWidth={4} />
+
+// Additional Lucide props
+<Icon icon={AlertIcon} color="var(--color-error)" />
+```
+
+### Available Icon Categories
+
+**User & Players**: `UserIcon`, `UsersIcon`, `UserPlusIcon`, `UserMinusIcon`
+
+**Game Actions**: `PlayIcon`, `PauseIcon`, `RestartIcon`, `ShuffleIcon`, `SkipIcon`
+
+**Navigation**: `HomeIcon`, `ArrowLeftIcon`, `ArrowRightIcon`, `ChevronLeftIcon`, etc.
+
+**Actions & UI**: `CheckIcon`, `XIcon`, `PlusIcon`, `MinusIcon`, `SettingsIcon`, `MenuIcon`
+
+**Status**: `AlertIcon`, `WarningIcon`, `InfoIcon`, `SuccessIcon`, `ErrorIcon`, `HelpIcon`
+
+**Game Results**: `TrophyIcon`, `CrownIcon`, `MedalIcon`, `StarIcon`
+
+**Audio**: `VolumeIcon`, `VolumeOffIcon`, `VolumeLowIcon`
+
+**Misc**: `CopyIcon`, `ShareIcon`, `LoaderIcon`, `RefreshIcon`, `TrashIcon`, `ClockIcon`, `ZapIcon`
+
+### Neubrutalist Icon Guidelines
+
+1. **Use strokeWidth=3** (default) for bold, heavy lines
+2. **Prefer larger sizes** (lg or xl) for standalone icons
+3. **Use sm/md sizes** for inline icons in buttons or text
+4. **Icons inherit `currentColor`** - set color via parent or `color` prop
+5. **For animated loading**, use `LoaderIcon` with CSS animation:
+   ```css
+   .spinner {
+     animation: spin 1s linear infinite;
+   }
+   @keyframes spin {
+     from { transform: rotate(0deg); }
+     to { transform: rotate(360deg); }
+   }
+   ```
