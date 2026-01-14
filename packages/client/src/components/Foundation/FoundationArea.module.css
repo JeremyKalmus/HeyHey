@@ -20,6 +20,15 @@
   gap: var(--space-sm, 8px);
 }
 
+/* Header with label and status */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: var(--space-sm, 8px);
+}
+
 /* Area Label - Bold uppercase */
 .areaLabel {
   font-family: var(--font-family-bold, 'Inter', sans-serif);
@@ -28,6 +37,40 @@
   text-transform: uppercase;
   letter-spacing: var(--letter-spacing-wide, 0.05em);
   color: var(--arcade-yellow, #FFD23F);
+}
+
+/* Sync indicator for pending moves */
+.syncIndicator {
+  font-family: var(--font-family-mono, 'Courier New', monospace);
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: var(--font-weight-bold, 700);
+  color: var(--arcade-cyan, #00F5FF);
+  animation: blink 1s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* Error message display */
+.errorMessage {
+  font-family: var(--font-family-base, 'Inter', sans-serif);
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: var(--font-weight-bold, 700);
+  color: var(--arcade-red, #FF1744);
+  background: rgba(255, 23, 68, 0.15);
+  border: var(--border-thin, 2px) solid var(--arcade-red, #FF1744);
+  border-radius: var(--radius-sm, 2px);
+  padding: var(--space-xs, 4px) var(--space-sm, 8px);
+  width: 100%;
+  text-align: center;
+}
+
+/* Pending state - subtle visual indicator */
+.pending {
+  box-shadow: var(--shadow-neubrutalist, 4px 4px 0px #000000),
+              0 0 0 2px var(--arcade-cyan, #00F5FF);
 }
 
 /* Piles Container */

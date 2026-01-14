@@ -1,1 +1,7 @@
-export { FoundationArea, type FoundationAreaProps, type FoundationPile, type Suit } from './FoundationArea';
+export {
+  FoundationArea,
+  type FoundationAreaProps,
+  type FoundationPile,
+  type Suit,
+  type CardOwnershipMap,
+} from './FoundationArea';

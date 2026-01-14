@@ -7,6 +7,8 @@ export interface CardProps {
   card: CardType;
   faceUp?: boolean;
   backColor?: PlayerColor;
+  /** Owner color indicator for cards in shared piles (foundations) */
+  ownerColor?: PlayerColor;
   selected?: boolean;
   disabled?: boolean;
   dragging?: boolean;
@@ -18,10 +20,25 @@ export interface CardProps {
   style?: React.CSSProperties;
 }
 
+function getOwnerColorClass(color: PlayerColor): string {
+  const classMap: Record<PlayerColor, string> = {
+    red: styles.ownerRed ?? '',
+    blue: styles.ownerBlue ?? '',
+    green: styles.ownerGreen ?? '',
+    yellow: styles.ownerYellow ?? '',
+    purple: styles.ownerPurple ?? '',
+    orange: styles.ownerOrange ?? '',
+    pink: styles.ownerPink ?? '',
+    teal: styles.ownerTeal ?? '',
+  };
+  return classMap[color];
+}
+
 export function Card({
   card,
   faceUp = true,
   backColor = 'blue',
+  ownerColor,
   selected = false,
   disabled = false,
   dragging = false,
@@ -72,6 +89,12 @@ export function Card({
       aria-disabled={disabled}
     >
       {faceUp ? <CardFace card={card} /> : <CardBack color={backColor} />}
+      {faceUp && ownerColor && (
+        <div
+          className={`${styles.ownerIndicator} ${getOwnerColorClass(ownerColor)}`}
+          aria-label={`Played by ${ownerColor} player`}
+        />
+      )}
     </div>
   );
 }

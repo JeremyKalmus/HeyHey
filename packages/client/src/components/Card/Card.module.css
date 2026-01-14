@@ -277,3 +277,47 @@
   animation: cardFlip 0.4s ease-in-out;
   transform-style: preserve-3d;
 }
+
+/* Owner color indicator - shown on face-up cards in shared piles */
+.ownerIndicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  border-radius: 0 0 var(--radius-sm, 2px) var(--radius-sm, 2px);
+  pointer-events: none;
+}
+
+/* Owner color variations */
+.ownerRed {
+  background: #dc2626;
+}
+
+.ownerBlue {
+  background: #2563eb;
+}
+
+.ownerGreen {
+  background: #16a34a;
+}
+
+.ownerYellow {
+  background: #ca8a04;
+}
+
+.ownerPurple {
+  background: #9333ea;
+}
+
+.ownerOrange {
+  background: #ea580c;
+}
+
+.ownerPink {
+  background: #db2777;
+}
+
+.ownerTeal {
+  background: #0891b2;
+}

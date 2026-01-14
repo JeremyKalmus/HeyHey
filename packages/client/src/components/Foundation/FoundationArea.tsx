@@ -5,6 +5,7 @@ import type { Card as CardType } from '@heyhey/shared';
 import type { ComponentType } from 'react';
 import type { LucideProps } from 'lucide-react';
 import { Card } from '../Card';
+import type { PlayerColor } from '../Card/CardBack';
 import {
   Icon,
   SuitHeartIcon,
@@ -13,6 +14,16 @@ import {
   SuitSpadeIcon,
 } from '../ui/Icon';
 import styles from './FoundationArea.module.css';
+
+/**
+ * Map of card keys to owner info
+ * Key format: `${suit}-${rank}` (e.g., "hearts-1" for Ace of Hearts)
+ */
+export type CardOwnershipMap = Map<string, { playerId: string; color: PlayerColor }>;
+
+function makeCardKey(card: CardType): string {
+  return `${card.suit}-${card.rank}`;
+}
 
 export type Suit = 'hearts' | 'diamonds' | 'clubs' | 'spades';
 
@@ -41,6 +52,12 @@ export interface FoundationAreaProps {
   canPlace?: boolean;
   /** Compact mode for smaller displays */
   compact?: boolean;
+  /** Map of card ownership for showing who played each card */
+  cardOwnership?: CardOwnershipMap;
+  /** Whether there are pending unconfirmed moves */
+  hasPendingMoves?: boolean;
+  /** Error message to display (e.g., move rejected) */
+  error?: string | null;
 }
 
 export function FoundationArea({
@@ -49,6 +66,9 @@ export function FoundationArea({
   onPileClick,
   canPlace = false,
   compact = false,
+  cardOwnership,
+  hasPendingMoves = false,
+  error,
 }: FoundationAreaProps) {
   // Create a map for easy lookup
   const pileMap = new Map(piles.map((p) => [p.suit, p]));
@@ -77,8 +97,20 @@ export function FoundationArea({
     return selectedCard.rank === topCard.rank + 1;
   };
 
+  // Get owner color for a card
+  const getOwnerColor = (card: CardType): PlayerColor | undefined => {
+    if (!cardOwnership) return undefined;
+    const key = makeCardKey(card);
+    return cardOwnership.get(key)?.color;
+  };
+
   return (
-    <div className={`${styles.foundationArea} ${compact ? styles.compact : ''}`}>
+    <div className={`${styles.foundationArea} ${compact ? styles.compact : ''} ${hasPendingMoves ? styles.pending : ''}`}>
+      <div className={styles.header}>
+        <span className={styles.areaLabel}>Foundations</span>
+        {hasPendingMoves && <span className={styles.syncIndicator}>Syncing...</span>}
+      </div>
+      {error && <div className={styles.errorMessage}>{error}</div>}
       <div className={styles.pilesContainer}>
         {SUITS.map((suit) => {
           const pile = pileMap.get(suit);
@@ -103,7 +135,11 @@ export function FoundationArea({
             >
               <div className={styles.pile}>
                 {topCard ? (
-                  <Card card={topCard} faceUp={true} />
+                  <Card
+                    card={topCard}
+                    faceUp={true}
+                    ownerColor={getOwnerColor(topCard)}
+                  />
                 ) : (
                   <div className={`${styles.emptySlot} ${styles[suit]}`}>
                     <Icon
