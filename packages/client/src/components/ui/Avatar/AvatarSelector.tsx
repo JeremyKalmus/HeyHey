@@ -17,13 +17,11 @@ import {
 import { Avatar } from './Avatar';
 import type {
   AvatarIcon,
-  AvatarShape,
   AvatarString,
   PlayerColor,
 } from './types';
 import {
   AVATAR_ICONS,
-  AVATAR_SHAPES,
   parseAvatar,
   serializeAvatar,
   DEFAULT_AVATAR,
@@ -60,14 +58,6 @@ const ICON_LABELS: Record<AvatarIcon, string> = {
   crown: 'Crown',
 };
 
-const SHAPE_LABELS: Record<AvatarShape, string> = {
-  circle: 'Circle',
-  square: 'Square',
-  diamond: 'Diamond',
-  hexagon: 'Hexagon',
-  star: 'Star',
-  triangle: 'Triangle',
-};
 
 export interface AvatarSelectorProps {
   /** Current avatar value */
@@ -107,10 +97,6 @@ export function AvatarSelector({
     onChange(serializeAvatar({ icon, shape: selectedShape }));
   };
 
-  const handleShapeChange = (shape: AvatarShape) => {
-    onChange(serializeAvatar({ icon: selectedIcon, shape }));
-  };
-
   return (
     <div className={styles.container}>
       {label && <span className={styles.label}>{label}</span>}
@@ -145,27 +131,6 @@ export function AvatarSelector({
         </div>
       </div>
 
-      {/* Shape Selection */}
-      <div className={styles.section}>
-        <span className={styles.sectionLabel}>Shape</span>
-        <div className={styles.shapeGrid}>
-          {AVATAR_SHAPES.map((shape) => {
-            const isSelected = shape === selectedShape;
-
-            return (
-              <button
-                key={shape}
-                type="button"
-                className={`${styles.shapeButton} ${styles[`shape-${shape}`]} ${isSelected ? styles.selected : ''}`}
-                onClick={() => handleShapeChange(shape)}
-                aria-label={`Select ${SHAPE_LABELS[shape]} shape`}
-                aria-pressed={isSelected}
-                title={SHAPE_LABELS[shape]}
-              />
-            );
-          })}
-        </div>
-      </div>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 // GameBoard - Main game layout with 90s arcade neobrutalist styling
-// Displays player area, foundation, opponents, and game controls
+// Displays player area, foundation, and game controls
 
 import type { Card as CardType } from '@heyhey/shared';
 import { NertzPile } from './NertzPile';
@@ -9,31 +9,8 @@ import { FoundationArea, type FoundationPile } from '../Foundation';
 import { StockPile } from '../Player/StockPile';
 import { WastePile } from '../Player/WastePile';
 import { ScoreDisplay } from '../ui/ScoreDisplay/ScoreDisplay';
-import type { PlayerScore } from '../ui/ScoreDisplay/types';
 import type { PlayerColor } from '../Card/CardBack';
 import styles from './GameBoard.module.css';
-
-/* =============================================================================
-   SECTION HEADER - Arcade-style area labels
-   ============================================================================= */
-
-interface SectionHeaderProps {
-  label: string;
-  variant?: 'default' | 'highlight' | 'danger';
-}
-
-function SectionHeader({ label, variant = 'default' }: SectionHeaderProps) {
-  const classNames = [
-    styles.sectionHeader,
-    styles[`header-${variant}`],
-  ].filter(Boolean).join(' ');
-
-  return (
-    <div className={classNames}>
-      <span className={styles.headerText}>{label}</span>
-    </div>
-  );
-}
 
 /* =============================================================================
    GAME BOARD PROPS
@@ -50,12 +27,7 @@ export interface GameBoardProps {
   foundationPiles: FoundationPile[];
 
   // Player info
-  playerName: string;
-  playerScore: number;
   playerColor: PlayerColor;
-
-  // All players for scoreboard
-  players?: PlayerScore[];
 
   // Round info
   currentRound?: number;
@@ -102,10 +74,7 @@ export function GameBoard({
   stockPile,
   wastePile,
   foundationPiles,
-  playerName,
-  playerScore,
   playerColor,
-  players = [],
   currentRound = 1,
   totalRounds,
   selectedCard,
@@ -133,109 +102,82 @@ export function GameBoard({
 
   return (
     <div className={`${styles.gameBoard} ${className ?? ''}`}>
-      {/* Top Bar - Round Counter and Scoreboard */}
+      {/* Top Bar - Round Counter only (no scores - keeps game exciting!) */}
       <div className={styles.topBar}>
         <ScoreDisplay.Round current={currentRound} total={totalRounds} />
-
-        {players.length > 0 && (
-          <ScoreDisplay.Scoreboard
-            players={players}
-            direction="horizontal"
-            animate
-          />
-        )}
       </div>
 
-      {/* Main Game Area */}
-      <div className={styles.mainArea}>
-        {/* Left Column - Foundation Area */}
-        <div className={styles.foundationColumn}>
-          <SectionHeader label="Foundations" variant="highlight" />
-          <FoundationArea
-            piles={foundationPiles}
-            selectedCard={foundationSelectedCard}
-            onPileClick={onFoundationClick}
-            canPlace={canPlaceOnFoundation}
+      {/* Foundation Area - CENTER FOCUS (the main attention) */}
+      <div className={styles.foundationArea}>
+        <FoundationArea
+          piles={foundationPiles}
+          selectedCard={foundationSelectedCard}
+          onPileClick={onFoundationClick}
+          canPlace={canPlaceOnFoundation}
+        />
+      </div>
+
+      {/* Player Area - Bottom Row: Nertz | Work Piles | Stock/Waste */}
+      <div className={styles.playerArea}>
+        {/* Nertz Pile - Left */}
+        <div className={styles.nertzArea}>
+          <NertzPile
+            cards={nertzPile}
+            backColor={playerColor}
+            selected={isNertzSelected}
+            disabled={disabled}
+            onTopCardClick={onNertzCardClick}
+            onTopCardDoubleClick={onNertzCardDoubleClick}
           />
         </div>
 
-        {/* Center Column - Player's Playing Area */}
-        <div className={styles.playerColumn}>
-          {/* Player Header */}
-          <div className={styles.playerHeader}>
-            <SectionHeader label={playerName} />
-            <ScoreDisplay.Board
-              name={playerName}
-              score={playerScore}
-              color={playerColor === 'blue' ? 'cyan' : playerColor === 'red' ? 'orange' : 'green'}
-              isActive
-            />
-          </div>
+        {/* Work Piles - Center (takes up remaining space) */}
+        <div className={styles.workArea}>
+          <WorkPiles
+            piles={workPiles}
+            backColor={playerColor}
+            selectedCard={selectedCard}
+            validDestinations={validWorkDestinations}
+            onCardClick={onWorkCardClick}
+            onCardDoubleClick={onWorkCardDoubleClick}
+            onPileClick={onWorkPileClick}
+            disabled={disabled}
+          />
+        </div>
 
-          {/* Work Piles Area */}
-          <div className={styles.workArea}>
-            <SectionHeader label="Work Piles" />
-            <WorkPiles
-              piles={workPiles}
+        {/* Stock and Waste - Right */}
+        <div className={styles.stockWasteArea}>
+          <div className={styles.stockContainer}>
+            <StockPile
+              cards={stockPile}
               backColor={playerColor}
-              selectedCard={selectedCard}
-              validDestinations={validWorkDestinations}
-              onCardClick={onWorkCardClick}
-              onCardDoubleClick={onWorkCardDoubleClick}
-              onPileClick={onWorkPileClick}
               disabled={disabled}
+              canRecycle={canRecycleStock}
+              onDraw={onStockDraw}
+              onRecycle={onStockRecycle}
+              showLabel={false}
             />
           </div>
-
-          {/* Bottom Row - Nertz, Stock/Waste, HeyHey */}
-          <div className={styles.bottomRow}>
-            {/* Nertz Pile */}
-            <div className={styles.nertzArea}>
-              <SectionHeader label="Nertz" variant="danger" />
-              <NertzPile
-                cards={nertzPile}
-                backColor={playerColor}
-                selected={isNertzSelected}
-                disabled={disabled}
-                onTopCardClick={onNertzCardClick}
-                onTopCardDoubleClick={onNertzCardDoubleClick}
-              />
-            </div>
-
-            {/* Stock and Waste */}
-            <div className={styles.stockWasteArea}>
-              <SectionHeader label="Draw" />
-              <div className={styles.stockWasteRow}>
-                <StockPile
-                  cards={stockPile}
-                  backColor={playerColor}
-                  disabled={disabled}
-                  canRecycle={canRecycleStock}
-                  onDraw={onStockDraw}
-                  onRecycle={onStockRecycle}
-                  showLabel={false}
-                />
-                <WastePile
-                  cards={wastePile}
-                  backColor={playerColor}
-                  selectedIndex={selectedWasteIndex}
-                  disabled={disabled}
-                  onTopCardClick={onWasteCardClick}
-                  onTopCardDoubleClick={onWasteCardDoubleClick}
-                  showLabel={false}
-                />
-              </div>
-            </div>
-
-            {/* HeyHey Button */}
-            <div className={styles.heyHeyArea}>
-              <HeyHeyButton
-                nertzPileEmpty={canCallHeyHey}
-                onCallHeyHey={onCallHeyHey ?? (() => {})}
-              />
-            </div>
+          <div className={styles.wasteContainer}>
+            <WastePile
+              cards={wastePile}
+              backColor={playerColor}
+              selectedIndex={selectedWasteIndex}
+              disabled={disabled}
+              onTopCardClick={onWasteCardClick}
+              onTopCardDoubleClick={onWasteCardDoubleClick}
+              showLabel={false}
+            />
           </div>
         </div>
+      </div>
+
+      {/* HeyHey Button - Only visible when Nertz is empty */}
+      <div className={`${styles.heyHeyArea} ${!canCallHeyHey ? styles.hidden : ''}`}>
+        <HeyHeyButton
+          nertzPileEmpty={canCallHeyHey}
+          onCallHeyHey={onCallHeyHey ?? (() => {})}
+        />
       </div>
     </div>
   );

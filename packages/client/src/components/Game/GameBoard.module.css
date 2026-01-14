@@ -1,4 +1,5 @@
 /* GameBoard - 90s Arcade Neobrutalist Layout */
+/* Layout: Foundation (center/big) → Player controls (bottom row) */
 
 /* =============================================================================
    BASE GAME BOARD
@@ -7,278 +8,165 @@
 .gameBoard {
   --board-bg: #0a0a12;
   --board-surface: #16213e;
-  --board-accent: #1a1a2e;
-  --header-bg: #0f3460;
   --border-color: #000;
   --arcade-green: #00FF88;
   --arcade-cyan: #00F5FF;
   --arcade-orange: #FF6B35;
-  --arcade-yellow: #FFD23F;
-  --arcade-pink: #FF006E;
 
   width: 100%;
   min-height: 100vh;
   padding: 16px;
   background: var(--board-bg);
-  background-image:
-    radial-gradient(circle at 20% 80%, rgba(0, 255, 136, 0.03) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(0, 245, 255, 0.03) 0%, transparent 50%),
-    linear-gradient(180deg, var(--board-bg) 0%, #0d0d1a 100%);
   color: #fff;
   font-family: var(--font-body, 'Inter', sans-serif);
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
   box-sizing: border-box;
 }
 
-/* Scanline overlay for CRT effect */
-.gameBoard::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(0, 0, 0, 0.03) 2px,
-    rgba(0, 0, 0, 0.03) 4px
-  );
-  pointer-events: none;
-  z-index: 1000;
-}
-
 /* =============================================================================
-   SECTION HEADERS - Arcade Style
-   ============================================================================= */
-
-.sectionHeader {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px 16px;
-  margin-bottom: 8px;
-  background: var(--header-bg);
-  border: 3px solid var(--border-color);
-  box-shadow: 3px 3px 0 var(--border-color);
-}
-
-.headerText {
-  font-family: var(--font-display, 'Archivo Black', sans-serif);
-  font-size: 0.75rem;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.15em;
-  color: rgba(255, 255, 255, 0.9);
-}
-
-/* Header variants */
-.header-default {
-  background: var(--header-bg);
-}
-
-.header-highlight {
-  background: linear-gradient(135deg, #1a472a 0%, #0f3460 100%);
-  border-color: var(--arcade-green);
-}
-
-.header-highlight .headerText {
-  color: var(--arcade-green);
-  text-shadow: 0 0 8px var(--arcade-green);
-}
-
-.header-danger {
-  background: linear-gradient(135deg, #4a1c1c 0%, #0f3460 100%);
-  border-color: var(--arcade-orange);
-}
-
-.header-danger .headerText {
-  color: var(--arcade-orange);
-  text-shadow: 0 0 8px var(--arcade-orange);
-}
-
-/* =============================================================================
-   TOP BAR - Round Counter & Scoreboard
+   TOP BAR - Round Counter (minimal)
    ============================================================================= */
 
 .topBar {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
+  justify-content: center;
+  padding: 8px 16px;
   background: var(--board-surface);
   border: 4px solid var(--border-color);
   box-shadow: 4px 4px 0 var(--border-color);
 }
 
 /* =============================================================================
-   MAIN GAME AREA
+   FOUNDATION AREA - Center Stage (THE MAIN FOCUS)
    ============================================================================= */
 
-.mainArea {
-  display: flex;
-  gap: 24px;
+.foundationArea {
   flex: 1;
-}
-
-/* Foundation Column - Left side */
-.foundationColumn {
   display: flex;
-  flex-direction: column;
-  padding: 16px;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
   background: var(--board-surface);
   border: 4px solid var(--border-color);
   box-shadow: 4px 4px 0 var(--border-color);
-  align-self: flex-start;
+  min-height: 200px;
 }
 
-/* Player Column - Center (main play area) */
-.playerColumn {
-  flex: 1;
+/* Scale up the foundation piles to be the visual focus */
+.foundationArea :global(.foundationArea) {
+  transform: scale(1.2);
+  transform-origin: center center;
+}
+
+/* =============================================================================
+   PLAYER AREA - Bottom Row
+   Layout: [Nertz] [Work Piles] [Stock/Waste]
+   ============================================================================= */
+
+.playerArea {
   display: flex;
-  flex-direction: column;
-  gap: 20px;
+  align-items: flex-start;
+  gap: 16px;
   padding: 16px;
-  background: var(--board-accent);
+  background: rgba(0, 0, 0, 0.3);
   border: 4px solid var(--border-color);
   box-shadow: 4px 4px 0 var(--border-color);
 }
 
-/* Player Header */
-.playerHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-bottom: 12px;
-  border-bottom: 3px solid var(--border-color);
-}
-
-/* Work Piles Area */
-.workArea {
-  padding: 16px;
-  background: rgba(0, 0, 0, 0.2);
-  border: 3px solid rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-}
-
-/* =============================================================================
-   BOTTOM ROW - Nertz, Stock/Waste, HeyHey
-   ============================================================================= */
-
-.bottomRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 24px;
-  padding-top: 16px;
-  border-top: 3px solid var(--border-color);
-}
-
-/* Nertz Area */
+/* Nertz Pile - Left */
 .nertzArea {
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 12px;
-  background: rgba(255, 107, 53, 0.05);
-  border: 3px solid rgba(255, 107, 53, 0.3);
-  border-radius: 4px;
+  background: rgba(255, 107, 53, 0.1);
+  border: 3px solid rgba(255, 107, 53, 0.4);
 }
 
-/* Stock and Waste Area */
+/* Work Piles - Center (takes up remaining space) */
+.workArea {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 3px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Stock and Waste - Right */
 .stockWasteArea {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 12px;
-  background: rgba(0, 0, 0, 0.15);
-  border: 3px solid rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-}
-
-.stockWasteRow {
-  display: flex;
-  gap: 16px;
   align-items: flex-start;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 3px solid rgba(255, 255, 255, 0.1);
 }
 
-/* HeyHey Button Area */
+/* Stock pile - partially hidden off right edge */
+.stockContainer {
+  position: relative;
+  margin-right: -40px; /* Hide part of stock off-screen */
+}
+
+/* Waste pile - fully visible */
+.wasteContainer {
+  position: relative;
+}
+
+/* =============================================================================
+   HEYHEY BUTTON - Only visible when Nertz is empty
+   ============================================================================= */
+
 .heyHeyArea {
   display: flex;
-  flex-direction: column;
-  align-items: center;
   justify-content: center;
   padding: 16px;
+}
+
+.heyHeyArea.hidden {
+  display: none;
 }
 
 /* =============================================================================
    RESPONSIVE ADJUSTMENTS
    ============================================================================= */
 
-@media (max-width: 1024px) {
-  .mainArea {
-    flex-direction: column;
+@media (max-width: 900px) {
+  .foundationArea :global(.foundationArea) {
+    transform: scale(1);
   }
 
-  .foundationColumn {
-    align-self: stretch;
-  }
-}
-
-@media (max-width: 768px) {
-  .gameBoard {
-    padding: 8px;
-    gap: 12px;
-  }
-
-  .topBar {
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .bottomRow {
+  .playerArea {
     flex-wrap: wrap;
     justify-content: center;
   }
 
-  .sectionHeader {
-    padding: 4px 12px;
-  }
-
-  .headerText {
-    font-size: 0.65rem;
+  .workArea {
+    flex-basis: 100%;
+    order: -1;
   }
 }
 
-@media (max-width: 500px) {
-  .bottomRow {
+@media (max-width: 600px) {
+  .gameBoard {
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .foundationArea {
+    padding: 16px;
+    min-height: 150px;
+  }
+
+  .playerArea {
     flex-direction: column;
     align-items: center;
-    gap: 16px;
   }
 
-  .stockWasteRow {
-    flex-direction: column;
-    gap: 12px;
+  .stockContainer {
+    margin-right: 0;
   }
-}
-
-/* =============================================================================
-   ANIMATIONS
-   ============================================================================= */
-
-@keyframes glowPulse {
-  0%, 100% {
-    box-shadow: 4px 4px 0 var(--border-color);
-  }
-  50% {
-    box-shadow:
-      4px 4px 0 var(--border-color),
-      0 0 20px rgba(0, 255, 136, 0.2);
-  }
-}
-
-/* Active game state - subtle glow on player area */
-.playerColumn:focus-within {
-  animation: glowPulse 2s ease-in-out infinite;
 }

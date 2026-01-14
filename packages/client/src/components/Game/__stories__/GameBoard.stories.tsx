@@ -58,12 +58,6 @@ const sampleFoundationPiles: FoundationPile[] = [
   { suit: 'spades', cards: [createCard('spades', 1), createCard('spades', 2)] },
 ];
 
-const samplePlayers = [
-  { name: 'PLAYER 1', score: 2500, color: 'cyan' as const, isActive: true },
-  { name: 'PLAYER 2', score: 1800, color: 'orange' as const },
-  { name: 'PLAYER 3', score: 2100, color: 'green' as const },
-  { name: 'PLAYER 4', score: 950, color: 'pink' as const },
-];
 
 const meta: Meta<typeof GameBoard> = {
   title: 'Game/GameBoard',
@@ -93,10 +87,7 @@ export const Default: Story = {
     stockPile: sampleStockPile,
     wastePile: sampleWastePile,
     foundationPiles: sampleFoundationPiles,
-    playerName: 'PLAYER 1',
-    playerScore: 2500,
     playerColor: 'blue',
-    players: samplePlayers,
     currentRound: 3,
     totalRounds: 10,
   },
@@ -131,21 +122,9 @@ export const EmptyStock: Story = {
   },
 };
 
-export const SinglePlayer: Story = {
+export const FinalRound: Story = {
   args: {
     ...Default.args,
-    players: [],
-  },
-};
-
-export const HighScore: Story = {
-  args: {
-    ...Default.args,
-    playerScore: 99999,
-    players: [
-      { name: 'CHAMPION', score: 99999, color: 'green' as const, isActive: true },
-      { name: 'PLAYER 2', score: 45000, color: 'cyan' as const },
-    ],
     currentRound: 10,
     totalRounds: 10,
   },
