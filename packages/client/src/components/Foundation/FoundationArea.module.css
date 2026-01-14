@@ -109,6 +109,13 @@
   box-shadow: 0 0 0 3px var(--arcade-green, #00FF88);
 }
 
+.pileWrapper.dragOver {
+  background: rgba(0, 255, 136, 0.3);
+  box-shadow: 0 0 0 4px var(--arcade-green, #00FF88),
+              0 0 20px rgba(0, 255, 136, 0.5);
+  transform: scale(1.05);
+}
+
 /* Pile Area */
 .pile {
   position: relative;

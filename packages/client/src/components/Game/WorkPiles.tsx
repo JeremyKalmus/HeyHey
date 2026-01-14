@@ -188,6 +188,8 @@ function DroppableWorkPile({
           }
           onCardClick={(card, index) => onCardClick(card, pileIndex, index)}
           onCardDoubleClick={(card, index) => onCardDoubleClick(card, pileIndex, index)}
+          draggableTopCard={!disabled}
+          pileIndex={pileIndex}
         />
       ) : (
         <div

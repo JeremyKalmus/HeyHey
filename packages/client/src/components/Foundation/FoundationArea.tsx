@@ -4,6 +4,7 @@
 import type { Card as CardType } from '@heyhey/shared';
 import type { ComponentType } from 'react';
 import type { LucideProps } from 'lucide-react';
+import { useDroppable } from '@dnd-kit/core';
 import { Card } from '../Card';
 import type { PlayerColor } from '../Card/CardBack';
 import {
@@ -13,6 +14,7 @@ import {
   SuitClubIcon,
   SuitSpadeIcon,
 } from '../ui/Icon';
+import { createDropId } from '../../hooks/useDragAndDrop';
 import styles from './FoundationArea.module.css';
 
 /**
@@ -112,47 +114,26 @@ export function FoundationArea({
       </div>
       {error && <div className={styles.errorMessage}>{error}</div>}
       <div className={styles.pilesContainer}>
-        {SUITS.map((suit) => {
+        {SUITS.map((suit, suitIndex) => {
           const pile = pileMap.get(suit);
           const cards = pile?.cards ?? [];
           const topCard = cards[cards.length - 1];
           const cardCount = cards.length;
           const isTarget = isValidTarget(suit);
-          const isClickable = canPlace && selectedCard;
+          const isClickable = canPlace && !!selectedCard;
 
           return (
-            <div
+            <DroppableFoundationPile
               key={suit}
-              className={`${styles.pileWrapper} ${isClickable ? styles.clickable : ''} ${
-                isTarget ? styles.validTarget : ''
-              }`}
-              onClick={() => handlePileClick(suit)}
-              role="button"
-              tabIndex={isClickable ? 0 : -1}
-              aria-label={`${suit} foundation - ${cardCount} cards${
-                topCard ? `, top card: ${topCard.rank}` : ''
-              }`}
-            >
-              <div className={styles.pile}>
-                {topCard ? (
-                  <Card
-                    card={topCard}
-                    faceUp={true}
-                    ownerColor={getOwnerColor(topCard)}
-                  />
-                ) : (
-                  <div className={`${styles.emptySlot} ${styles[suit]}`}>
-                    <Icon
-                      icon={SUIT_ICONS[suit]}
-                      size="xl"
-                      strokeWidth={3}
-                      className={styles.suitIcon}
-                    />
-                  </div>
-                )}
-              </div>
-              <span className={styles.cardCount}>{cardCount}</span>
-            </div>
+              suit={suit}
+              suitIndex={suitIndex}
+              topCard={topCard}
+              cardCount={cardCount}
+              isTarget={isTarget}
+              isClickable={isClickable}
+              getOwnerColor={getOwnerColor}
+              onPileClick={handlePileClick}
+            />
           );
         })}
       </div>
@@ -161,3 +142,72 @@ export function FoundationArea({
 }
 
 export default FoundationArea;
+
+/* =============================================================================
+   DROPPABLE FOUNDATION PILE COMPONENT
+   ============================================================================= */
+
+interface DroppableFoundationPileProps {
+  suit: Suit;
+  suitIndex: number;
+  topCard: CardType | undefined;
+  cardCount: number;
+  isTarget: boolean;
+  isClickable: boolean;
+  getOwnerColor: (card: CardType) => PlayerColor | undefined;
+  onPileClick: (suit: Suit) => void;
+}
+
+function DroppableFoundationPile({
+  suit,
+  suitIndex,
+  topCard,
+  cardCount,
+  isTarget,
+  isClickable,
+  getOwnerColor,
+  onPileClick,
+}: DroppableFoundationPileProps) {
+  // Set up droppable
+  const dropId = createDropId('foundation', suitIndex);
+  const { setNodeRef, isOver } = useDroppable({
+    id: dropId,
+  });
+
+  const isHighlighted = isTarget || isOver;
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`${styles.pileWrapper} ${isClickable ? styles.clickable : ''} ${
+        isHighlighted ? styles.validTarget : ''
+      } ${isOver ? styles.dragOver : ''}`}
+      onClick={() => onPileClick(suit)}
+      role="button"
+      tabIndex={isClickable ? 0 : -1}
+      aria-label={`${suit} foundation - ${cardCount} cards${
+        topCard ? `, top card: ${topCard.rank}` : ''
+      }`}
+    >
+      <div className={styles.pile}>
+        {topCard ? (
+          <Card
+            card={topCard}
+            faceUp={true}
+            ownerColor={getOwnerColor(topCard)}
+          />
+        ) : (
+          <div className={`${styles.emptySlot} ${styles[suit]}`}>
+            <Icon
+              icon={SUIT_ICONS[suit]}
+              size="xl"
+              strokeWidth={3}
+              className={styles.suitIcon}
+            />
+          </div>
+        )}
+      </div>
+      <span className={styles.cardCount}>{cardCount}</span>
+    </div>
+  );
+}

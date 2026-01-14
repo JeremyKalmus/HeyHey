@@ -1,6 +1,8 @@
 import type { Card as CardType } from '@heyhey/shared';
+import { useDraggable } from '@dnd-kit/core';
 import { Card } from './Card';
 import type { PlayerColor } from './CardBack';
+import { createDragId } from '../../hooks/useDragAndDrop';
 import styles from './Card.module.css';
 
 export type StackDirection = 'horizontal' | 'vertical' | 'fan';
@@ -18,6 +20,10 @@ export interface CardStackProps {
   onCardDoubleClick?: (card: CardType, index: number) => void;
   selectedIndex?: number;
   disabledIndices?: number[];
+  /** Enable dragging on the top card */
+  draggableTopCard?: boolean;
+  /** Pile index for drag ID (required if draggableTopCard is true) */
+  pileIndex?: number;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -35,10 +41,30 @@ export function CardStack({
   onCardDoubleClick,
   selectedIndex,
   disabledIndices = [],
+  draggableTopCard = false,
+  pileIndex,
   className,
   style,
 }: CardStackProps) {
   const visibleCards = maxVisible ? cards.slice(-maxVisible) : cards;
+  const topCard = cards[cards.length - 1];
+  const topCardIndex = cards.length - 1;
+
+  // Set up draggable for top card (only if enabled)
+  const dragId = topCard && draggableTopCard && pileIndex !== undefined
+    ? createDragId('work', topCard, pileIndex, topCardIndex)
+    : 'stack-not-draggable';
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: dragId,
+    disabled: !draggableTopCard || cards.length === 0,
+    data: {
+      card: topCard,
+      cardCount: 1,
+      pileIndex,
+      cardIndex: topCardIndex,
+    },
+  });
+
   const directionClass =
     direction === 'horizontal'
       ? styles.stackHorizontal
@@ -110,12 +136,21 @@ export function CardStack({
         const originalIndex = maxVisible
           ? cards.length - visibleCards.length + index
           : index;
+        const isTopCard = index === visibleCards.length - 1;
+        const isDraggableTopCard = isTopCard && draggableTopCard && pileIndex !== undefined;
 
         return (
           <div
             key={`${card.deckId}-${card.suit}-${card.rank}`}
-            className={styles.stackedCard}
-            style={{ ...getCardStyle(index), zIndex: index }}
+            ref={isDraggableTopCard ? setNodeRef : undefined}
+            className={`${styles.stackedCard} ${isDragging && isDraggableTopCard ? styles.dragging : ''}`}
+            style={{
+              ...getCardStyle(index),
+              zIndex: index,
+              opacity: isDragging && isDraggableTopCard ? 0.5 : 1,
+            }}
+            {...(isDraggableTopCard ? listeners : {})}
+            {...(isDraggableTopCard ? attributes : {})}
           >
             <Card
               card={card}
