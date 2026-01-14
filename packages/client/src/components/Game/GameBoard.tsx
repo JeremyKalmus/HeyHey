@@ -10,6 +10,7 @@ import { StockPile } from '../Player/StockPile';
 import { WastePile } from '../Player/WastePile';
 import { ScoreDisplay } from '../ui/ScoreDisplay/ScoreDisplay';
 import type { PlayerColor } from '../Card/CardBack';
+import type { PlayerScore } from '../ui/ScoreDisplay/types';
 import styles from './GameBoard.module.css';
 
 /* =============================================================================
@@ -28,6 +29,9 @@ export interface GameBoardProps {
 
   // Player info
   playerColor: PlayerColor;
+  playerName?: string;
+  playerScore?: number;
+  players?: PlayerScore[];
 
   // Round info
   currentRound?: number;
@@ -75,6 +79,9 @@ export function GameBoard({
   wastePile,
   foundationPiles,
   playerColor,
+  playerName: _playerName,
+  playerScore: _playerScore,
+  players: _players,
   currentRound = 1,
   totalRounds,
   selectedCard,
