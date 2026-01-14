@@ -36,3 +36,8 @@ storybook-static/
 tmp/
 
 *storybook.log
+
+# Gas Town system files
+.beads/redirect
+.runtime/
+AGENTS.md
