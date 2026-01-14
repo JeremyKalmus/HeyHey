@@ -8,10 +8,19 @@ import type { Card as CardType } from '@heyhey/shared';
  * It renders either a face-up card showing the rank and suit, or a
  * face-down card showing the player's color pattern.
  *
+ * ## Neubrutalist Style
+ * - 4px black border on all cards
+ * - Hard offset shadow (4px 4px 0 black)
+ * - Selected state: 5px border + cyan glow shadow
+ * - Flat player colors on card backs (no gradients)
+ * - Snappy 100ms transitions
+ * - Card deal and flip animations
+ *
  * ## Features
  * - Face-up/face-down states
  * - 8 customizable back colors for player identification
  * - Selection, disabled, and dragging visual states
+ * - Deal and flip animations
  * - Click and double-click interaction handlers
  * - Accessible with proper ARIA labels
  */
@@ -51,6 +60,14 @@ const meta: Meta<typeof Card> = {
     },
     dragging: {
       description: 'Whether the card is currently being dragged',
+      control: 'boolean',
+    },
+    dealing: {
+      description: 'Whether to play the deal animation',
+      control: 'boolean',
+    },
+    flipping: {
+      description: 'Whether to play the flip animation',
       control: 'boolean',
     },
     onClick: {
@@ -241,4 +258,40 @@ export const InteractiveStates: Story = {
       </div>
     </div>
   ),
+};
+
+/**
+ * Card being dealt with animation.
+ */
+export const DealAnimation: Story = {
+  args: {
+    card: createCard('hearts', 1),
+    faceUp: true,
+    dealing: true,
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Card with the deal animation playing. The animation drops the card in with a slight rotation and bounce effect.',
+      },
+    },
+  },
+};
+
+/**
+ * Card flip animation.
+ */
+export const FlipAnimation: Story = {
+  args: {
+    card: createCard('diamonds', 13),
+    faceUp: true,
+    flipping: true,
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Card with the flip animation playing.',
+      },
+    },
+  },
 };
