@@ -19,7 +19,7 @@ export interface UseSetupControllerOptions {
   deckId: string;
   /** Nertz pile size (10 or 13), defaults to 13 */
   nertzPileSize?: 10 | 13;
-  /** Delay in ms between interactions to prevent rapid clicking */
+  /** Delay in ms between interactions (0 for fast/frantic feel) */
   interactionDelay?: number;
   /** Callback when setup is complete */
   onSetupComplete?: () => void;
@@ -59,18 +59,18 @@ export type UseSetupControllerReturn = SetupControllerState & SetupControllerAct
  * Hook for managing game setup interactions.
  * Integrates SetupStateMachine with card state management.
  *
- * Flow:
+ * Flow (fast and frantic!):
  * 1. idle -> placingNertz: Click deck to start
- * 2. placingNertz: Click deck 13x (or 10x) to fill nertz pile, auto-transitions to flipNertz
- * 3. flipNertz: Click nertz pile to flip top card, auto-transitions to placingWork
- * 4. placingWork: Click deck 4x to place work pile cards, auto-transitions to complete
+ * 2. placingNertz: Click deck 10x or 13x to fill nertz pile, auto-transitions to flipNertz
+ * 3. flipNertz: Click nertz pile to flip top card face-up, transitions to placingWork
+ * 4. placingWork: Click each work pile to drop a card on it (4 clicks total)
  * 5. complete: Setup finished, waiting for other players
  */
 export function useSetupController(options: UseSetupControllerOptions): UseSetupControllerReturn {
   const {
     deckId,
     nertzPileSize = 13,
-    interactionDelay = 150,
+    interactionDelay = 0,
     onSetupComplete,
     onSound,
   } = options;
@@ -117,14 +117,13 @@ export function useSetupController(options: UseSetupControllerOptions): UseSetup
     }, interactionDelay);
   }, [interactionDelay]);
 
-  // Track which work pile to fill next
-  const nextWorkPileIndexRef = useRef(0);
+  // Track which work piles have been filled
+  const [filledWorkPiles, setFilledWorkPiles] = useState<Set<number>>(new Set());
 
   /**
    * Handle deck click:
    * - In idle: Start setup (transition to placingNertz)
    * - In placingNertz: Move top card from deck to nertz pile
-   * - In placingWork: Move top card from deck to next work pile
    */
   const handleDeckClick = useCallback(() => {
     if (isInteractionDisabled) return;
@@ -137,7 +136,7 @@ export function useSetupController(options: UseSetupControllerOptions): UseSetup
       const result = machine.start();
       if (result.success) {
         onSound?.('cardSelect');
-        disableInteractionsTemporarily();
+        if (interactionDelay > 0) disableInteractionsTemporarily();
         syncState();
       }
       return;
@@ -151,7 +150,7 @@ export function useSetupController(options: UseSetupControllerOptions): UseSetup
       if (!placed) return;
 
       onSound?.('cardPlace');
-      disableInteractionsTemporarily();
+      if (interactionDelay > 0) disableInteractionsTemporarily();
 
       // Move card from deck to nertz pile
       setDeckCards(prev => {
@@ -174,55 +173,13 @@ export function useSetupController(options: UseSetupControllerOptions): UseSetup
       }
       return;
     }
-
-    // Handle placingWork - move card to next work pile
-    if (currentState === 'placingWork') {
-      if (deckCards.length === 0) return;
-      if (nextWorkPileIndexRef.current >= 4) return;
-
-      const placed = machine.placeWorkPile();
-      if (!placed) return;
-
-      onSound?.('cardPlace');
-      disableInteractionsTemporarily();
-
-      const pileIndex = nextWorkPileIndexRef.current;
-      nextWorkPileIndexRef.current++;
-
-      // Move card from deck to work pile
-      setDeckCards(prev => {
-        const newDeck = [...prev];
-        const card = newDeck.pop();
-        if (card) {
-          setWorkPileCards(prevPiles => {
-            const newPiles = [...prevPiles] as [Card[], Card[], Card[], Card[]];
-            const existingPile = newPiles[pileIndex] ?? [];
-            newPiles[pileIndex] = [...existingPile, card];
-            return newPiles;
-          });
-        }
-        return newDeck;
-      });
-
-      syncState();
-
-      // Check if all work piles placed, auto-complete
-      if (machine.progress.workPilesPlaced >= 4) {
-        const completeResult = machine.completeSetup();
-        if (completeResult.success) {
-          syncState();
-          onSetupComplete?.();
-        }
-      }
-      return;
-    }
   }, [
     isInteractionDisabled,
     deckCards.length,
     nertzPileSize,
+    interactionDelay,
     disableInteractionsTemporarily,
     syncState,
-    onSetupComplete,
     onSound,
   ]);
 
@@ -241,18 +198,69 @@ export function useSetupController(options: UseSetupControllerOptions): UseSetup
     const result = machine.flipNertz();
     if (result.success) {
       onSound?.('cardFlip');
-      disableInteractionsTemporarily();
+      if (interactionDelay > 0) disableInteractionsTemporarily();
       syncState();
     }
-  }, [isInteractionDisabled, disableInteractionsTemporarily, syncState, onSound]);
+  }, [isInteractionDisabled, interactionDelay, disableInteractionsTemporarily, syncState, onSound]);
 
   /**
-   * Handle work pile click - provided for flexibility but not used in standard flow
+   * Handle work pile click:
+   * - In placingWork: Drop a card from deck onto the clicked pile
    */
-  const handleWorkPileClick = useCallback((_index: number) => {
-    // In the standard setup flow, work piles are filled automatically
-    // This handler is provided for potential future variants
-  }, []);
+  const handleWorkPileClick = useCallback((index: number) => {
+    if (isInteractionDisabled) return;
+
+    const machine = stateMachine.current;
+    const currentState = machine.state;
+
+    if (currentState !== 'placingWork') return;
+    if (deckCards.length === 0) return;
+    if (filledWorkPiles.has(index)) return; // Already has a card
+
+    const placed = machine.placeWorkPile();
+    if (!placed) return;
+
+    onSound?.('cardPlace');
+    if (interactionDelay > 0) disableInteractionsTemporarily();
+
+    // Mark this pile as filled
+    setFilledWorkPiles(prev => new Set(prev).add(index));
+
+    // Move card from deck to this work pile
+    setDeckCards(prev => {
+      const newDeck = [...prev];
+      const card = newDeck.pop();
+      if (card) {
+        setWorkPileCards(prevPiles => {
+          const newPiles = [...prevPiles] as [Card[], Card[], Card[], Card[]];
+          const existingPile = newPiles[index] ?? [];
+          newPiles[index] = [...existingPile, card];
+          return newPiles;
+        });
+      }
+      return newDeck;
+    });
+
+    syncState();
+
+    // Check if all work piles placed, auto-complete
+    if (machine.progress.workPilesPlaced >= 4) {
+      const completeResult = machine.completeSetup();
+      if (completeResult.success) {
+        syncState();
+        onSetupComplete?.();
+      }
+    }
+  }, [
+    isInteractionDisabled,
+    deckCards.length,
+    filledWorkPiles,
+    interactionDelay,
+    disableInteractionsTemporarily,
+    syncState,
+    onSetupComplete,
+    onSound,
+  ]);
 
   /**
    * Reset the setup to initial state
@@ -272,8 +280,8 @@ export function useSetupController(options: UseSetupControllerOptions): UseSetup
     setNertzPileCards([]);
     setWorkPileCards([[], [], [], []]);
 
-    // Reset work pile index
-    nextWorkPileIndexRef.current = 0;
+    // Reset filled work piles tracking
+    setFilledWorkPiles(new Set());
 
     // Reset interaction state
     setIsInteractionDisabled(false);

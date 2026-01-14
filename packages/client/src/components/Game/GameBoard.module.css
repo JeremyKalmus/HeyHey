@@ -62,20 +62,46 @@
 
 /* =============================================================================
    PLAYER AREA - Bottom Row
-   Layout: [Nertz] [Work Piles] [Stock/Waste]
+   Layout: [Stock/Waste] [Nertz] [Work Piles]
    ============================================================================= */
 
 .playerArea {
   display: flex;
   align-items: flex-start;
-  gap: 16px;
+  justify-content: space-between;
+  gap: 24px;
   padding: 16px;
   background: rgba(0, 0, 0, 0.3);
   border: 4px solid var(--border-color);
   box-shadow: 4px 4px 0 var(--border-color);
 }
 
-/* Nertz Pile - Left */
+/* Stock and Waste - Left */
+.stockWasteArea {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 3px solid rgba(255, 255, 255, 0.1);
+}
+
+.stockContainer {
+  position: relative;
+}
+
+.wasteContainer {
+  position: relative;
+}
+
+/* Play Area - Nertz + Work Piles (right side, grouped) */
+.playArea {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+/* Nertz Pile */
 .nertzArea {
   display: flex;
   flex-direction: column;
@@ -85,35 +111,13 @@
   border: 3px solid rgba(255, 107, 53, 0.4);
 }
 
-/* Work Piles - Center (takes up remaining space) */
+/* Work Piles */
 .workArea {
-  flex: 1;
   display: flex;
   justify-content: center;
   padding: 12px;
   background: rgba(0, 0, 0, 0.2);
   border: 3px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Stock and Waste - Right */
-.stockWasteArea {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 12px;
-  background: rgba(0, 0, 0, 0.2);
-  border: 3px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Stock pile - partially hidden off right edge */
-.stockContainer {
-  position: relative;
-  margin-right: -40px; /* Hide part of stock off-screen */
-}
-
-/* Waste pile - fully visible */
-.wasteContainer {
-  position: relative;
 }
 
 /* =============================================================================
@@ -144,9 +148,10 @@
     justify-content: center;
   }
 
-  .workArea {
+  .playArea {
     flex-basis: 100%;
     order: -1;
+    justify-content: center;
   }
 }
 
@@ -166,7 +171,8 @@
     align-items: center;
   }
 
-  .stockContainer {
-    margin-right: 0;
+  .playArea {
+    flex-direction: column;
+    align-items: center;
   }
 }

@@ -159,13 +159,13 @@ export default meta;
 type Story = StoryObj<typeof InteractiveSetup>;
 
 /**
- * Full interactive setup flow with default settings.
+ * Full interactive setup flow - fast and frantic!
  *
  * **How to use:**
  * 1. Click the **Deck** to start dealing cards to the Nertz pile
  * 2. Keep clicking the Deck until 13 cards are dealt
- * 3. Click the **Nertz Pile** to flip the top card
- * 4. Click the **Deck** 4 more times to deal work pile cards
+ * 3. Click the **Nertz Pile** to flip the top card face-up
+ * 4. Click each **Work Pile** slot to drop a card on it
  * 5. Setup is complete!
  *
  * Use the **Reset** button to start over.
@@ -174,7 +174,7 @@ export const FullFlow: Story = {
   args: {
     backColor: 'blue',
     nertzPileSize: 13,
-    interactionDelay: 150,
+    interactionDelay: 0,
     soundEnabled: true,
   },
 };
@@ -186,32 +186,7 @@ export const TenCardVariant: Story = {
   args: {
     backColor: 'green',
     nertzPileSize: 10,
-    interactionDelay: 150,
-    soundEnabled: true,
-  },
-};
-
-/**
- * Fast interactions with no delay.
- * Good for testing rapid clicking.
- */
-export const NoDelay: Story = {
-  args: {
-    backColor: 'purple',
-    nertzPileSize: 13,
     interactionDelay: 0,
-    soundEnabled: true,
-  },
-};
-
-/**
- * Slow interactions for accessibility testing.
- */
-export const SlowInteractions: Story = {
-  args: {
-    backColor: 'teal',
-    nertzPileSize: 13,
-    interactionDelay: 500,
     soundEnabled: true,
   },
 };

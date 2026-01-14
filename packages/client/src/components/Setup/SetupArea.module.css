@@ -108,7 +108,7 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 32px;
+  gap: 24px;
 }
 
 /* Section Labels */
@@ -123,11 +123,37 @@
   text-align: center;
 }
 
+/* Stock Area (Deck + Waste) - Left side */
+.stockArea {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
 /* Deck Section */
 .deckSection {
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+/* Waste Section */
+.wasteSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.wastePile {
+  min-width: 78px;
+  min-height: 108px;
+}
+
+/* Play Area (Nertz + Work Piles) - Right side */
+.playArea {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
 }
 
 .deckArea {
@@ -194,6 +220,7 @@
 .topCard {
   position: absolute;
   left: 0;
+  z-index: 10;
 }
 
 /* Work Piles Section */
@@ -284,6 +311,16 @@
     flex-direction: column;
     align-items: center;
     gap: 24px;
+  }
+
+  .stockArea {
+    order: 1;
+  }
+
+  .playArea {
+    order: 0;
+    flex-direction: column;
+    align-items: center;
   }
 
   .workPiles {

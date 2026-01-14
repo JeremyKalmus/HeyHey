@@ -52,7 +52,7 @@ const SETUP_INSTRUCTIONS: Record<SetupState, { title: string; description: strin
   },
   placingWork: {
     title: 'Deal Work Piles',
-    description: 'Click the deck to deal one card face-up to each work pile.',
+    description: 'Click each work pile to drop a card on it.',
   },
   complete: {
     title: 'Setup Complete',
@@ -150,111 +150,127 @@ export function SetupArea({
 
       {/* Game Board Layout */}
       <div className={styles.boardLayout}>
-        {/* Deck Area (Source) */}
-        <div className={styles.deckSection}>
-          <span className={styles.sectionLabel}>Deck</span>
-          <div
-            className={`${styles.deckArea} ${isDeckClickable ? styles.clickable : ''}`}
-            onClick={handleDeckClick}
-            role="button"
-            tabIndex={isDeckClickable ? 0 : -1}
-            aria-label={`Deck - ${deckCards.length} cards remaining`}
-          >
-            {deckCards.length > 0 ? (
-              <CardStack
-                cards={deckCards.slice(-3)}
-                direction="vertical"
-                offset={2}
-                faceUp={false}
-                backColor={backColor}
-                maxVisible={3}
-              />
-            ) : (
-              <div className={styles.emptySlot}>
-                <span className={styles.emptyLabel}>Empty</span>
-              </div>
-            )}
-            <span className={styles.cardCount}>{deckCards.length}</span>
-          </div>
-        </div>
-
-        {/* Nertz Pile */}
-        <div className={styles.nertzSection}>
-          <span className={styles.sectionLabel}>Nertz Pile</span>
-          <div
-            className={`${styles.nertzPile} ${isNertzPileClickable ? styles.clickable : ''} ${
-              isNertzPileClickable ? styles.highlight : ''
-            }`}
-            onClick={handleNertzPileClick}
-            role="button"
-            tabIndex={isNertzPileClickable ? 0 : -1}
-            aria-label={`Nertz pile - ${nertzPileCards.length} cards`}
-          >
-            {nertzPileCards.length > 0 ? (
-              <div className={styles.nertzStack}>
-                {/* Show stacked face-down cards */}
-                {nertzPileCards.length > 1 && (
-                  <CardStack
-                    cards={nertzPileCards.slice(0, -1)}
-                    direction="vertical"
-                    offset={2}
-                    faceUp={false}
-                    backColor={backColor}
-                    maxVisible={Math.min(nertzPileCards.length - 1, 5)}
-                  />
-                )}
-                {/* Top card - may be face up if flipped */}
-                <div
-                  className={styles.topCard}
-                  style={{
-                    top: Math.min((nertzPileCards.length - 1) * 2, 10),
-                  }}
-                >
-                  <Card
-                    card={nertzPileCards[nertzPileCards.length - 1]!}
-                    faceUp={progress.nertzFlipped}
-                    backColor={backColor}
-                  />
+        {/* Stock Area (Deck + Waste) - Left side */}
+        <div className={styles.stockArea}>
+          {/* Deck (Stock) */}
+          <div className={styles.deckSection}>
+            <span className={styles.sectionLabel}>Stock</span>
+            <div
+              className={`${styles.deckArea} ${isDeckClickable ? styles.clickable : ''}`}
+              onClick={handleDeckClick}
+              role="button"
+              tabIndex={isDeckClickable ? 0 : -1}
+              aria-label={`Deck - ${deckCards.length} cards remaining`}
+            >
+              {deckCards.length > 0 ? (
+                <CardStack
+                  cards={deckCards.slice(-3)}
+                  direction="vertical"
+                  offset={2}
+                  faceUp={false}
+                  backColor={backColor}
+                  maxVisible={3}
+                />
+              ) : (
+                <div className={styles.emptySlot}>
+                  <span className={styles.emptyLabel}>Empty</span>
                 </div>
-              </div>
-            ) : (
+              )}
+              <span className={styles.cardCount}>{deckCards.length}</span>
+            </div>
+          </div>
+
+          {/* Waste Pile placeholder */}
+          <div className={styles.wasteSection}>
+            <span className={styles.sectionLabel}>Waste</span>
+            <div className={styles.wastePile}>
               <div className={styles.emptySlot}>
-                <span className={styles.emptyLabel}>Nertz</span>
+                <span className={styles.emptyLabel}>—</span>
               </div>
-            )}
+            </div>
           </div>
         </div>
 
-        {/* Work Piles */}
-        <div className={styles.workPilesSection}>
-          <span className={styles.sectionLabel}>Work Piles</span>
-          <div className={styles.workPiles}>
-            {workPileCards.map((pile, index) => (
-              <div
-                key={index}
-                className={`${styles.workPile} ${isWorkPileClickable ? styles.clickable : ''} ${
-                  isWorkPileClickable && pile.length === 0 ? styles.highlight : ''
-                }`}
-                onClick={() => handleWorkPileClick(index)}
-                role="button"
-                tabIndex={isWorkPileClickable ? 0 : -1}
-                aria-label={`Work pile ${index + 1} - ${pile.length} cards`}
-              >
-                {pile.length > 0 ? (
-                  <CardStack
-                    cards={pile}
-                    direction="vertical"
-                    offset={20}
-                    faceUp={true}
-                    backColor={backColor}
-                  />
-                ) : (
-                  <div className={styles.emptySlot}>
-                    <span className={styles.emptyLabel}>{index + 1}</span>
+        {/* Play Area (Nertz + Work Piles) - Right side, closer together */}
+        <div className={styles.playArea}>
+          {/* Nertz Pile */}
+          <div className={styles.nertzSection}>
+            <span className={styles.sectionLabel}>Nertz Pile</span>
+            <div
+              className={`${styles.nertzPile} ${isNertzPileClickable ? styles.clickable : ''} ${
+                isNertzPileClickable ? styles.highlight : ''
+              }`}
+              onClick={handleNertzPileClick}
+              role="button"
+              tabIndex={isNertzPileClickable ? 0 : -1}
+              aria-label={`Nertz pile - ${nertzPileCards.length} cards`}
+            >
+              {nertzPileCards.length > 0 ? (
+                <div className={styles.nertzStack}>
+                  {/* Show stacked face-down cards */}
+                  {nertzPileCards.length > 1 && (
+                    <CardStack
+                      cards={nertzPileCards.slice(0, -1)}
+                      direction="vertical"
+                      offset={2}
+                      faceUp={false}
+                      backColor={backColor}
+                      maxVisible={Math.min(nertzPileCards.length - 1, 5)}
+                    />
+                  )}
+                  {/* Top card - may be face up if flipped */}
+                  <div
+                    className={styles.topCard}
+                    style={{
+                      top: Math.min((nertzPileCards.length - 1) * 2, 10),
+                    }}
+                  >
+                    <Card
+                      card={nertzPileCards[nertzPileCards.length - 1]!}
+                      faceUp={progress.nertzFlipped}
+                      backColor={backColor}
+                    />
                   </div>
-                )}
-              </div>
-            ))}
+                </div>
+              ) : (
+                <div className={styles.emptySlot}>
+                  <span className={styles.emptyLabel}>Nertz</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Work Piles */}
+          <div className={styles.workPilesSection}>
+            <span className={styles.sectionLabel}>Work Piles</span>
+            <div className={styles.workPiles}>
+              {workPileCards.map((pile, index) => (
+                <div
+                  key={index}
+                  className={`${styles.workPile} ${isWorkPileClickable ? styles.clickable : ''} ${
+                    isWorkPileClickable && pile.length === 0 ? styles.highlight : ''
+                  }`}
+                  onClick={() => handleWorkPileClick(index)}
+                  role="button"
+                  tabIndex={isWorkPileClickable ? 0 : -1}
+                  aria-label={`Work pile ${index + 1} - ${pile.length} cards`}
+                >
+                  {pile.length > 0 ? (
+                    <CardStack
+                      cards={pile}
+                      direction="vertical"
+                      offset={20}
+                      faceUp={true}
+                      backColor={backColor}
+                    />
+                  ) : (
+                    <div className={styles.emptySlot}>
+                      <span className={styles.emptyLabel}>{index + 1}</span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

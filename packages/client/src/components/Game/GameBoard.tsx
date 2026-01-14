@@ -124,35 +124,9 @@ export function GameBoard({
         />
       </div>
 
-      {/* Player Area - Bottom Row: Nertz | Work Piles | Stock/Waste */}
+      {/* Player Area - Bottom Row: Stock/Waste | Nertz | Work Piles */}
       <div className={styles.playerArea}>
-        {/* Nertz Pile - Left */}
-        <div className={styles.nertzArea}>
-          <NertzPile
-            cards={nertzPile}
-            backColor={playerColor}
-            selected={isNertzSelected}
-            disabled={disabled}
-            onTopCardClick={onNertzCardClick}
-            onTopCardDoubleClick={onNertzCardDoubleClick}
-          />
-        </div>
-
-        {/* Work Piles - Center (takes up remaining space) */}
-        <div className={styles.workArea}>
-          <WorkPiles
-            piles={workPiles}
-            backColor={playerColor}
-            selectedCard={selectedCard}
-            validDestinations={validWorkDestinations}
-            onCardClick={onWorkCardClick}
-            onCardDoubleClick={onWorkCardDoubleClick}
-            onPileClick={onWorkPileClick}
-            disabled={disabled}
-          />
-        </div>
-
-        {/* Stock and Waste - Right */}
+        {/* Stock and Waste - Left */}
         <div className={styles.stockWasteArea}>
           <div className={styles.stockContainer}>
             <StockPile
@@ -174,6 +148,35 @@ export function GameBoard({
               onTopCardClick={onWasteCardClick}
               onTopCardDoubleClick={onWasteCardDoubleClick}
               showLabel={false}
+            />
+          </div>
+        </div>
+
+        {/* Play Area - Nertz + Work Piles (right side, grouped) */}
+        <div className={styles.playArea}>
+          {/* Nertz Pile */}
+          <div className={styles.nertzArea}>
+            <NertzPile
+              cards={nertzPile}
+              backColor={playerColor}
+              selected={isNertzSelected}
+              disabled={disabled}
+              onTopCardClick={onNertzCardClick}
+              onTopCardDoubleClick={onNertzCardDoubleClick}
+            />
+          </div>
+
+          {/* Work Piles */}
+          <div className={styles.workArea}>
+            <WorkPiles
+              piles={workPiles}
+              backColor={playerColor}
+              selectedCard={selectedCard}
+              validDestinations={validWorkDestinations}
+              onCardClick={onWorkCardClick}
+              onCardDoubleClick={onWorkCardDoubleClick}
+              onPileClick={onWorkPileClick}
+              disabled={disabled}
             />
           </div>
         </div>
