@@ -98,6 +98,14 @@ export {
   Zap as ZapIcon,
 } from 'lucide-react';
 
+// Card Piles & Stacks
+export {
+  Layers as LayersIcon,
+  Repeat as RecycleIcon,
+  Square as SquareIcon,
+  CircleDot as CircleDotIcon,
+} from 'lucide-react';
+
 // Avatar Icons
 export {
   Smile as SmileIcon,

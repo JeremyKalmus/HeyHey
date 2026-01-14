@@ -1,4 +1,4 @@
-/* NertzPile Component Styles */
+/* NertzPile Component Styles - Neubrutalist Arcade */
 
 .nertzPile {
   position: relative;
@@ -20,20 +20,24 @@
   z-index: 10;
 }
 
-/* Card count badge */
+/* Card count badge - neubrutalist arcade style */
 .countBadge {
   position: absolute;
-  bottom: -20px;
+  bottom: -24px;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
-  background: rgba(0, 0, 0, 0.6);
-  padding: 2px 8px;
-  border-radius: 10px;
-  min-width: 20px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-black);
+  font-family: var(--font-family-mono);
+  color: var(--color-black);
+  background: var(--arcade-yellow);
+  padding: var(--space-xs) var(--space-sm);
+  border: var(--border-medium) solid var(--color-black);
+  box-shadow: var(--shadow-sm);
+  min-width: 24px;
   text-align: center;
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
 }
 
 /* Empty state */
@@ -46,39 +50,38 @@
 .emptySlot {
   width: 70px;
   height: 100px;
-  border: 2px dashed rgba(255, 193, 7, 0.5);
-  border-radius: 6px;
-  background: rgba(255, 193, 7, 0.05);
+  border: var(--border-thick) solid var(--arcade-green);
+  background: rgba(0, 255, 136, 0.1);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  animation: emptyPulse 2s ease-in-out infinite;
+  gap: var(--space-xs);
+  animation: emptyPulse 1.5s ease-in-out infinite;
+  box-shadow: var(--shadow-neubrutalist);
 }
 
 .emptyLabel {
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: rgba(255, 193, 7, 0.8);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-black);
+  font-family: var(--font-family-mono);
+  color: var(--arcade-green);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: var(--letter-spacing-wide);
 }
 
 .emptyIcon {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: rgba(255, 193, 7, 0.8);
+  color: var(--arcade-green);
 }
 
-/* Empty state animation - visual indicator when pile is empty */
+/* Empty state animation - arcade pulse */
 @keyframes emptyPulse {
   0%, 100% {
-    border-color: rgba(255, 193, 7, 0.3);
-    background: rgba(255, 193, 7, 0.02);
+    border-color: var(--arcade-green);
+    box-shadow: var(--shadow-neubrutalist);
   }
   50% {
-    border-color: rgba(255, 193, 7, 0.6);
-    background: rgba(255, 193, 7, 0.08);
+    border-color: var(--arcade-yellow);
+    box-shadow: var(--shadow-lg), 0 0 12px var(--arcade-green);
   }
 }

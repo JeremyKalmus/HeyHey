@@ -1,9 +1,11 @@
 // StockPile - Face-down draw pile component
 // Click to draw cards to waste pile, recycle waste when empty
+// Neubrutalist arcade style with heavy borders and bold elements
 
 import type { Card as CardType } from '@heyhey/shared';
 import { CardStack } from '../Card';
 import type { PlayerColor } from '../Card/CardBack';
+import { Icon, RecycleIcon, LayersIcon } from '../ui/Icon';
 import styles from './Player.module.css';
 
 export interface StockPileProps {
@@ -75,7 +77,11 @@ export function StockPile({
       >
         {isEmpty ? (
           <div className={`${styles.stockEmpty} ${canRecycle ? styles.canRecycle : ''}`}>
-            <span className={styles.recycleIcon}>{canRecycle ? '♻' : ''}</span>
+            {canRecycle ? (
+              <Icon icon={RecycleIcon} size="lg" className={styles.recycleIcon} />
+            ) : (
+              <Icon icon={LayersIcon} size="md" className={styles.emptyIcon} />
+            )}
           </div>
         ) : (
           <CardStack

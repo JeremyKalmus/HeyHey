@@ -1,9 +1,11 @@
 // WorkPiles - Game Phase Work Piles Component
 // Displays 4 cascading columns with stacked card display for gameplay
+// Neubrutalist arcade style with heavy borders and bold elements
 
 import type { Card as CardType } from '@heyhey/shared';
 import { CardStack } from '../Card';
 import type { PlayerColor } from '../Card/CardBack';
+import { Icon, LayersIcon } from '../ui/Icon';
 import styles from './WorkPiles.module.css';
 
 export interface SelectedCard {
@@ -132,6 +134,7 @@ export function WorkPiles({
                 className={`${styles.emptyPile} ${isDestination ? styles.emptyHighlight : ''}`}
                 onClick={() => handlePileClick(pileIndex)}
               >
+                <Icon icon={LayersIcon} size="md" className={styles.emptyIcon} />
                 <span className={styles.emptyLabel}>{pileIndex + 1}</span>
               </div>
             )}

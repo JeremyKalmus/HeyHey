@@ -1,9 +1,11 @@
 // WastePile - Face-up discard pile with fanned display
 // Shows top 3 cards fanned, click top card to select
+// Neubrutalist arcade style with heavy borders and bold elements
 
 import type { Card as CardType } from '@heyhey/shared';
 import { Card } from '../Card';
 import type { PlayerColor } from '../Card/CardBack';
+import { Icon, SquareIcon } from '../ui/Icon';
 import styles from './Player.module.css';
 
 export interface WastePileProps {
@@ -78,7 +80,7 @@ export function WastePile({
       >
         {isEmpty ? (
           <div className={styles.wasteEmpty}>
-            <span className={styles.wasteEmptyLabel}>Waste</span>
+            <Icon icon={SquareIcon} size="md" className={styles.wasteEmptyIcon} />
           </div>
         ) : (
           <div className={styles.wasteStack}>
