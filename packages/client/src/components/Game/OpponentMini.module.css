@@ -61,7 +61,7 @@
   box-shadow: 2px 2px 0px var(--arcade-cyan);
 }
 
-/* Activity indicator - pulsing dot with arcade glow */
+/* Activity indicator - pulsing dot */
 .activityPulse {
   position: absolute;
   top: 6px;
@@ -72,7 +72,6 @@
   background: var(--arcade-green);
   border: var(--border-thin) solid var(--border-color);
   animation: pulse 1s ease-in-out infinite;
-  box-shadow: 0 0 6px var(--arcade-green);
 }
 
 @keyframes pulse {
@@ -125,7 +124,6 @@
   color: var(--arcade-green);
   text-transform: uppercase;
   letter-spacing: var(--letter-spacing-wider);
-  text-shadow: 0 0 4px var(--arcade-green);
 }
 
 .nertzNumber {
@@ -134,7 +132,6 @@
   font-weight: var(--font-weight-black);
   color: var(--arcade-green);
   line-height: 1;
-  text-shadow: 0 0 8px var(--arcade-green);
   font-variant-numeric: tabular-nums;
 }
 

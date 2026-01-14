@@ -72,13 +72,14 @@ export function Avatar({
   size = 'md',
   className,
 }: AvatarProps) {
-  const { icon, shape } = parseAvatar(avatar);
+  const { icon } = parseAvatar(avatar);
   const IconComponent = ICON_MAP[icon];
   const sizeConfig = SIZE_MAP[size];
 
+  // Always use circle shape
   const classNames = [
     styles.avatar,
-    styles[`shape-${shape}`],
+    styles['shape-circle'],
     styles[`color-${color}`],
     styles[`size-${size}`],
     className,

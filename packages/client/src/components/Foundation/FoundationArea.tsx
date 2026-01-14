@@ -79,7 +79,6 @@ export function FoundationArea({
 
   return (
     <div className={`${styles.foundationArea} ${compact ? styles.compact : ''}`}>
-      <span className={styles.areaLabel}>Foundations</span>
       <div className={styles.pilesContainer}>
         {SUITS.map((suit) => {
           const pile = pileMap.get(suit);

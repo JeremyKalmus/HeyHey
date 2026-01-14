@@ -142,6 +142,6 @@
     box-shadow: var(--shadow-secondary);
   }
   50% {
-    box-shadow: var(--shadow-lg), 0 0 12px var(--arcade-green);
+    box-shadow: var(--shadow-lg);
   }
 }

@@ -16,19 +16,6 @@
   }
 }
 
-@keyframes glow-pulse {
-  0%, 100% {
-    text-shadow:
-      0 0 4px currentColor,
-      0 0 8px currentColor;
-  }
-  50% {
-    text-shadow:
-      0 0 8px currentColor,
-      0 0 16px currentColor,
-      0 0 24px currentColor;
-  }
-}
 
 /* =============================================================================
    BASE SCORE DISPLAY
@@ -65,10 +52,7 @@
   font-weight: var(--weight-bold, 700);
   font-variant-numeric: tabular-nums;
   color: var(--arcade-green, #00FF88);
-  text-shadow:
-    0 0 4px var(--arcade-green, #00FF88),
-    0 0 8px var(--arcade-green, #00FF88),
-    2px 2px 0 var(--color-black, #000);
+  text-shadow: 2px 2px 0 var(--color-black, #000);
 }
 
 .scoreNumber.animate {
@@ -107,9 +91,7 @@
 
 .playerBoard.isActive {
   border-color: var(--arcade-green, #00FF88);
-  box-shadow:
-    var(--shadow-neubrutalist, 4px 4px 0 #000),
-    0 0 12px var(--arcade-green, #00FF88);
+  box-shadow: var(--shadow-neubrutalist, 4px 4px 0 #000);
 }
 
 .playerName {
@@ -130,53 +112,35 @@
   line-height: 1;
 }
 
-/* Player color variants */
+/* Player color variants - solid colors with hard offset shadow only */
 .color-green .playerScore {
   color: var(--arcade-green, #00FF88);
-  text-shadow:
-    0 0 4px var(--arcade-green, #00FF88),
-    0 0 8px var(--arcade-green, #00FF88),
-    2px 2px 0 var(--color-black, #000);
+  text-shadow: 2px 2px 0 var(--color-black, #000);
 }
 
 .color-orange .playerScore {
   color: var(--arcade-orange, #FF6B35);
-  text-shadow:
-    0 0 4px var(--arcade-orange, #FF6B35),
-    0 0 8px var(--arcade-orange, #FF6B35),
-    2px 2px 0 var(--color-black, #000);
+  text-shadow: 2px 2px 0 var(--color-black, #000);
 }
 
 .color-cyan .playerScore {
   color: var(--arcade-cyan, #00F5FF);
-  text-shadow:
-    0 0 4px var(--arcade-cyan, #00F5FF),
-    0 0 8px var(--arcade-cyan, #00F5FF),
-    2px 2px 0 var(--color-black, #000);
+  text-shadow: 2px 2px 0 var(--color-black, #000);
 }
 
 .color-yellow .playerScore {
   color: var(--arcade-yellow, #FFD23F);
-  text-shadow:
-    0 0 4px var(--arcade-yellow, #FFD23F),
-    0 0 8px var(--arcade-yellow, #FFD23F),
-    2px 2px 0 var(--color-black, #000);
+  text-shadow: 2px 2px 0 var(--color-black, #000);
 }
 
 .color-pink .playerScore {
   color: var(--arcade-pink, #FF006E);
-  text-shadow:
-    0 0 4px var(--arcade-pink, #FF006E),
-    0 0 8px var(--arcade-pink, #FF006E),
-    2px 2px 0 var(--color-black, #000);
+  text-shadow: 2px 2px 0 var(--color-black, #000);
 }
 
 .color-purple .playerScore {
   color: var(--arcade-purple, #5E60CE);
-  text-shadow:
-    0 0 4px var(--arcade-purple, #5E60CE),
-    0 0 8px var(--arcade-purple, #5E60CE),
-    2px 2px 0 var(--color-black, #000);
+  text-shadow: 2px 2px 0 var(--color-black, #000);
 }
 
 .playerScore.animate {
@@ -230,10 +194,7 @@
   font-weight: var(--weight-bold, 700);
   font-variant-numeric: tabular-nums;
   color: var(--arcade-cyan, #00F5FF);
-  text-shadow:
-    0 0 4px var(--arcade-cyan, #00F5FF),
-    0 0 8px var(--arcade-cyan, #00F5FF),
-    2px 2px 0 var(--color-black, #000);
+  text-shadow: 2px 2px 0 var(--color-black, #000);
 }
 
 .roundSeparator {
@@ -278,9 +239,7 @@
   font-weight: var(--weight-bold, 700);
   font-variant-numeric: tabular-nums;
   color: var(--arcade-green, #00FF88);
-  text-shadow:
-    0 0 2px var(--arcade-green, #00FF88),
-    1px 1px 0 var(--color-black, #000);
+  text-shadow: 1px 1px 0 var(--color-black, #000);
 }
 
 .statValue.animate {

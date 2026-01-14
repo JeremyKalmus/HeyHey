@@ -126,6 +126,23 @@ Replace all emoji usage with **Lucide React** icons or custom SVG icons where ne
 --shadow-pressed:  2px 2px 0 #000000;  /* Push effect */
 ```
 
+### Glow Effects (RESTRICTED)
+
+**Glow effects (`0 0 Xpx color`) are STRICTLY LIMITED to:**
+
+1. **HeyHey Button** - The primary game action button when enabled
+2. **Selected Card** - To show which card the player has selected
+
+**DO NOT use glow on:**
+- Input focus states (use border color change instead)
+- Valid drop targets (use solid border outline instead)
+- Text/labels (use solid colors, no text-shadow glow)
+- Activity indicators (use solid colors)
+- Opponent displays (use solid colors)
+- Headers or decorative elements
+
+**Rationale:** Too many glowing elements create visual chaos and reduce the impact of critical feedback. Glow should be reserved for moments that demand immediate attention.
+
 ## Spacing
 
 ```css
@@ -431,6 +448,7 @@ packages/client/src/
 - [ ] Lucide icons at 2.5-3px stroke weight
 - [ ] Buttons have press/lift animations
 - [ ] Score displays have 90s arcade feel
+- [ ] Glow effects limited to HeyHey button and selected card ONLY
 
 ---
 

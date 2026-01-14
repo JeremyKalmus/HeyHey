@@ -9,7 +9,7 @@
 .label {
   font-size: var(--font-size-sm, 0.875rem);
   font-weight: var(--font-weight-bold, 700);
-  color: var(--text-secondary, #2a2a2a);
+  color: var(--text-inverse, #fff);
   text-transform: uppercase;
   letter-spacing: var(--letter-spacing-wide, 0.05em);
 }
@@ -29,7 +29,7 @@
 .sectionLabel {
   font-size: var(--font-size-xs, 0.75rem);
   font-weight: var(--font-weight-bold, 700);
-  color: var(--text-secondary, #555);
+  color: var(--text-muted, #A0A0B0);
   text-transform: uppercase;
   letter-spacing: var(--letter-spacing-wide, 0.05em);
 }

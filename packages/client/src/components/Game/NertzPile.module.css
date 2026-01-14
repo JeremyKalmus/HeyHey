@@ -57,7 +57,6 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-xs);
-  animation: emptyPulse 1.5s ease-in-out infinite;
   box-shadow: var(--shadow-neubrutalist);
 }
 
@@ -74,14 +73,3 @@
   color: var(--arcade-green);
 }
 
-/* Empty state animation - arcade pulse */
-@keyframes emptyPulse {
-  0%, 100% {
-    border-color: var(--arcade-green);
-    box-shadow: var(--shadow-neubrutalist);
-  }
-  50% {
-    border-color: var(--arcade-yellow);
-    box-shadow: var(--shadow-lg), 0 0 12px var(--arcade-green);
-  }
-}

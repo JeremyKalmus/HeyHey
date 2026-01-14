@@ -19,7 +19,6 @@
 /* Valid destination highlight - neubrutalist style */
 .pileContainer.validDestination {
   box-shadow: 0 0 0 var(--border-thick) var(--arcade-green);
-  animation: pulseDestination 1s ease-in-out infinite;
 }
 
 .pileContainer.validDestination:hover {
@@ -92,15 +91,6 @@
   color: var(--arcade-green);
 }
 
-/* Animations */
-@keyframes pulseDestination {
-  0%, 100% {
-    box-shadow: 0 0 0 var(--border-thick) var(--arcade-green);
-  }
-  50% {
-    box-shadow: 0 0 0 var(--border-chunky) var(--arcade-green), 0 0 12px var(--arcade-green);
-  }
-}
 
 /* Responsive adjustments */
 @media (max-width: 500px) {

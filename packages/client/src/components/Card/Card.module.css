@@ -35,8 +35,9 @@
   box-shadow: var(--shadow-neubrutalist, 4px 4px 0 #000);
   display: flex;
   flex-direction: column;
-  padding: var(--space-xs, 4px);
+  padding: 2px 3px;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .cardFaceContent {
@@ -64,13 +65,15 @@
 }
 
 .rank {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: var(--font-weight-black, 900);
   font-family: var(--font-family-base, 'Inter', sans-serif);
+  line-height: 1;
 }
 
 .suitSmall {
-  font-size: 12px;
+  font-size: 10px;
+  line-height: 1;
 }
 
 /* Center suit display */
@@ -79,7 +82,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 32px;
+  font-size: 28px;
+  min-height: 0;
 }
 
 /* Suit colors - high contrast */
