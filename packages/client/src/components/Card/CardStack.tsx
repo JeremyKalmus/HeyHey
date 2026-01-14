@@ -20,10 +20,14 @@ export interface CardStackProps {
   onCardDoubleClick?: (card: CardType, index: number) => void;
   selectedIndex?: number;
   disabledIndices?: number[];
-  /** Enable dragging on the top card */
+  /** Enable dragging on the top card only (legacy) */
   draggableTopCard?: boolean;
-  /** Pile index for drag ID (required if draggableTopCard is true) */
+  /** Enable dragging on all cards (multi-card stack drag) */
+  draggableAllCards?: boolean;
+  /** Pile index for drag ID (required if draggable is true) */
   pileIndex?: number;
+  /** Index of the card currently being dragged (to fade cards below) */
+  draggingFromIndex?: number;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -42,28 +46,13 @@ export function CardStack({
   selectedIndex,
   disabledIndices = [],
   draggableTopCard = false,
+  draggableAllCards = false,
   pileIndex,
+  draggingFromIndex,
   className,
   style,
 }: CardStackProps) {
   const visibleCards = maxVisible ? cards.slice(-maxVisible) : cards;
-  const topCard = cards[cards.length - 1];
-  const topCardIndex = cards.length - 1;
-
-  // Set up draggable for top card (only if enabled)
-  const dragId = topCard && draggableTopCard && pileIndex !== undefined
-    ? createDragId('work', topCard, pileIndex, topCardIndex)
-    : 'stack-not-draggable';
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: dragId,
-    disabled: !draggableTopCard || cards.length === 0,
-    data: {
-      card: topCard,
-      cardCount: 1,
-      pileIndex,
-      cardIndex: topCardIndex,
-    },
-  });
 
   const directionClass =
     direction === 'horizontal'
@@ -137,20 +126,43 @@ export function CardStack({
           ? cards.length - visibleCards.length + index
           : index;
         const isTopCard = index === visibleCards.length - 1;
-        const isDraggableTopCard = isTopCard && draggableTopCard && pileIndex !== undefined;
+        const isDraggable = pileIndex !== undefined && (
+          draggableAllCards || (isTopCard && draggableTopCard)
+        );
+        // Calculate how many cards would be dragged (this card + all below)
+        const cardCount = cards.length - originalIndex;
+        // Check if this card is part of a currently dragged stack
+        const isBeingDragged = draggingFromIndex !== undefined && originalIndex >= draggingFromIndex;
+
+        if (isDraggable) {
+          return (
+            <DraggableStackCard
+              key={`${card.deckId}-${card.suit}-${card.rank}`}
+              card={card}
+              cardIndex={originalIndex}
+              pileIndex={pileIndex}
+              cardCount={cardCount}
+              visibleIndex={index}
+              faceUp={faceUp}
+              backColor={backColor}
+              selected={selectedIndex === originalIndex}
+              disabled={disabledIndices.includes(originalIndex)}
+              isBeingDragged={isBeingDragged}
+              cardStyle={getCardStyle(index)}
+              onClick={onCardClick ? () => onCardClick(card, originalIndex) : undefined}
+              onDoubleClick={onCardDoubleClick ? () => onCardDoubleClick(card, originalIndex) : undefined}
+            />
+          );
+        }
 
         return (
           <div
             key={`${card.deckId}-${card.suit}-${card.rank}`}
-            ref={isDraggableTopCard ? setNodeRef : undefined}
-            className={`${styles.stackedCard} ${isDragging && isDraggableTopCard ? styles.dragging : ''}`}
+            className={styles.stackedCard}
             style={{
               ...getCardStyle(index),
               zIndex: index,
-              opacity: isDragging && isDraggableTopCard ? 0.5 : 1,
             }}
-            {...(isDraggableTopCard ? listeners : {})}
-            {...(isDraggableTopCard ? attributes : {})}
           >
             <Card
               card={card}
@@ -175,3 +187,76 @@ export function CardStack({
 }
 
 export default CardStack;
+
+/* =============================================================================
+   DRAGGABLE STACK CARD COMPONENT
+   Allows each card in a work pile to be draggable with proper cardCount
+   ============================================================================= */
+
+interface DraggableStackCardProps {
+  card: CardType;
+  cardIndex: number;
+  pileIndex: number;
+  cardCount: number;
+  visibleIndex: number;
+  faceUp: boolean;
+  backColor: PlayerColor;
+  selected: boolean;
+  disabled: boolean;
+  isBeingDragged: boolean;
+  cardStyle: React.CSSProperties;
+  onClick?: () => void;
+  onDoubleClick?: () => void;
+}
+
+function DraggableStackCard({
+  card,
+  cardIndex,
+  pileIndex,
+  cardCount,
+  visibleIndex,
+  faceUp,
+  backColor,
+  selected,
+  disabled,
+  isBeingDragged,
+  cardStyle,
+  onClick,
+  onDoubleClick,
+}: DraggableStackCardProps) {
+  const dragId = createDragId('work', card, pileIndex, cardIndex);
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: dragId,
+    disabled,
+    data: {
+      card,
+      cardCount,
+      pileIndex,
+      cardIndex,
+    },
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`${styles.stackedCard} ${isDragging || isBeingDragged ? styles.dragging : ''}`}
+      style={{
+        ...cardStyle,
+        zIndex: visibleIndex,
+        opacity: isDragging || isBeingDragged ? 0.5 : 1,
+      }}
+      {...listeners}
+      {...attributes}
+    >
+      <Card
+        card={card}
+        faceUp={faceUp}
+        backColor={backColor}
+        selected={selected}
+        disabled={disabled}
+        onClick={onClick}
+        onDoubleClick={onDoubleClick}
+      />
+    </div>
+  );
+}

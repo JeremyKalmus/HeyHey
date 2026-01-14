@@ -75,28 +75,20 @@ export function WorkPiles({
     return selectedCard !== null && selectedCard !== undefined && validDestinations.includes(pileIndex);
   };
 
-  // Get indices of cards that can be selected (only top card and cards below selected)
-  const getSelectableIndices = (pile: CardType[], pileIndex: number): number[] => {
+  // Get indices of cards that can be selected/dragged
+  // For multi-card drag, all face-up cards are selectable
+  const getSelectableIndices = (pile: CardType[]): number[] => {
     if (disabled) return [];
 
-    // If this pile has the selected card, allow selecting any card at or below selection
-    if (selectedCard?.sourceType === 'workPile' && selectedCard.sourcePileIndex === pileIndex) {
-      return Array.from({ length: pile.length }, (_, i) => i);
-    }
-
-    // Otherwise, only the top card is selectable
-    if (pile.length > 0) {
-      return [pile.length - 1];
-    }
-
-    return [];
+    // All cards in the pile are face-up and selectable for multi-card drag
+    return Array.from({ length: pile.length }, (_, i) => i);
   };
 
   return (
     <div className={`${styles.workPiles} ${className ?? ''}`}>
       {piles.map((pile, pileIndex) => {
         const isDestination = isValidDestination(pileIndex);
-        const selectableIndices = getSelectableIndices(pile, pileIndex);
+        const selectableIndices = getSelectableIndices(pile);
 
         // Find the selected card index in this pile for highlighting cascade
         const selectedIndexInPile =
@@ -188,7 +180,7 @@ function DroppableWorkPile({
           }
           onCardClick={(card, index) => onCardClick(card, pileIndex, index)}
           onCardDoubleClick={(card, index) => onCardDoubleClick(card, pileIndex, index)}
-          draggableTopCard={!disabled}
+          draggableAllCards={!disabled}
           pileIndex={pileIndex}
         />
       ) : (

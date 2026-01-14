@@ -259,14 +259,13 @@ export function PlayerArea({
         className={className}
       />
 
-      {/* Drag overlay - shows dragged card following cursor */}
+      {/* Drag overlay - shows dragged card(s) following cursor */}
       <DragOverlay>
         {dragDrop.dragSource && (
-          <CardComponent
-            card={dragDrop.dragSource.card}
-            faceUp={true}
-            backColor={playerColor}
-            className="dragging"
+          <DragPreview
+            dragSource={dragDrop.dragSource}
+            workPiles={workPiles}
+            playerColor={playerColor}
           />
         )}
       </DragOverlay>
@@ -275,3 +274,82 @@ export function PlayerArea({
 }
 
 export default PlayerArea;
+
+/* =============================================================================
+   DRAG PREVIEW COMPONENT
+   Shows the card(s) being dragged in the overlay
+   ============================================================================= */
+
+interface DragPreviewProps {
+  dragSource: {
+    type: 'nertz' | 'work' | 'waste';
+    card: Card;
+    pileIndex?: number;
+    cardIndex?: number;
+    cardCount: number;
+  };
+  workPiles: [Card[], Card[], Card[], Card[]];
+  playerColor: PlayerColor;
+}
+
+function DragPreview({ dragSource, workPiles, playerColor }: DragPreviewProps) {
+  // For single card drags, just show the card
+  if (dragSource.cardCount === 1) {
+    return (
+      <CardComponent
+        card={dragSource.card}
+        faceUp={true}
+        backColor={playerColor}
+        className="dragging"
+      />
+    );
+  }
+
+  // For multi-card drags from work piles, show the stack
+  if (dragSource.type === 'work' && dragSource.pileIndex !== undefined && dragSource.cardIndex !== undefined) {
+    const pile = workPiles[dragSource.pileIndex];
+    if (!pile) {
+      return (
+        <CardComponent
+          card={dragSource.card}
+          faceUp={true}
+          backColor={playerColor}
+          className="dragging"
+        />
+      );
+    }
+    const draggedCards = pile.slice(dragSource.cardIndex);
+
+    return (
+      <div style={{ position: 'relative' }}>
+        {draggedCards.map((card, index) => (
+          <div
+            key={`${card.deckId}-${card.suit}-${card.rank}`}
+            style={{
+              position: index === 0 ? 'relative' : 'absolute',
+              top: index * 24,
+              left: 0,
+              zIndex: index,
+            }}
+          >
+            <CardComponent
+              card={card}
+              faceUp={true}
+              backColor={playerColor}
+            />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  // Fallback to single card
+  return (
+    <CardComponent
+      card={dragSource.card}
+      faceUp={true}
+      backColor={playerColor}
+      className="dragging"
+    />
+  );
+}
