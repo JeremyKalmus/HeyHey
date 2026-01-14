@@ -154,11 +154,20 @@ function DroppableWorkPile({
 
   const isHighlighted = isDestination || isOver;
 
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (disabled) return;
+    if ((event.key === 'Enter' || event.key === ' ') && (pile.length === 0 || isDestination)) {
+      event.preventDefault();
+      onPileClick(pileIndex);
+    }
+  };
+
   return (
     <div
       ref={setNodeRef}
       className={`${styles.pileContainer} ${isHighlighted ? styles.validDestination : ''} ${isOver ? styles.dragOver : ''}`}
       onClick={() => pile.length === 0 && onPileClick(pileIndex)}
+      onKeyDown={handleKeyDown}
       role="button"
       tabIndex={disabled ? -1 : 0}
       aria-label={`Work pile ${pileIndex + 1} - ${pile.length} cards${isDestination ? ' - valid destination' : ''}`}

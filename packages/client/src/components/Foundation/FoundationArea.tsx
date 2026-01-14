@@ -176,6 +176,14 @@ function DroppableFoundationPile({
 
   const isHighlighted = isTarget || isOver;
 
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (!isClickable) return;
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      onPileClick(suit);
+    }
+  };
+
   return (
     <div
       ref={setNodeRef}
@@ -183,6 +191,7 @@ function DroppableFoundationPile({
         isHighlighted ? styles.validTarget : ''
       } ${isOver ? styles.dragOver : ''}`}
       onClick={() => onPileClick(suit)}
+      onKeyDown={handleKeyDown}
       role="button"
       tabIndex={isClickable ? 0 : -1}
       aria-label={`${suit} foundation - ${cardCount} cards${

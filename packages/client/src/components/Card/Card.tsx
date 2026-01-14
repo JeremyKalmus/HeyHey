@@ -73,12 +73,21 @@ export function Card({
     }
   };
 
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (disabled) return;
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      onClick?.(card);
+    }
+  };
+
   return (
     <div
       className={classNames}
       style={style}
       onClick={handleClick}
       onDoubleClick={handleDoubleClick}
+      onKeyDown={handleKeyDown}
       role="button"
       tabIndex={disabled ? -1 : 0}
       aria-label={
