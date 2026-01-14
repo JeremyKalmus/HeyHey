@@ -98,6 +98,14 @@ export {
   Zap as ZapIcon,
 } from 'lucide-react';
 
+// Card/Pile indicators
+export {
+  Layers as LayersIcon,
+  Square as SquareIcon,
+  LayoutGrid as LayoutGridIcon,
+  Inbox as InboxIcon,
+} from 'lucide-react';
+
 // Avatar Icons
 export {
   Smile as SmileIcon,
