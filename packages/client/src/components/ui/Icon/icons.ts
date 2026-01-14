@@ -104,6 +104,8 @@ export {
   Repeat as RecycleIcon,
   Square as SquareIcon,
   CircleDot as CircleDotIcon,
+  LayoutGrid as LayoutGridIcon,
+  Inbox as InboxIcon,
 } from 'lucide-react';
 
 // Avatar Icons

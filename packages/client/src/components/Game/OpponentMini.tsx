@@ -1,9 +1,11 @@
 // OpponentMini - Compact display of opponent's game state
 // Shows card counts (not actual cards) with emphasis on Nertz pile
+// Neobrutalist styling with arcade score display
 
 import type { PlayerGameState } from '@heyhey/shared';
 import type { PlayerColor } from '../Card/CardBack';
 import { Avatar, type AvatarString, DEFAULT_AVATAR } from '../ui/Avatar';
+import { LayersIcon, InboxIcon, LayoutGridIcon } from '../ui/Icon';
 import styles from './OpponentMini.module.css';
 
 export interface OpponentMiniProps {
@@ -52,27 +54,27 @@ export function OpponentMini({
         <span className={styles.name}>{name}</span>
       </div>
 
-      {/* Nertz pile count - most important! */}
+      {/* Nertz pile count - arcade style score display */}
       <div
         className={`${styles.nertzCount} ${nertzDanger ? styles.danger : ''} ${nertzEmpty ? styles.empty : ''}`}
         title="Nertz pile"
       >
-        <span className={styles.nertzLabel}>N</span>
+        <span className={styles.nertzLabel}>NERTZ</span>
         <span className={styles.nertzNumber}>{nertzCount}</span>
       </div>
 
-      {/* Other pile counts */}
+      {/* Other pile counts with icons */}
       <div className={styles.pileCounts}>
         <div className={styles.pileCount} title="Stock pile">
-          <span className={styles.pileIcon}>S</span>
+          <LayersIcon size={12} strokeWidth={2.5} />
           <span>{stockCount}</span>
         </div>
         <div className={styles.pileCount} title="Waste pile">
-          <span className={styles.pileIcon}>W</span>
+          <InboxIcon size={12} strokeWidth={2.5} />
           <span>{wasteCount}</span>
         </div>
         <div className={styles.pileCount} title="Work piles total">
-          <span className={styles.pileIcon}>P</span>
+          <LayoutGridIcon size={12} strokeWidth={2.5} />
           <span>{workCount}</span>
         </div>
       </div>

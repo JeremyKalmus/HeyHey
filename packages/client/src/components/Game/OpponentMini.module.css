@@ -1,40 +1,78 @@
 /* OpponentMini Component Styles */
-/* Compact opponent area display with card counts */
+/* Compact opponent area with neobrutalist arcade styling */
 
 .opponentMini {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.3);
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  min-width: 80px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-lg);
+  background: var(--bg-primary);
+  border: var(--border-thick) solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  min-width: 90px;
+  transition: var(--transition-shadow), var(--transition-transform);
 }
 
-/* Color variants - subtle border tint */
-.opponentMini.red { border-color: rgba(244, 67, 54, 0.4); }
-.opponentMini.blue { border-color: rgba(33, 150, 243, 0.4); }
-.opponentMini.green { border-color: rgba(76, 175, 80, 0.4); }
-.opponentMini.yellow { border-color: rgba(255, 235, 59, 0.4); }
-.opponentMini.purple { border-color: rgba(156, 39, 176, 0.4); }
-.opponentMini.orange { border-color: rgba(255, 152, 0, 0.4); }
-.opponentMini.pink { border-color: rgba(233, 30, 99, 0.4); }
-.opponentMini.teal { border-color: rgba(0, 150, 136, 0.4); }
+.opponentMini:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: var(--shadow-md);
+}
 
-/* Activity indicator - pulsing dot */
+/* Color variants - solid color accents */
+.opponentMini.red {
+  border-color: var(--arcade-red);
+  box-shadow: 2px 2px 0px var(--arcade-red);
+}
+
+.opponentMini.blue {
+  border-color: var(--arcade-blue);
+  box-shadow: 2px 2px 0px var(--arcade-blue);
+}
+
+.opponentMini.green {
+  border-color: var(--arcade-green);
+  box-shadow: 2px 2px 0px var(--arcade-green);
+}
+
+.opponentMini.yellow {
+  border-color: var(--arcade-yellow);
+  box-shadow: 2px 2px 0px var(--arcade-yellow);
+}
+
+.opponentMini.purple {
+  border-color: var(--arcade-purple);
+  box-shadow: 2px 2px 0px var(--arcade-purple);
+}
+
+.opponentMini.orange {
+  border-color: var(--arcade-orange);
+  box-shadow: 2px 2px 0px var(--arcade-orange);
+}
+
+.opponentMini.pink {
+  border-color: var(--arcade-pink);
+  box-shadow: 2px 2px 0px var(--arcade-pink);
+}
+
+.opponentMini.teal {
+  border-color: var(--arcade-cyan);
+  box-shadow: 2px 2px 0px var(--arcade-cyan);
+}
+
+/* Activity indicator - pulsing dot with arcade glow */
 .activityPulse {
   position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 8px;
-  height: 8px;
+  top: 6px;
+  right: 6px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  background: #4caf50;
+  background: var(--arcade-green);
+  border: var(--border-thin) solid var(--border-color);
   animation: pulse 1s ease-in-out infinite;
+  box-shadow: 0 0 6px var(--arcade-green);
 }
 
 @keyframes pulse {
@@ -43,7 +81,7 @@
     transform: scale(1);
   }
   50% {
-    opacity: 0.5;
+    opacity: 0.7;
     transform: scale(1.2);
   }
 }
@@ -52,99 +90,120 @@
 .identity {
   display: flex;
   align-items: center;
-  gap: 4px;
-}
-
-.avatar {
-  font-size: 1.25rem;
-  line-height: 1;
+  gap: var(--space-xs);
 }
 
 .name {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.9);
-  max-width: 60px;
+  font-family: var(--font-family-bold);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  max-width: 70px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
 }
 
-/* Nertz pile count - prominent display */
+/* Nertz pile count - arcade score display */
 .nertzCount {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  padding: 4px 10px;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.1);
-  min-width: 40px;
+  padding: var(--space-xs) var(--space-md);
+  background: var(--color-black);
+  border: var(--border-medium) solid var(--border-color);
+  min-width: 50px;
 }
 
 .nertzLabel {
-  font-size: 0.6rem;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.5);
+  font-family: var(--font-family-mono);
+  font-size: 0.5rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--arcade-green);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: var(--letter-spacing-wider);
+  text-shadow: 0 0 4px var(--arcade-green);
 }
 
 .nertzNumber {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.95);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-black);
+  color: var(--arcade-green);
   line-height: 1;
+  text-shadow: 0 0 8px var(--arcade-green);
+  font-variant-numeric: tabular-nums;
 }
 
 /* Danger state - close to winning */
 .nertzCount.danger {
-  background: rgba(255, 152, 0, 0.3);
-  animation: dangerPulse 1.5s ease-in-out infinite;
+  background: var(--arcade-orange);
+  animation: dangerPulse 0.8s ease-in-out infinite;
 }
 
+.nertzCount.danger .nertzLabel,
 .nertzCount.danger .nertzNumber {
-  color: #ffb74d;
+  color: var(--color-black);
+  text-shadow: none;
 }
 
 @keyframes dangerPulse {
   0%, 100% {
-    background: rgba(255, 152, 0, 0.3);
+    background: var(--arcade-orange);
   }
   50% {
-    background: rgba(255, 152, 0, 0.5);
+    background: var(--arcade-yellow);
   }
 }
 
 /* Empty state - opponent won! */
 .nertzCount.empty {
-  background: rgba(255, 193, 7, 0.4);
-  border: 1px solid rgba(255, 193, 7, 0.6);
+  background: var(--arcade-yellow);
+  border-color: var(--color-black);
 }
 
+.nertzCount.empty .nertzLabel,
 .nertzCount.empty .nertzNumber {
-  color: #ffc107;
+  color: var(--color-black);
+  text-shadow: none;
 }
 
-.nertzCount.empty .nertzLabel {
-  color: rgba(255, 193, 7, 0.8);
-}
-
-/* Other pile counts - compact row */
+/* Other pile counts - compact row with icons */
 .pileCounts {
   display: flex;
-  gap: 8px;
-  font-size: 0.65rem;
+  gap: var(--space-md);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
 }
 
 .pileCount {
   display: flex;
   align-items: center;
-  gap: 2px;
-  color: rgba(255, 255, 255, 0.6);
+  gap: 3px;
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-medium);
 }
 
-.pileIcon {
-  font-size: 0.7rem;
+.pileCount svg {
   opacity: 0.8;
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .opponentMini,
+.dark .opponentMini {
+  background: var(--bg-dark-surface);
+}
+
+[data-theme="dark"] .name,
+.dark .name {
+  color: var(--color-white);
+}
+
+[data-theme="dark"] .pileCount,
+.dark .pileCount {
+  color: var(--color-gray-light);
 }
