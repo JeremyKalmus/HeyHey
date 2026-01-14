@@ -26,28 +26,39 @@ export function HomePage({ onCreateRoom, onJoinRoom }: HomePageProps) {
   return (
     <div className={styles.container}>
       <div className={styles.content}>
-        <h1 className={styles.title}>HeyHey!</h1>
-        <p className={styles.subtitle}>Online multiplayer Nertz</p>
+        <div className={styles.logo}>
+          <h1 className={styles.title}>HEYHEY!</h1>
+          <div className={styles.titleAccent} />
+        </div>
+        <p className={styles.subtitle}>ONLINE MULTIPLAYER NERTZ</p>
 
         <div className={styles.actions}>
           <Button
             variant="primary"
             size="large"
             onClick={() => setShowCreateModal(true)}
+            className={styles.createButton}
           >
-            Create Room
+            ▶ PRESS START
           </Button>
           <Button
             variant="secondary"
             size="large"
             onClick={() => setShowJoinModal(true)}
           >
-            Join Room
+            JOIN GAME
           </Button>
         </div>
 
         <div className={styles.footer}>
-          <p>2-8 players • Real-time gameplay • No turns!</p>
+          <div className={styles.stats}>
+            <span className={styles.stat}>2-8 PLAYERS</span>
+            <span className={styles.divider}>◆</span>
+            <span className={styles.stat}>REAL-TIME</span>
+            <span className={styles.divider}>◆</span>
+            <span className={styles.stat}>NO TURNS</span>
+          </div>
+          <p className={styles.insertCoin}>INSERT COIN TO CONTINUE</p>
         </div>
       </div>
 

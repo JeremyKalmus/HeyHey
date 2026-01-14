@@ -1,26 +1,44 @@
+/**
+ * PlayerList - 90s Arcade Neubrutalist Style
+ * Player list with arcade-style numbering
+ */
+
 .container {
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 12px;
-  padding: 1.25rem;
+  background: var(--bg-dark-elevated);
+  border: var(--border-thick) solid var(--color-black);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-neubrutalist);
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-md);
+  border-bottom: var(--border-medium) solid var(--color-black);
 }
 
 .title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #eee;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-black);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+  color: var(--arcade-yellow);
   margin: 0;
 }
 
 .count {
-  font-size: 0.875rem;
-  color: #888;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--arcade-cyan);
+  background: var(--color-black);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  border: var(--border-thin) solid var(--arcade-cyan);
 }
 
 .list {
@@ -29,32 +47,61 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--space-sm);
 }
 
 .player {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.5rem;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 8px;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background: var(--bg-dark-surface);
+  border: var(--border-medium) solid var(--color-black);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition-fast);
+}
+
+.player:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: var(--shadow-neubrutalist);
 }
 
 .player.empty {
   opacity: 0.5;
+  border-style: dashed;
+}
+
+.player.empty:hover {
+  transform: none;
+  box-shadow: var(--shadow-sm);
+}
+
+.playerNumber {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-black);
+  color: var(--arcade-pink);
+  background: var(--color-black);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  border: var(--border-thin) solid var(--arcade-pink);
+  min-width: 32px;
+  text-align: center;
 }
 
 .emptyAvatar {
   width: 40px;
   height: 40px;
-  border-radius: 50%;
-  border: 2px dashed rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-md);
+  border: var(--border-medium) dashed var(--color-gray);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #666;
-  font-size: 1.125rem;
+  color: var(--color-gray);
+  font-family: var(--font-family-bold);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-black);
   flex-shrink: 0;
 }
 
@@ -63,40 +110,63 @@
   flex-direction: column;
   gap: 2px;
   min-width: 0;
+  flex: 1;
 }
 
 .name {
-  font-weight: 500;
-  color: #eee;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-white);
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-sm);
 }
 
 .youBadge {
-  font-size: 0.75rem;
-  color: #888;
-  font-weight: 400;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-black);
+  color: var(--arcade-cyan);
+  animation: blink 1s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 50%, 100% { opacity: 1; }
+  25%, 75% { opacity: 0.5; }
 }
 
 .status {
-  font-size: 0.75rem;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
 }
 
 .hostBadge {
-  color: #fbbf24;
+  color: var(--arcade-yellow);
 }
 
 .readyBadge {
-  color: #22c55e;
+  color: var(--arcade-green);
 }
 
 .waitingBadge {
-  color: #888;
+  color: var(--color-gray);
+  animation: dots 1.5s ease-in-out infinite;
+}
+
+@keyframes dots {
+  0%, 20% { opacity: 0.3; }
+  40% { opacity: 0.6; }
+  60% { opacity: 1; }
+  80%, 100% { opacity: 0.3; }
 }
 
 .emptyText {
-  color: #666;
-  font-size: 0.875rem;
-  font-style: italic;
+  color: var(--color-gray);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
 }

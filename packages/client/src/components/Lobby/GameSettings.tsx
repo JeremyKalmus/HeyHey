@@ -31,12 +31,12 @@ export function GameSettings({
 
   return (
     <div className={styles.container}>
-      <h3 className={styles.title}>Game Settings</h3>
+      <h3 className={styles.title}>◆ GAME SETTINGS ◆</h3>
 
       <div className={styles.setting}>
-        <label className={styles.label}>Nertz Pile Size</label>
+        <label className={styles.label}>NERTZ PILE</label>
         <p className={styles.description}>
-          Number of cards in each player&apos;s Nertz pile
+          Cards in each player&apos;s Nertz pile
         </p>
         <div className={styles.options}>
           <Button
@@ -45,7 +45,7 @@ export function GameSettings({
             onClick={() => handleNertzPileSizeChange(10)}
             disabled={!canEdit}
           >
-            10 cards
+            10
           </Button>
           <Button
             variant={config.nertzPileSize === 13 ? 'primary' : 'secondary'}
@@ -53,15 +53,15 @@ export function GameSettings({
             onClick={() => handleNertzPileSizeChange(13)}
             disabled={!canEdit}
           >
-            13 cards
+            13
           </Button>
         </div>
       </div>
 
       <div className={styles.setting}>
-        <label className={styles.label}>Draw Count</label>
+        <label className={styles.label}>DRAW COUNT</label>
         <p className={styles.description}>
-          Cards drawn from stock pile at a time
+          Cards drawn from stock at a time
         </p>
         <div className={styles.options}>
           <Button
@@ -70,7 +70,7 @@ export function GameSettings({
             onClick={() => handleDrawCountChange(1)}
             disabled={!canEdit}
           >
-            1 card (easy)
+            1 EASY
           </Button>
           <Button
             variant={config.drawCount === 3 ? 'primary' : 'secondary'}
@@ -78,14 +78,14 @@ export function GameSettings({
             onClick={() => handleDrawCountChange(3)}
             disabled={!canEdit}
           >
-            3 cards
+            3 HARD
           </Button>
         </div>
       </div>
 
       <div className={styles.setting}>
-        <label className={styles.label}>Target Score</label>
-        <p className={styles.description}>First player to reach this wins</p>
+        <label className={styles.label}>TARGET SCORE</label>
+        <p className={styles.description}>First to reach this wins!</p>
         <div className={styles.options}>
           {[50, 100, 150, 200].map((score) => (
             <Button
@@ -102,7 +102,7 @@ export function GameSettings({
       </div>
 
       {!isHost && (
-        <p className={styles.hint}>Only the host can change settings</p>
+        <p className={styles.hint}>★ HOST CONTROLS SETTINGS ★</p>
       )}
     </div>
   );

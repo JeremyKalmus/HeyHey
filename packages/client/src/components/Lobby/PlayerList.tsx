@@ -27,15 +27,16 @@ export function PlayerList({
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h3 className={styles.title}>Players</h3>
+        <h3 className={styles.title}>◆ PLAYERS ◆</h3>
         <span className={styles.count}>
           {players.length}/{maxPlayers}
         </span>
       </div>
 
       <ul className={styles.list}>
-        {players.map((player) => (
+        {players.map((player, index) => (
           <li key={player.id} className={styles.player}>
+            <span className={styles.playerNumber}>P{index + 1}</span>
             <Avatar
               avatar={player.avatar || DEFAULT_AVATAR}
               color={player.color}
@@ -43,18 +44,18 @@ export function PlayerList({
             />
             <div className={styles.info}>
               <span className={styles.name}>
-                {player.name}
+                {player.name.toUpperCase()}
                 {player.id === currentPlayerId && (
-                  <span className={styles.youBadge}>(You)</span>
+                  <span className={styles.youBadge}>◀ YOU</span>
                 )}
               </span>
               <span className={styles.status}>
                 {player.isHost ? (
-                  <span className={styles.hostBadge}>Host</span>
+                  <span className={styles.hostBadge}>★ HOST</span>
                 ) : player.isReady ? (
-                  <span className={styles.readyBadge}>Ready</span>
+                  <span className={styles.readyBadge}>✓ READY</span>
                 ) : (
-                  <span className={styles.waitingBadge}>Waiting</span>
+                  <span className={styles.waitingBadge}>...</span>
                 )}
               </span>
             </div>
@@ -63,8 +64,9 @@ export function PlayerList({
 
         {Array.from({ length: emptySlots }).map((_, i) => (
           <li key={`empty-${i}`} className={`${styles.player} ${styles.empty}`}>
+            <span className={styles.playerNumber}>P{players.length + i + 1}</span>
             <div className={styles.emptyAvatar}>?</div>
-            <span className={styles.emptyText}>Waiting for player...</span>
+            <span className={styles.emptyText}>WAITING...</span>
           </li>
         ))}
       </ul>
