@@ -10,6 +10,7 @@ import type {
   PlayerGameState,
   FoundationPile,
   Move,
+  MoveSource,
   LobbyPlayer,
   StateUpdate,
   MoveRejection,
@@ -46,7 +47,7 @@ export interface GameStateContextValue {
   setupComplete: () => void;
   makeMove: (move: Move) => void;
   callNertz: () => void;
-  foundationMove: (card: PlayerGameState['nertzPile'][0], foundationIndex: number, source: Move extends { source: infer S } ? S : never) => void;
+  foundationMove: (card: PlayerGameState['nertzPile'][0], foundationIndex: number, source: MoveSource) => void;
 
   // Errors
   error: string | null;
@@ -505,7 +506,7 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
   }, [socket, isConnected]);
 
   const foundationMove = useCallback(
-    (card: PlayerGameState['nertzPile'][0], foundationIndex: number, source: Move extends { source: infer S } ? S : never) => {
+    (card: PlayerGameState['nertzPile'][0], foundationIndex: number, source: MoveSource) => {
       if (!socket || !isConnected) {
         return;
       }
@@ -513,7 +514,7 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
       socket.emit('foundationMove', {
         card,
         foundationIndex,
-        source: source as { type: 'nertz' } | { type: 'work'; pileIndex: number; cardIndex?: number } | { type: 'waste' },
+        source,
         clientSequence: state.moveSequence + 1,
       });
     },

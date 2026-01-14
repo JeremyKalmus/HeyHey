@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+// App - Main application with routing and context providers
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { SocketProvider } from './context/SocketContext';
 import { GameStateProvider } from './context/GameStateContext';
 import { HomePageConnected } from './pages/HomePageConnected';
@@ -14,6 +15,7 @@ function App() {
             <Route path="/" element={<HomePageConnected />} />
             <Route path="/room/:code" element={<RoomLobbyConnected />} />
             <Route path="/game/:gameId" element={<GameScreenConnected />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
       </GameStateProvider>

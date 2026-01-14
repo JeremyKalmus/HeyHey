@@ -1,68 +1,111 @@
-// RoomLobbyConnected - Connects RoomLobby to GameStateContext
-// Handles navigation on game start
-
-import { useEffect } from 'react';
+// RoomLobbyConnected - Wires RoomLobby to context and routing
+import { useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useGameState } from '../context';
 import { RoomLobby } from '../components/Lobby/RoomLobby';
-import { useGameState } from '../context/GameStateContext';
 import type { LobbyPlayer } from '../components/Lobby/PlayerList';
+import type { PlayerColor } from '../components/Card/CardBack';
+import type { GameConfig } from '@heyhey/shared';
 
-// Default player colors for assignment (matches PlayerColor type)
-const PLAYER_COLORS: LobbyPlayer['color'][] = ['red', 'blue', 'green', 'purple', 'orange', 'teal', 'pink', 'yellow'];
+// Default colors assigned to players in order
+const PLAYER_COLORS: PlayerColor[] = [
+  'red', 'blue', 'green', 'yellow', 'purple', 'orange', 'pink', 'teal',
+];
 
 export function RoomLobbyConnected() {
-  const { code } = useParams<{ code: string }>();
   const navigate = useNavigate();
+  const { code } = useParams<{ code: string }>();
   const {
     room,
     playerId,
     isHost,
     gameId,
-    leaveRoom,
+    gamePhase,
     updateSettings,
     startGame,
+    leaveRoom,
+    error,
+    clearError,
   } = useGameState();
-
-  // Navigate to game when game starts
-  useEffect(() => {
-    if (gameId) {
-      navigate(`/game/${gameId}`);
-    }
-  }, [gameId, navigate]);
 
   // Redirect to home if no room
   useEffect(() => {
-    if (!room && code) {
+    if (!room) {
       navigate('/');
     }
-  }, [room, code, navigate]);
+  }, [room, navigate]);
 
+  // Navigate to game when game starts
+  useEffect(() => {
+    if (gameId && (gamePhase === 'setup' || gamePhase === 'playing')) {
+      navigate(`/game/${gameId}`);
+    }
+  }, [gameId, gamePhase, navigate]);
+
+  // Map server LobbyPlayer to client LobbyPlayer with colors
+  const clientPlayers: LobbyPlayer[] = useMemo(() => {
+    if (!room) return [];
+    return room.players.map((p, index) => ({
+      id: p.id,
+      name: p.name,
+      color: PLAYER_COLORS[index % PLAYER_COLORS.length]!,
+      isHost: p.isHost,
+      isReady: p.isHost, // Host is always ready
+    }));
+  }, [room]);
+
+  const handleConfigChange = (config: GameConfig) => {
+    updateSettings(config);
+  };
+
+  const handleStartGame = () => {
+    startGame();
+  };
+
+  const handleLeaveRoom = () => {
+    leaveRoom();
+    navigate('/');
+  };
+
+  // Don't render if no room
   if (!room || !playerId) {
     return null;
   }
 
-  // Adapt shared LobbyPlayer to component LobbyPlayer (add color and isReady)
-  const adaptedPlayers: LobbyPlayer[] = room.players.map((player, index) => ({
-    ...player,
-    color: PLAYER_COLORS[index % PLAYER_COLORS.length]!,
-    isReady: player.isHost, // Host is always ready, others default to false
-  }));
+  // Validate room code matches URL
+  if (code && room.code !== code) {
+    return null;
+  }
 
   return (
-    <RoomLobby
-      roomCode={room.code}
-      players={adaptedPlayers}
-      currentPlayerId={playerId}
-      isHost={isHost}
-      gameConfig={room.settings}
-      onConfigChange={(config) => updateSettings(config)}
-      onStartGame={startGame}
-      onLeaveRoom={() => {
-        leaveRoom();
-        navigate('/');
-      }}
-    />
+    <>
+      <RoomLobby
+        roomCode={room.code}
+        players={clientPlayers}
+        currentPlayerId={playerId}
+        isHost={isHost}
+        gameConfig={room.settings}
+        onConfigChange={handleConfigChange}
+        onStartGame={handleStartGame}
+        onLeaveRoom={handleLeaveRoom}
+      />
+      {error && (
+        <div style={{
+          position: 'fixed',
+          bottom: '20px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: '#ff4444',
+          color: 'white',
+          padding: '12px 24px',
+          borderRadius: '8px',
+          fontFamily: 'monospace',
+          zIndex: 1000,
+          cursor: 'pointer',
+        }} onClick={clearError}>
+          {error}
+        </div>
+      )}
+    </>
   );
 }
-
-export default RoomLobbyConnected;
