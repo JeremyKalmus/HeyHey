@@ -1,0 +1,42 @@
+# Auth Seed Vault - HeyHey! (Nertz Card Game)
+# Auto-discovered patterns from codebase
+
+auth:
+  model: socket_identity
+  description: Socket.IO connection-based identity (no JWT/session/OAuth)
+
+  identity:
+    - type: socket_id
+      usage: Primary player identifier
+      persistence: Connection duration only
+
+    - type: room_code
+      usage: Room membership verification
+      format: 6-char alphanumeric (HEYHEY prefix + 4 chars)
+
+  access_control:
+    room_membership:
+      permits: Participate in game room
+      enforcement: LobbyManager socketToRoom mapping
+      location: packages/server/src/events/LobbyManager.ts
+
+    host_authority:
+      permits: Modify room settings, start game
+      grants_to: Room creator (hostId)
+      enforcement: room.hostId === socketId check
+      error_code: not_host
+
+    player_action_ownership:
+      permits: Make moves for own player only
+      enforcement: GameManager verifies socketId owns playerId
+      error_code: player_not_found
+
+  roles: none
+  scopes: none
+  tokens: none
+  middleware: none
+
+  notes:
+    - Appropriate for ephemeral real-time game connections
+    - No persistent authentication required
+    - All state in-memory (not persisted)

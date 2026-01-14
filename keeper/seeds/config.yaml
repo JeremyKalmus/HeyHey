@@ -1,0 +1,58 @@
+# Config Seed Vault - HeyHey! (Nertz Card Game)
+# Auto-discovered patterns from codebase
+
+config:
+  feature_flags: []  # No feature flag system
+
+  env_vars:
+    - name: PORT
+      required: false
+      default: 3000
+      sensitive: false
+      location: packages/server/src/index.ts
+
+    - name: CLIENT_URL
+      required: false
+      default: "http://localhost:5173"
+      sensitive: false
+      location: packages/server/src/index.ts
+
+    - name: VITE_SERVER_URL
+      required: false
+      default: "http://localhost:3000"
+      sensitive: false
+      location: packages/client/src/hooks/useSocket.ts
+
+  game_config:
+    - name: GameConfig
+      location: packages/shared/src/types/index.ts
+      properties:
+        - nertzPileSize: [10, 13] (default: 13)
+        - drawCount: [1, 3] (default: 3)
+        - targetScore: 1-1000 (default: 100)
+
+  constants:
+    room_codes:
+      CODE_PREFIX: "HEYHEY"
+      CODE_LENGTH: 4
+      SAFE_CHARS: "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
+      location: packages/shared/src/room/roomCode.ts
+
+    deck:
+      DECK_SIZE: 52
+      ALL_SUITS: [hearts, diamonds, clubs, spades]
+      ALL_RANKS: [1-13]
+      location: packages/shared/src/deck/index.ts
+
+    scoring:
+      FOUNDATION_CARD_POINTS: 1
+      NERTZ_PENALTY_PER_CARD: 2
+      location: packages/shared/src/engine/ScoringEngine.ts
+
+    avatar:
+      DEFAULT_AVATAR: "user:circle"
+      location: packages/client/src/components/ui/Avatar/types.ts
+
+    engine:
+      VERSION: "0.1.0"
+      location: packages/shared/src/engine/index.ts

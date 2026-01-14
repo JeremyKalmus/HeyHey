@@ -1,0 +1,107 @@
+# Backend Seed Vault - HeyHey! (Nertz Card Game)
+# Auto-discovered patterns from codebase
+
+backend:
+  framework: Express.js + Socket.IO
+  language: TypeScript
+
+  api_routes:
+    - method: GET
+      path: /health
+      auth: none
+      description: Server health check only
+
+  socket_events:
+    lobby_phase:
+      client_to_server:
+        - createRoom
+        - joinRoom
+        - leaveRoom
+        - updateSettings (host_only)
+        - startGame (host_only)
+      server_to_client:
+        - roomCreated
+        - roomJoined
+        - playerJoined (broadcast)
+        - playerLeft (broadcast)
+        - settingsUpdated (broadcast)
+        - gameStarted (broadcast)
+        - hostChanged (broadcast)
+        - error
+
+    setup_phase:
+      client_to_server:
+        - setupComplete
+      server_to_client:
+        - playerSetupComplete (broadcast)
+        - allPlayersReady (broadcast)
+
+    playing_phase:
+      client_to_server:
+        - makeMove
+        - callNertz
+        - foundationMove
+      server_to_client:
+        - stateUpdate (broadcast)
+        - moveRejected
+        - foundationUpdated (broadcast)
+        - foundationMoveRejected
+        - roundScored (broadcast)
+        - gameEnded (broadcast)
+
+  services:
+    - name: LobbyManager
+      location: packages/server/src/events/LobbyManager.ts
+      responsibility: Room lifecycle, player management, settings
+
+    - name: SetupManager
+      location: packages/server/src/events/SetupManager.ts
+      responsibility: Setup phase completion tracking
+
+    - name: GameManager
+      location: packages/server/src/events/GameManager.ts
+      responsibility: Active game state, move validation, conflict resolution
+
+    - name: StateManager
+      location: packages/shared/src/engine/StateManager.ts
+      responsibility: Game state transitions and delta generation
+
+    - name: RulesEngine
+      location: packages/shared/src/engine/RulesEngine.ts
+      responsibility: Move validation per Nertz rules
+
+    - name: ScoringEngine
+      location: packages/shared/src/engine/ScoringEngine.ts
+      responsibility: Round and game scoring
+
+  error_codes:
+    room_management:
+      - room_not_found
+      - invalid_code
+      - already_in_room
+      - not_in_room
+      - not_host
+      - not_enough_players
+
+    settings_validation:
+      - invalid_nertz_pile_size
+      - invalid_draw_count
+      - invalid_target_score
+
+    move_validation:
+      - invalid_source
+      - invalid_destination
+      - empty_source
+      - wrong_color_for_work
+      - wrong_rank_for_work
+      - wrong_suit_for_foundation
+      - wrong_rank_for_foundation
+
+  conflict_resolution:
+    strategy: First-Received-Wins
+    applies_to: Shared foundation moves
+    implementation: GameManager.processFoundationMove()
+
+  logging:
+    strategy: Console logging (no structured logger)
+    format: "context: message"

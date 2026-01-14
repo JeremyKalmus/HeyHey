@@ -1,0 +1,87 @@
+# Data Seed Vault - HeyHey! (Nertz Card Game)
+# Auto-discovered patterns from codebase
+
+data:
+  tables: []  # No database - in-memory state only
+
+  enums:
+    game_core:
+      - name: GamePhase
+        location: packages/shared/src/types/index.ts
+        values: [lobby, setup, playing, scoring, finished]
+
+      - name: Suit
+        location: packages/shared/src/deck/index.ts
+        values: [hearts, diamonds, clubs, spades]
+
+      - name: MoveSource
+        location: packages/shared/src/types/index.ts
+        values: [nertz, work, waste]
+
+      - name: MoveDestination
+        location: packages/shared/src/types/index.ts
+        values: [work, foundation]
+
+      - name: SetupState
+        location: packages/shared/src/engine/SetupStateMachine.ts
+        values: [idle, placingNertz, flipNertz, placingWork, complete]
+
+      - name: MoveValidationError
+        location: packages/shared/src/types/index.ts
+        values: [invalid_source, invalid_destination, empty_source, wrong_color_for_work, wrong_rank_for_work, wrong_suit_for_foundation, wrong_rank_for_foundation]
+
+    ui:
+      - name: PlayerColor
+        location: packages/client/src/components/Card/CardBack.tsx
+        values: [red, blue, green, yellow, purple, orange, pink, teal]
+
+      - name: AvatarIcon
+        location: packages/client/src/components/ui/Avatar/types.ts
+        values: [user, smile, ghost, skull, cat, bot, heart, star, zap, flame, sparkles, crown]
+
+      - name: SoundType
+        location: packages/client/src/audio/SoundManager.ts
+        values: [cardSelect, cardPlace, cardFlip, error, heyHey]
+
+  types:
+    core:
+      - name: Card
+        location: packages/shared/src/types/index.ts
+        fields: [suit, rank, deckId]
+
+      - name: GameState
+        location: packages/shared/src/types/index.ts
+        fields: [gameId, phase, players, foundations, config, calledBy]
+
+      - name: PlayerGameState
+        location: packages/shared/src/types/index.ts
+        fields: [playerId, deckId, nertzPile, workPiles, stockPile, wastePile]
+
+      - name: FoundationPile
+        location: packages/shared/src/types/index.ts
+        fields: [suit, cards]
+
+      - name: Move
+        location: packages/shared/src/types/index.ts
+        variants: [CardMove, DrawMove, FlipStockMove]
+
+      - name: StateDelta
+        location: packages/shared/src/types/index.ts
+        variants: [cardMoved, cardsDrawn, stockFlipped, nertzCalled, phaseChanged]
+
+      - name: StateUpdate
+        location: packages/shared/src/types/index.ts
+        fields: [sequence, timestamp, delta, gameId]
+
+    scoring:
+      - name: RoundResult
+        location: packages/shared/src/types/index.ts
+        fields: [roundNumber, calledBy, playerScores, timestamp]
+
+      - name: PlayerRoundScore
+        location: packages/shared/src/types/index.ts
+        fields: [playerId, foundationCards, nertzPenalty, roundScore]
+
+      - name: ScoringState
+        location: packages/shared/src/types/index.ts
+        fields: [rounds, totalScores, targetScore, gameWinner]

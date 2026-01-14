@@ -1,0 +1,91 @@
+# Testing Seed Vault - HeyHey! (Nertz Card Game)
+# Auto-discovered patterns from codebase
+
+testing:
+  framework: Vitest
+
+  fixtures:
+    # Inline helpers per test file (no shared fixture library)
+    - name: card()
+      locations:
+        - packages/shared/src/deck/deck.test.ts
+        - packages/shared/src/engine/StateManager.test.ts
+        - packages/shared/src/engine/ScoringEngine.test.ts
+        - packages/shared/src/engine/RulesEngine.test.ts
+        - packages/server/src/events/GameManager.test.ts
+      creates: Card objects with suit, rank, deckId
+
+    - name: createTestPlayer()
+      locations:
+        - packages/shared/src/engine/StateManager.test.ts
+        - packages/shared/src/engine/ScoringEngine.test.ts
+        - packages/server/src/events/GameManager.test.ts
+      creates: PlayerGameState with default empty piles
+
+    - name: createTestGameState()
+      locations:
+        - packages/shared/src/engine/StateManager.test.ts
+        - packages/shared/src/engine/ScoringEngine.test.ts
+        - packages/shared/src/engine/RulesEngine.test.ts
+      creates: GameState with defaults
+
+  mocks:
+    - name: broadcastFn / rejectFn
+      location: packages/server/src/events/GameManager.test.ts
+      mocks: Socket callbacks
+      usage: vi.fn()
+
+    - name: Math.random()
+      location: packages/shared/src/deck/deck.test.ts
+      mocks: Random for shuffle testing
+      usage: vi.spyOn
+
+  utilities:
+    - name: vitest
+      purpose: Test runner and assertions
+      provides: [describe, it, expect, beforeEach, vi]
+
+    - name: "@testing-library/react"
+      location: packages/client/src/hooks/useCardSelection.test.ts
+      purpose: React hook testing
+      provides: [renderHook, act]
+
+    - name: storybook/test
+      location: packages/client/src/components/**/__stories__/
+      purpose: Interactive story testing
+
+  structure:
+    unit_tests: "src/**/*.test.ts (colocated)"
+    storybook_tests: "src/components/**/__stories__/*.stories.tsx"
+
+    packages:
+      shared:
+        config: packages/shared/vitest.config.ts
+        pattern: src/**/*.test.ts
+      server:
+        config: packages/server/vitest.config.ts
+        pattern: src/**/*.test.ts
+        globals: true
+      client:
+        config: packages/client/vite.config.ts
+        projects:
+          - name: unit
+            environment: jsdom
+          - name: storybook
+            environment: browser (playwright)
+
+  patterns:
+    - Inline test helpers per file
+    - describe blocks for logical grouping
+    - beforeEach for setup
+    - { success: boolean } return pattern verification
+    - In-memory testing (no external deps)
+    - vi.fn() callback tracking
+
+  coverage: Not configured (tool available)
+
+  scripts:
+    shared: "vitest run"
+    server: "vitest run"
+    client: "vitest run --project unit"
+    client_storybook: "vitest run --project storybook"

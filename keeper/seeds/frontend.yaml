@@ -1,0 +1,143 @@
+# Frontend Seed Vault - HeyHey! (Nertz Card Game)
+# Auto-discovered patterns from codebase
+
+frontend:
+  components:
+    ui:
+      - name: Avatar
+        location: packages/client/src/components/ui/Avatar/Avatar.tsx
+        variants: [sm, md, lg]
+        props: [avatar, color, size, className]
+        when_to_use: Player identification in lobby and game views
+
+      - name: AvatarSelector
+        location: packages/client/src/components/ui/Avatar/AvatarSelector.tsx
+        props: [avatar, onAvatarChange, color, disabled]
+        when_to_use: Player customization in lobby
+
+      - name: Button
+        location: packages/client/src/components/Lobby/Button.tsx
+        variants: [primary, secondary, ghost]
+        sizes: [small, medium, large]
+        when_to_use: All interactive buttons
+
+      - name: Icon
+        location: packages/client/src/components/ui/Icon/Icon.tsx
+        variants: [sm, md, lg, xl]
+        when_to_use: Iconography throughout the app
+
+      - name: Panel
+        location: packages/client/src/components/ui/Panel/Panel.tsx
+        variants: [default, elevated, outlined, ghost]
+        sizes: [sm, md, lg, xl]
+        subcomponents: [Panel.Header, Panel.Body, Panel.Footer]
+        when_to_use: Content containers and cards
+
+      - name: ScoreDisplay
+        location: packages/client/src/components/ui/ScoreDisplay/ScoreDisplay.tsx
+        subcomponents: [ScoreValue, PlayerBoard, Scoreboard, RoundCounter, StatRow]
+        when_to_use: Score and round display (NOTE - scores hidden during gameplay)
+
+    card:
+      - name: Card
+        location: packages/client/src/components/Card/Card.tsx
+        variants: [faceUp, faceDown, selected, disabled, dragging]
+        props: [card, faceUp, backColor, selected, onClick, onDoubleClick]
+        when_to_use: All card rendering
+
+      - name: CardBack
+        location: packages/client/src/components/Card/CardBack.tsx
+        colors: [red, blue, green, yellow, purple, orange, pink, teal]
+        when_to_use: Face-down card display with player colors
+
+      - name: CardStack
+        location: packages/client/src/components/Card/CardStack.tsx
+        directions: [horizontal, vertical]
+        when_to_use: Stacked card displays
+
+    game:
+      - name: GameBoard
+        location: packages/client/src/components/Game/GameBoard.tsx
+        when_to_use: Main game layout - Foundation center, player controls bottom
+        layout_structure:
+          - topBar: Round counter only (no scores)
+          - foundationArea: CENTER FOCUS - largest element
+          - playerArea: Bottom row (Nertz | Work | Stock/Waste)
+          - heyHeyArea: Only visible when Nertz empty
+
+      - name: NertzPile
+        location: packages/client/src/components/Game/NertzPile.tsx
+        when_to_use: Player's Nertz draw pile
+
+      - name: WorkPiles
+        location: packages/client/src/components/Game/WorkPiles.tsx
+        when_to_use: 4 work piles for card building
+
+      - name: FoundationArea
+        location: packages/client/src/components/Foundation/FoundationArea.tsx
+        when_to_use: Shared foundation piles (4 suits)
+
+      - name: HeyHeyButton
+        location: packages/client/src/components/Game/HeyHeyButton.tsx
+        when_to_use: End-round button when Nertz pile is empty
+
+      - name: OpponentMini
+        location: packages/client/src/components/Game/OpponentMini.tsx
+        when_to_use: Compact opponent state display
+
+    player:
+      - name: StockPile
+        location: packages/client/src/components/Player/StockPile.tsx
+        when_to_use: Player's draw pile with recycle
+
+      - name: WastePile
+        location: packages/client/src/components/Player/WastePile.tsx
+        when_to_use: Player's waste pile display
+
+  hooks:
+    - name: useSocket
+      location: packages/client/src/hooks/useSocket.ts
+      purpose: Socket.IO connection management
+      when_to_use: All server communication
+
+    - name: useCardSelection
+      location: packages/client/src/hooks/useCardSelection.ts
+      purpose: Card selection and placement validation
+      when_to_use: Game interaction handling
+
+    - name: useSetupController
+      location: packages/client/src/hooks/useSetupController.ts
+      purpose: Setup phase state machine integration
+      when_to_use: Game setup interactions
+
+    - name: useAudio
+      location: packages/client/src/audio/useAudio.ts
+      purpose: Game sound effects
+      sound_types: [cardSelect, cardPlace, cardFlip, error, heyHey]
+
+  design_tokens:
+    location: packages/client/src/styles/tokens.css
+    type: css-variables
+    design_system: Neubrutalist 90s Arcade
+    key_patterns:
+      borders: Heavy black (4px), hard offset shadows
+      colors: Bright arcade palette (--arcade-*)
+      typography: Archivo Black display, Inter body
+      shadows: No blur, 4px/6px offset
+
+  glow_effects:
+    # RESTRICTED - Only allowed on these elements
+    allowed:
+      - HeyHeyButton (call-to-action feedback)
+      - Selected card (selection indicator)
+    forbidden:
+      - Foundation piles
+      - Work piles
+      - Nertz pile
+      - Score displays
+      - Opponent displays
+      - Section headers
+
+  styling:
+    approach: CSS Modules + CSS Custom Properties
+    file_pattern: "*.module.css colocated with components"
