@@ -206,13 +206,82 @@
 /* Dragging state - elevated with larger shadow */
 .dragging {
   opacity: 0.9;
-  transform: scale(1.05) translate(-2px, -2px);
+  transform: scale(1.05) rotate(3deg);
   z-index: var(--z-max, 9999);
+  cursor: grabbing;
 }
 
 .dragging .cardFace,
 .dragging .cardBack {
   box-shadow: var(--shadow-neubrutalist-xl, 8px 8px 0 #000);
+}
+
+/* Drop animation - snap to target */
+@keyframes snapToTarget {
+  0% {
+    transform: scale(1.05) rotate(3deg);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.02) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+.dropping {
+  animation: snapToTarget 200ms ease-out forwards;
+}
+
+/* Return animation - card bounces back on invalid drop */
+@keyframes returnToOrigin {
+  0% {
+    transform: scale(1.05) rotate(3deg);
+    opacity: 0.9;
+  }
+  25% {
+    transform: scale(1.08) rotate(-2deg);
+  }
+  50% {
+    transform: scale(0.98) rotate(1deg);
+  }
+  75% {
+    transform: scale(1.02) rotate(-0.5deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+.returning {
+  animation: returnToOrigin 300ms ease-out forwards;
+}
+
+/* Shake animation for invalid drop feedback */
+@keyframes invalidDrop {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-8px);
+  }
+  40% {
+    transform: translateX(8px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(4px);
+  }
+}
+
+.invalid {
+  animation: invalidDrop 300ms ease-out;
 }
 
 /* Selected state - thick border + colored glow */

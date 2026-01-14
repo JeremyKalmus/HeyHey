@@ -2,7 +2,7 @@
 // Uses useLocalPlayerState for optimistic updates and card interactions
 // Wrapped with DndContext for drag-and-drop support
 
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useEffect, useRef, memo } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -10,6 +10,7 @@ import {
   TouchSensor,
   useSensor,
   useSensors,
+  type DropAnimation,
 } from '@dnd-kit/core';
 import type {
   PlayerGameState,
@@ -29,6 +30,15 @@ import type { PlayerColor } from '../Card/CardBack';
 import type { PlayerScore } from '../ui/ScoreDisplay/types';
 import { useLocalPlayerState } from '../../hooks/useLocalPlayerState';
 import { useDragAndDrop } from '../../hooks/useDragAndDrop';
+import { useAudio } from '../../audio';
+
+// Static default for empty foundations to avoid recreating on each render
+const DEFAULT_FOUNDATION_PILES: FoundationPile[] = [
+  { suit: 'hearts', cards: [] },
+  { suit: 'diamonds', cards: [] },
+  { suit: 'clubs', cards: [] },
+  { suit: 'spades', cards: [] },
+];
 
 export interface PlayerAreaProps {
   /** Player's server-authoritative state */
@@ -88,11 +98,14 @@ export function PlayerArea({
   });
   const touchSensor = useSensor(TouchSensor, {
     activationConstraint: {
-      delay: 150, // 150ms delay for touch to distinguish from tap
-      tolerance: 5,
+      delay: 300, // 300ms long press for touch (spec requirement)
+      tolerance: 5, // 5px movement tolerance during delay
     },
   });
   const sensors = useSensors(pointerSensor, touchSensor);
+
+  // Audio for drag-drop feedback
+  const { play: playSound } = useAudio();
 
   // Use local player state hook for optimistic updates and handlers
   const localPlayer = useLocalPlayerState({
@@ -129,6 +142,90 @@ export function PlayerArea({
     onFoundationMove,
   });
 
+  // Wrap drag handlers with sound effects
+  const handleDragStart = useCallback(
+    (event: Parameters<typeof dragDrop.handleDragStart>[0]) => {
+      dragDrop.handleDragStart(event);
+      playSound('cardSelect');
+    },
+    [dragDrop.handleDragStart, playSound]
+  );
+
+  const handleDragEnd = useCallback(
+    (event: Parameters<typeof dragDrop.handleDragEnd>[0]) => {
+      // Check if drop is valid before calling handler
+      const wasValid = event.over && dragDrop.isValidDropTarget({
+        type: event.over.id.toString().includes('foundation') ? 'foundation' : 'work',
+        index: parseInt(event.over.id.toString().split('-').pop() || '0', 10),
+      });
+
+      dragDrop.handleDragEnd(event);
+
+      // Play appropriate sound
+      if (wasValid) {
+        playSound('cardPlace');
+      } else if (event.over) {
+        playSound('error');
+      }
+    },
+    [dragDrop.handleDragEnd, dragDrop.isValidDropTarget, playSound]
+  );
+
+  const handleDragCancel = useCallback(() => {
+    dragDrop.handleDragCancel();
+    playSound('error');
+  }, [dragDrop.handleDragCancel, playSound]);
+
+  // Drop animation configuration - snap to target with spring effect
+  const dropAnimation: DropAnimation = useMemo(() => ({
+    sideEffects: ({ dragOverlay }) => {
+      // Add visual feedback class during drop animation
+      if (dragOverlay.node) {
+        dragOverlay.node.style.transition = 'transform 150ms ease-out';
+      }
+      return () => {
+        // Cleanup
+        if (dragOverlay.node) {
+          dragOverlay.node.style.transition = '';
+        }
+      };
+    },
+    duration: 200,
+    easing: 'cubic-bezier(0.25, 0.1, 0.25, 1)',
+  }), []);
+
+  // Track drag state for pinch-to-zoom prevention
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Prevent pinch-to-zoom during drag
+  useEffect(() => {
+    if (!dragDrop.isDragging || !containerRef.current) return;
+
+    const container = containerRef.current;
+
+    const preventGestures = (e: TouchEvent) => {
+      // Prevent pinch-to-zoom and other gestures during drag
+      if (e.touches.length > 1) {
+        e.preventDefault();
+      }
+    };
+
+    const preventWheel = (e: WheelEvent) => {
+      // Prevent scroll-zoom during drag
+      if (e.ctrlKey) {
+        e.preventDefault();
+      }
+    };
+
+    container.addEventListener('touchmove', preventGestures, { passive: false });
+    container.addEventListener('wheel', preventWheel, { passive: false });
+
+    return () => {
+      container.removeEventListener('touchmove', preventGestures);
+      container.removeEventListener('wheel', preventWheel);
+    };
+  }, [dragDrop.isDragging]);
+
   // Convert local state to GameBoard props
   const nertzPile = localPlayer.localState?.nertzPile ?? [];
   const workPiles: [Card[], Card[], Card[], Card[]] = useMemo(() => {
@@ -163,12 +260,7 @@ export function PlayerArea({
   // Convert foundations from game state
   const foundationPiles: FoundationPile[] = useMemo(() => {
     if (!gameState) {
-      return [
-        { suit: 'hearts', cards: [] },
-        { suit: 'diamonds', cards: [] },
-        { suit: 'clubs', cards: [] },
-        { suit: 'spades', cards: [] },
-      ];
+      return DEFAULT_FOUNDATION_PILES;
     }
 
     return gameState.foundations.map((f: SharedFoundationPile) => ({
@@ -207,69 +299,74 @@ export function PlayerArea({
   );
 
   return (
-    <DndContext
-      sensors={sensors}
-      onDragStart={dragDrop.handleDragStart}
-      onDragOver={dragDrop.handleDragOver}
-      onDragEnd={dragDrop.handleDragEnd}
-      onDragCancel={dragDrop.handleDragCancel}
+    <div
+      ref={containerRef}
+      style={{ touchAction: dragDrop.isDragging ? 'none' : 'auto' }}
     >
-      <GameBoard
-        // Player's cards
-        nertzPile={nertzPile}
-        workPiles={workPiles}
-        stockPile={stockPile}
-        wastePile={wastePile}
-        // Foundation
-        foundationPiles={foundationPiles}
-        // Player info
-        playerName={playerName}
-        playerScore={playerScore}
-        playerColor={playerColor}
-        players={players}
-        currentRound={currentRound}
-        totalRounds={totalRounds}
-        // Selection state
-        selectedCard={selectedCard}
-        validWorkDestinations={localPlayer.validWorkPileDestinations}
-        selectedWasteIndex={selectedWasteIndex}
-        // Game state
-        canCallHeyHey={canCallHeyHey}
-        canRecycleStock={canRecycleStock}
-        disabled={disabled}
-        // Handlers - wire to localPlayer hook
-        onNertzCardClick={localPlayer.handleNertzClick}
-        onNertzCardDoubleClick={localPlayer.handleNertzDoubleClick}
-        onWorkCardClick={localPlayer.handleWorkPileClick}
-        onWorkCardDoubleClick={localPlayer.handleWorkPileDoubleClick}
-        onWorkPileClick={localPlayer.handleWorkPileTarget}
-        onStockDraw={localPlayer.drawCards}
-        onStockRecycle={localPlayer.recycleWaste}
-        onWasteCardClick={localPlayer.handleWasteClick}
-        onWasteCardDoubleClick={localPlayer.handleWasteDoubleClick}
-        onFoundationClick={handleFoundationClick}
-        onCallHeyHey={onCallHeyHey}
-        // Foundation highlighting
-        canPlaceOnFoundation={canPlaceOnFoundation}
-        foundationSelectedCard={foundationSelectedCard}
-        // Drag-drop state
-        isDragging={dragDrop.isDragging}
-        dragSource={dragDrop.dragSource}
-        validDropTargets={dragDrop.validDropTargets}
-        className={className}
-      />
+      <DndContext
+        sensors={sensors}
+        onDragStart={handleDragStart}
+        onDragOver={dragDrop.handleDragOver}
+        onDragEnd={handleDragEnd}
+        onDragCancel={handleDragCancel}
+      >
+        <GameBoard
+          // Player's cards
+          nertzPile={nertzPile}
+          workPiles={workPiles}
+          stockPile={stockPile}
+          wastePile={wastePile}
+          // Foundation
+          foundationPiles={foundationPiles}
+          // Player info
+          playerName={playerName}
+          playerScore={playerScore}
+          playerColor={playerColor}
+          players={players}
+          currentRound={currentRound}
+          totalRounds={totalRounds}
+          // Selection state
+          selectedCard={selectedCard}
+          validWorkDestinations={localPlayer.validWorkPileDestinations}
+          selectedWasteIndex={selectedWasteIndex}
+          // Game state
+          canCallHeyHey={canCallHeyHey}
+          canRecycleStock={canRecycleStock}
+          disabled={disabled}
+          // Handlers - wire to localPlayer hook
+          onNertzCardClick={localPlayer.handleNertzClick}
+          onNertzCardDoubleClick={localPlayer.handleNertzDoubleClick}
+          onWorkCardClick={localPlayer.handleWorkPileClick}
+          onWorkCardDoubleClick={localPlayer.handleWorkPileDoubleClick}
+          onWorkPileClick={localPlayer.handleWorkPileTarget}
+          onStockDraw={localPlayer.drawCards}
+          onStockRecycle={localPlayer.recycleWaste}
+          onWasteCardClick={localPlayer.handleWasteClick}
+          onWasteCardDoubleClick={localPlayer.handleWasteDoubleClick}
+          onFoundationClick={handleFoundationClick}
+          onCallHeyHey={onCallHeyHey}
+          // Foundation highlighting
+          canPlaceOnFoundation={canPlaceOnFoundation}
+          foundationSelectedCard={foundationSelectedCard}
+          // Drag-drop state
+          isDragging={dragDrop.isDragging}
+          dragSource={dragDrop.dragSource}
+          validDropTargets={dragDrop.validDropTargets}
+          className={className}
+        />
 
-      {/* Drag overlay - shows dragged card(s) following cursor */}
-      <DragOverlay>
-        {dragDrop.dragSource && (
-          <DragPreview
-            dragSource={dragDrop.dragSource}
-            workPiles={workPiles}
-            playerColor={playerColor}
-          />
-        )}
-      </DragOverlay>
-    </DndContext>
+        {/* Drag overlay - shows dragged card(s) following cursor */}
+        <DragOverlay dropAnimation={dropAnimation}>
+          {dragDrop.dragSource && (
+            <DragPreview
+              dragSource={dragDrop.dragSource}
+              workPiles={workPiles}
+              playerColor={playerColor}
+            />
+          )}
+        </DragOverlay>
+      </DndContext>
+    </div>
   );
 }
 
@@ -292,7 +389,7 @@ interface DragPreviewProps {
   playerColor: PlayerColor;
 }
 
-function DragPreview({ dragSource, workPiles, playerColor }: DragPreviewProps) {
+const DragPreview = memo(function DragPreview({ dragSource, workPiles, playerColor }: DragPreviewProps) {
   // For single card drags, just show the card
   if (dragSource.cardCount === 1) {
     return (
@@ -352,4 +449,4 @@ function DragPreview({ dragSource, workPiles, playerColor }: DragPreviewProps) {
       className="dragging"
     />
   );
-}
+});

@@ -39,6 +39,8 @@ export interface UseDragAndDropOptions {
   onFoundationMove?: (card: Card, foundationIndex: number, source: MoveSource) => void;
 }
 
+export type DropResult = 'success' | 'invalid' | 'cancelled' | null;
+
 export interface UseDragAndDropReturn {
   /** Whether a drag is currently in progress */
   isDragging: boolean;
@@ -48,6 +50,8 @@ export interface UseDragAndDropReturn {
   activeDropTarget: DropTarget | null;
   /** Valid drop targets for current drag */
   validDropTargets: DropTarget[];
+  /** Result of last drop operation */
+  lastDropResult: DropResult;
   /** Handler for drag start */
   handleDragStart: (event: DragStartEvent) => void;
   /** Handler for drag over */
@@ -58,6 +62,8 @@ export interface UseDragAndDropReturn {
   handleDragCancel: () => void;
   /** Check if a drop target is valid for current drag */
   isValidDropTarget: (target: DropTarget) => boolean;
+  /** Clear the drop result (call after animation completes) */
+  clearDropResult: () => void;
 }
 
 /* =============================================================================
@@ -146,6 +152,12 @@ export function useDragAndDrop(options: UseDragAndDropOptions): UseDragAndDropRe
   const [isDragging, setIsDragging] = useState(false);
   const [dragSource, setDragSource] = useState<DragSource | null>(null);
   const [activeDropTarget, setActiveDropTarget] = useState<DropTarget | null>(null);
+  const [lastDropResult, setLastDropResult] = useState<DropResult>(null);
+
+  // Clear drop result (for use after animation completes)
+  const clearDropResult = useCallback(() => {
+    setLastDropResult(null);
+  }, []);
 
   // Calculate valid drop targets for current drag source
   const validDropTargets = useMemo((): DropTarget[] => {
@@ -253,6 +265,7 @@ export function useDragAndDrop(options: UseDragAndDropOptions): UseDragAndDropRe
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
       const { over } = event;
+      let dropResult: DropResult = 'invalid';
 
       if (over && dragSource) {
         const target = parseDropId(over.id);
@@ -280,22 +293,37 @@ export function useDragAndDrop(options: UseDragAndDropOptions): UseDragAndDropRe
             };
             onMove?.(source, destination, dragSource.cardCount);
           }
+          dropResult = 'success';
         }
       }
+
+      // Set drop result for animation feedback
+      setLastDropResult(dropResult);
 
       // Reset state
       setIsDragging(false);
       setDragSource(null);
       setActiveDropTarget(null);
+
+      // Clear drop result after animation duration
+      setTimeout(() => {
+        setLastDropResult(null);
+      }, 350);
     },
     [dragSource, isValidDropTarget, onMove, onFoundationMove]
   );
 
   // Handle drag cancel
   const handleDragCancel = useCallback(() => {
+    setLastDropResult('cancelled');
     setIsDragging(false);
     setDragSource(null);
     setActiveDropTarget(null);
+
+    // Clear drop result after animation duration
+    setTimeout(() => {
+      setLastDropResult(null);
+    }, 350);
   }, []);
 
   return {
@@ -303,11 +331,13 @@ export function useDragAndDrop(options: UseDragAndDropOptions): UseDragAndDropRe
     dragSource,
     activeDropTarget,
     validDropTargets,
+    lastDropResult,
     handleDragStart,
     handleDragOver,
     handleDragEnd,
     handleDragCancel,
     isValidDropTarget,
+    clearDropResult,
   };
 }
 
