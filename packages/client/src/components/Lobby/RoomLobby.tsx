@@ -60,16 +60,19 @@ export function RoomLobby({
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <div>
-          <h1 className={styles.title}>HeyHey!</h1>
-          <p className={styles.subtitle}>Waiting for players...</p>
+        <div className={styles.headerLeft}>
+          <h1 className={styles.title}>HEYHEY!</h1>
+          <p className={styles.subtitle}>
+            {allReady && players.length >= minPlayers ? 'READY TO PLAY!' : 'WAITING FOR PLAYERS...'}
+          </p>
         </div>
 
         <div className={styles.roomCode}>
-          <span className={styles.codeLabel}>Room Code</span>
+          <span className={styles.codeLabel}>◀ ROOM CODE ▶</span>
           <button className={styles.code} onClick={handleCopyCode} title="Click to copy">
             {roomCode}
           </button>
+          <span className={styles.copyHint}>CLICK TO COPY</span>
         </div>
       </header>
 
@@ -100,7 +103,7 @@ export function RoomLobby({
 
       <footer className={styles.footer}>
         <Button variant="ghost" onClick={onLeaveRoom}>
-          Leave Room
+          ✕ EXIT
         </Button>
 
         <div className={styles.footerRight}>
@@ -109,7 +112,7 @@ export function RoomLobby({
               variant={isReady ? 'secondary' : 'primary'}
               onClick={onToggleReady}
             >
-              {isReady ? 'Not Ready' : 'Ready'}
+              {isReady ? '✕ NOT READY' : '✓ READY!'}
             </Button>
           )}
 
@@ -118,12 +121,13 @@ export function RoomLobby({
               variant="primary"
               onClick={onStartGame}
               disabled={!canStart || !allReady}
+              className={canStart && allReady ? styles.startButton : undefined}
             >
               {players.length < minPlayers
-                ? `Need ${minPlayers - players.length} more player${minPlayers - players.length > 1 ? 's' : ''}`
+                ? `NEED ${minPlayers - players.length} MORE`
                 : !allReady
-                  ? 'Waiting for players...'
-                  : 'Start Game'}
+                  ? 'WAITING...'
+                  : '▶ START GAME'}
             </Button>
           )}
         </div>

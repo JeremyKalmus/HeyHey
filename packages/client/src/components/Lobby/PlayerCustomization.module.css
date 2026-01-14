@@ -1,37 +1,93 @@
+/**
+ * PlayerCustomization - 90s Arcade Neubrutalist Style
+ * Player customization panel with arcade feel
+ */
+
 .container {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  padding: 20px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
+  gap: var(--space-lg);
+  padding: var(--space-lg);
+  background: var(--bg-dark-elevated);
+  border: var(--border-thick) solid var(--color-black);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-neubrutalist);
 }
 
 .title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #eee;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-black);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+  color: var(--arcade-yellow);
   margin: 0;
+  text-align: center;
 }
 
+/* Preview section */
 .preview {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 16px;
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 8px;
+  gap: var(--space-lg);
+  padding: var(--space-lg);
+  background: var(--color-black);
+  border: var(--border-medium) solid var(--arcade-cyan);
+  border-radius: var(--radius-md);
+  box-shadow:
+    inset 0 0 20px rgba(0, 245, 255, 0.1),
+    0 0 10px rgba(0, 245, 255, 0.2);
+}
+
+.previewAvatar {
+  flex-shrink: 0;
+}
+
+.previewInfo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+
+.previewLabel {
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+  color: var(--arcade-cyan);
 }
 
 .previewName {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #eee;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-black);
+  color: var(--color-white);
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
+/* Field sections */
 .fields {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--space-lg);
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.fieldLabel {
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-black);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+  color: var(--text-inverse);
 }

@@ -39,17 +39,22 @@ export function PlayerCustomization({
 
   return (
     <div className={styles.container}>
-      <h3 className={styles.title}>Customize Your Player</h3>
+      <h3 className={styles.title}>◆ CUSTOMIZE ◆</h3>
 
       <div className={styles.preview}>
-        <Avatar
-          avatar={value.avatar || DEFAULT_AVATAR}
-          color={value.color}
-          size="lg"
-        />
-        <span className={styles.previewName}>
-          {value.name || 'Your Name'}
-        </span>
+        <div className={styles.previewAvatar}>
+          <Avatar
+            avatar={value.avatar || DEFAULT_AVATAR}
+            color={value.color}
+            size="lg"
+          />
+        </div>
+        <div className={styles.previewInfo}>
+          <span className={styles.previewLabel}>PLAYER NAME</span>
+          <span className={styles.previewName}>
+            {value.name?.toUpperCase() || 'ENTER NAME'}
+          </span>
+        </div>
       </div>
 
       <div className={styles.fields}>
@@ -57,23 +62,29 @@ export function PlayerCustomization({
           label="Player Name"
           value={value.name}
           onChange={handleNameChange}
-          placeholder="Enter your name"
+          placeholder="ENTER YOUR NAME"
           maxLength={maxNameLength}
           error={nameError}
           autoFocus
         />
 
-        <ColorSelector
-          value={value.color}
-          onChange={handleColorChange}
-          disabledColors={disabledColors}
-        />
+        <div className={styles.fieldGroup}>
+          <span className={styles.fieldLabel}>SELECT COLOR</span>
+          <ColorSelector
+            value={value.color}
+            onChange={handleColorChange}
+            disabledColors={disabledColors}
+          />
+        </div>
 
-        <AvatarSelector
-          value={value.avatar || DEFAULT_AVATAR}
-          onChange={handleAvatarChange}
-          color={value.color}
-        />
+        <div className={styles.fieldGroup}>
+          <span className={styles.fieldLabel}>SELECT AVATAR</span>
+          <AvatarSelector
+            value={value.avatar || DEFAULT_AVATAR}
+            onChange={handleAvatarChange}
+            color={value.color}
+          />
+        </div>
       </div>
     </div>
   );

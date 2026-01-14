@@ -1,47 +1,89 @@
+/**
+ * GameSettings - 90s Arcade Neubrutalist Style
+ * Game settings panel with arcade feel
+ */
+
 .container {
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 12px;
-  padding: 1.25rem;
+  background: var(--bg-dark-elevated);
+  border: var(--border-thick) solid var(--color-black);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-neubrutalist);
 }
 
 .title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #eee;
-  margin: 0 0 1.25rem;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-black);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+  color: var(--arcade-yellow);
+  margin: 0 0 var(--space-lg);
+  text-align: center;
+  padding-bottom: var(--space-md);
+  border-bottom: var(--border-medium) solid var(--color-black);
 }
 
 .setting {
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--space-xl);
+  padding-bottom: var(--space-lg);
+  border-bottom: var(--border-thin) solid rgba(255, 255, 255, 0.1);
 }
 
 .setting:last-of-type {
   margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
 }
 
 .label {
   display: block;
-  font-weight: 500;
-  color: #eee;
-  margin-bottom: 0.25rem;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-black);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+  color: var(--arcade-pink);
+  margin-bottom: var(--space-xs);
 }
 
 .description {
-  font-size: 0.8125rem;
-  color: #888;
-  margin: 0 0 0.75rem;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-gray-light);
+  margin: 0 0 var(--space-md);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-normal);
 }
 
 .options {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: var(--space-sm);
 }
 
 .hint {
-  font-size: 0.8125rem;
-  color: #888;
-  font-style: italic;
-  margin: 1rem 0 0;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+  color: var(--arcade-cyan);
+  margin: var(--space-lg) 0 0;
   text-align: center;
+  padding: var(--space-md);
+  background: var(--color-black);
+  border: var(--border-thin) solid var(--arcade-cyan);
+  border-radius: var(--radius-sm);
+  animation: glow 2s ease-in-out infinite;
+}
+
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(0, 245, 255, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(0, 245, 255, 0.5);
+  }
 }
