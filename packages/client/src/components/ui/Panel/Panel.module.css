@@ -1,0 +1,116 @@
+/* Panel - Neubrutalist content container */
+
+.panel {
+  background: var(--bg-panel, #1a1a2e);
+  border: var(--border-width-thick, 4px) solid var(--border-color, #000);
+  border-radius: var(--radius-lg, 8px);
+  box-shadow: var(--shadow-neubrutalist-lg, 6px 6px 0 #000);
+  padding: var(--space-lg, 16px);
+}
+
+/* Size variants */
+.size-sm {
+  padding: var(--space-sm, 8px);
+}
+
+.size-md {
+  padding: var(--space-lg, 16px);
+}
+
+.size-lg {
+  padding: var(--space-xl, 24px);
+}
+
+.size-xl {
+  padding: var(--space-2xl, 32px);
+}
+
+/* Variant styles */
+.variant-default {
+  background: var(--bg-panel, #1a1a2e);
+}
+
+.variant-elevated {
+  background: var(--bg-panel-elevated, #242445);
+  box-shadow: var(--shadow-neubrutalist-xl, 8px 8px 0 #000);
+}
+
+.variant-outlined {
+  background: transparent;
+  border-width: var(--border-width-thick, 4px);
+}
+
+.variant-ghost {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+/* Interactive panel */
+.interactive {
+  cursor: pointer;
+  transition: transform var(--transition-fast, 0.1s), box-shadow var(--transition-fast, 0.1s);
+}
+
+.interactive:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--shadow-neubrutalist-xl, 8px 8px 0 #000);
+}
+
+.interactive:active {
+  transform: translate(2px, 2px);
+  box-shadow: var(--shadow-neubrutalist-pressed, 2px 2px 0 #000);
+}
+
+/* Color accents */
+.accent-primary {
+  border-color: var(--color-primary, #FF6B35);
+}
+
+.accent-secondary {
+  border-color: var(--color-secondary, #00FF88);
+}
+
+.accent-warning {
+  border-color: var(--color-warning, #FFC400);
+}
+
+.accent-error {
+  border-color: var(--color-error, #FF1744);
+}
+
+/* Header section */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-md, 12px);
+  padding-bottom: var(--space-md, 12px);
+  border-bottom: var(--border-width-medium, 3px) solid var(--border-color, #000);
+}
+
+.title {
+  font-family: var(--font-family-bold, 'Inter Black', sans-serif);
+  font-size: var(--font-size-lg, 1.25rem);
+  font-weight: var(--font-weight-black, 900);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide, 0.05em);
+  color: var(--text-inverse, #fff);
+  margin: 0;
+}
+
+/* Body content */
+.body {
+  color: var(--text-inverse, #fff);
+}
+
+/* Footer section */
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-sm, 8px);
+  margin-top: var(--space-md, 12px);
+  padding-top: var(--space-md, 12px);
+  border-top: var(--border-width-medium, 3px) solid var(--border-color, #000);
+}
