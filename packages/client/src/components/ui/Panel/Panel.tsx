@@ -40,7 +40,7 @@ export interface PanelProps extends HTMLAttributes<HTMLDivElement> {
  * </Panel>
  * ```
  */
-export function Panel({
+function Panel({
   size = 'md',
   variant = 'default',
   accent,
