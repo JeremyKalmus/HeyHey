@@ -1,11 +1,13 @@
 // NertzPile - Gameplay component for the Nertz pile
-// Displays a stack with top card face-up, supports selection
+// Displays a stack with top card face-up, supports selection and drag
 // Neubrutalist arcade style with heavy borders and bold elements
 
 import type { Card as CardType } from '@heyhey/shared';
+import { useDraggable } from '@dnd-kit/core';
 import { Card, CardStack } from '../Card';
 import type { PlayerColor } from '../Card/CardBack';
 import { Icon, ZapIcon } from '../ui/Icon';
+import { createDragId } from '../../hooks/useDragAndDrop';
 import styles from './NertzPile.module.css';
 
 export interface NertzPileProps {
@@ -37,6 +39,17 @@ export function NertzPile({
   const isEmpty = cards.length === 0;
   const topCard = cards[cards.length - 1];
   const bottomCards = cards.slice(0, -1);
+
+  // Set up draggable for top card
+  const dragId = topCard ? createDragId('nertz', topCard) : 'nertz-empty';
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: dragId,
+    disabled: disabled || isEmpty,
+    data: {
+      card: topCard,
+      cardCount: 1,
+    },
+  });
 
   const handleTopCardClick = () => {
     if (!disabled && topCard && onTopCardClick) {
@@ -81,12 +94,16 @@ export function NertzPile({
         </div>
       )}
 
-      {/* Top card (face-up, clickable) */}
+      {/* Top card (face-up, clickable, draggable) */}
       <div
-        className={styles.topCardContainer}
+        ref={setNodeRef}
+        className={`${styles.topCardContainer} ${isDragging ? styles.dragging : ''}`}
         style={{
           top: Math.min(bottomCards.length * 2, 10),
+          opacity: isDragging ? 0.5 : 1,
         }}
+        {...listeners}
+        {...attributes}
       >
         <Card
           card={topCard!}

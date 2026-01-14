@@ -1,7 +1,16 @@
 // PlayerArea - Container component that wires player state to GameBoard
 // Uses useLocalPlayerState for optimistic updates and card interactions
+// Wrapped with DndContext for drag-and-drop support
 
 import { useMemo, useCallback } from 'react';
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
 import type {
   PlayerGameState,
   GameState,
@@ -9,14 +18,17 @@ import type {
   Move,
   Card,
   MoveSource,
+  MoveDestination,
   FoundationPile as SharedFoundationPile,
 } from '@heyhey/shared';
 import { GameBoard } from './GameBoard';
+import { Card as CardComponent } from '../Card';
 import type { SelectedCard } from './WorkPiles';
 import type { FoundationPile } from '../Foundation';
 import type { PlayerColor } from '../Card/CardBack';
 import type { PlayerScore } from '../ui/ScoreDisplay/types';
 import { useLocalPlayerState } from '../../hooks/useLocalPlayerState';
+import { useDragAndDrop } from '../../hooks/useDragAndDrop';
 
 export interface PlayerAreaProps {
   /** Player's server-authoritative state */
@@ -68,6 +80,20 @@ export function PlayerArea({
   onCallHeyHey,
   className,
 }: PlayerAreaProps) {
+  // Configure drag sensors - pointer for mouse, touch for mobile
+  const pointerSensor = useSensor(PointerSensor, {
+    activationConstraint: {
+      distance: 8, // 8px movement required to start drag (prevents accidental drags)
+    },
+  });
+  const touchSensor = useSensor(TouchSensor, {
+    activationConstraint: {
+      delay: 150, // 150ms delay for touch to distinguish from tap
+      tolerance: 5,
+    },
+  });
+  const sensors = useSensors(pointerSensor, touchSensor);
+
   // Use local player state hook for optimistic updates and handlers
   const localPlayer = useLocalPlayerState({
     serverState,
@@ -75,6 +101,31 @@ export function PlayerArea({
     config,
     playerId,
     onMove,
+    onFoundationMove,
+  });
+
+  // Handle drag-drop move callback
+  const handleDragMove = useCallback(
+    (source: MoveSource, destination: MoveDestination, cardCount?: number) => {
+      // Build and send the move via existing mechanism
+      const move: Move = {
+        type: 'card',
+        playerId,
+        source,
+        destination,
+        cardCount,
+      };
+      onMove?.(move);
+    },
+    [playerId, onMove]
+  );
+
+  // Use drag-drop hook
+  const dragDrop = useDragAndDrop({
+    gameState,
+    config,
+    playerId,
+    onMove: handleDragMove,
     onFoundationMove,
   });
 
@@ -156,46 +207,70 @@ export function PlayerArea({
   );
 
   return (
-    <GameBoard
-      // Player's cards
-      nertzPile={nertzPile}
-      workPiles={workPiles}
-      stockPile={stockPile}
-      wastePile={wastePile}
-      // Foundation
-      foundationPiles={foundationPiles}
-      // Player info
-      playerName={playerName}
-      playerScore={playerScore}
-      playerColor={playerColor}
-      players={players}
-      currentRound={currentRound}
-      totalRounds={totalRounds}
-      // Selection state
-      selectedCard={selectedCard}
-      validWorkDestinations={localPlayer.validWorkPileDestinations}
-      selectedWasteIndex={selectedWasteIndex}
-      // Game state
-      canCallHeyHey={canCallHeyHey}
-      canRecycleStock={canRecycleStock}
-      disabled={disabled}
-      // Handlers - wire to localPlayer hook
-      onNertzCardClick={localPlayer.handleNertzClick}
-      onNertzCardDoubleClick={localPlayer.handleNertzDoubleClick}
-      onWorkCardClick={localPlayer.handleWorkPileClick}
-      onWorkCardDoubleClick={localPlayer.handleWorkPileDoubleClick}
-      onWorkPileClick={localPlayer.handleWorkPileTarget}
-      onStockDraw={localPlayer.drawCards}
-      onStockRecycle={localPlayer.recycleWaste}
-      onWasteCardClick={localPlayer.handleWasteClick}
-      onWasteCardDoubleClick={localPlayer.handleWasteDoubleClick}
-      onFoundationClick={handleFoundationClick}
-      onCallHeyHey={onCallHeyHey}
-      // Foundation highlighting
-      canPlaceOnFoundation={canPlaceOnFoundation}
-      foundationSelectedCard={foundationSelectedCard}
-      className={className}
-    />
+    <DndContext
+      sensors={sensors}
+      onDragStart={dragDrop.handleDragStart}
+      onDragOver={dragDrop.handleDragOver}
+      onDragEnd={dragDrop.handleDragEnd}
+      onDragCancel={dragDrop.handleDragCancel}
+    >
+      <GameBoard
+        // Player's cards
+        nertzPile={nertzPile}
+        workPiles={workPiles}
+        stockPile={stockPile}
+        wastePile={wastePile}
+        // Foundation
+        foundationPiles={foundationPiles}
+        // Player info
+        playerName={playerName}
+        playerScore={playerScore}
+        playerColor={playerColor}
+        players={players}
+        currentRound={currentRound}
+        totalRounds={totalRounds}
+        // Selection state
+        selectedCard={selectedCard}
+        validWorkDestinations={localPlayer.validWorkPileDestinations}
+        selectedWasteIndex={selectedWasteIndex}
+        // Game state
+        canCallHeyHey={canCallHeyHey}
+        canRecycleStock={canRecycleStock}
+        disabled={disabled}
+        // Handlers - wire to localPlayer hook
+        onNertzCardClick={localPlayer.handleNertzClick}
+        onNertzCardDoubleClick={localPlayer.handleNertzDoubleClick}
+        onWorkCardClick={localPlayer.handleWorkPileClick}
+        onWorkCardDoubleClick={localPlayer.handleWorkPileDoubleClick}
+        onWorkPileClick={localPlayer.handleWorkPileTarget}
+        onStockDraw={localPlayer.drawCards}
+        onStockRecycle={localPlayer.recycleWaste}
+        onWasteCardClick={localPlayer.handleWasteClick}
+        onWasteCardDoubleClick={localPlayer.handleWasteDoubleClick}
+        onFoundationClick={handleFoundationClick}
+        onCallHeyHey={onCallHeyHey}
+        // Foundation highlighting
+        canPlaceOnFoundation={canPlaceOnFoundation}
+        foundationSelectedCard={foundationSelectedCard}
+        // Drag-drop state
+        isDragging={dragDrop.isDragging}
+        dragSource={dragDrop.dragSource}
+        validDropTargets={dragDrop.validDropTargets}
+        className={className}
+      />
+
+      {/* Drag overlay - shows dragged card following cursor */}
+      <DragOverlay>
+        {dragDrop.dragSource && (
+          <CardComponent
+            card={dragDrop.dragSource.card}
+            faceUp={true}
+            backColor={playerColor}
+            className="dragging"
+          />
+        )}
+      </DragOverlay>
+    </DndContext>
   );
 }
 

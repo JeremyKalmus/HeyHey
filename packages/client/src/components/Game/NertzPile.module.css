@@ -73,3 +73,10 @@
   color: var(--arcade-green);
 }
 
+/* Dragging state - neubrutalist arcade style */
+.topCardContainer.dragging {
+  opacity: 0.5;
+  transform: rotate(5deg);
+  pointer-events: none;
+}
+

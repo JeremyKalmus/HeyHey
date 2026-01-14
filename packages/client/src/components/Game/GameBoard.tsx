@@ -11,6 +11,7 @@ import { WastePile } from '../Player/WastePile';
 import { ScoreDisplay } from '../ui/ScoreDisplay/ScoreDisplay';
 import type { PlayerColor } from '../Card/CardBack';
 import type { PlayerScore } from '../ui/ScoreDisplay/types';
+import type { DragSource, DropTarget } from '../../hooks/useDragAndDrop';
 import styles from './GameBoard.module.css';
 
 /* =============================================================================
@@ -64,6 +65,11 @@ export interface GameBoardProps {
   canPlaceOnFoundation?: boolean;
   foundationSelectedCard?: CardType | null;
 
+  // Drag-drop state
+  isDragging?: boolean;
+  dragSource?: DragSource | null;
+  validDropTargets?: DropTarget[];
+
   // Optional class
   className?: string;
 }
@@ -103,6 +109,9 @@ export function GameBoard({
   onCallHeyHey,
   canPlaceOnFoundation = false,
   foundationSelectedCard,
+  isDragging: _isDragging = false,
+  dragSource: _dragSource,
+  validDropTargets: _validDropTargets = [],
   className,
 }: GameBoardProps) {
   const isNertzSelected = selectedCard?.sourceType === 'nertz';

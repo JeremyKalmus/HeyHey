@@ -3,9 +3,11 @@
 // Neubrutalist arcade style with heavy borders and bold elements
 
 import type { Card as CardType } from '@heyhey/shared';
+import { useDroppable } from '@dnd-kit/core';
 import { CardStack } from '../Card';
 import type { PlayerColor } from '../Card/CardBack';
 import { Icon, LayersIcon } from '../ui/Icon';
+import { createDropId } from '../../hooks/useDragAndDrop';
 import styles from './WorkPiles.module.css';
 
 export interface SelectedCard {
@@ -103,44 +105,99 @@ export function WorkPiles({
             : -1;
 
         return (
-          <div
+          <DroppableWorkPile
             key={pileIndex}
-            className={`${styles.pileContainer} ${isDestination ? styles.validDestination : ''}`}
-            onClick={() => pile.length === 0 && handlePileClick(pileIndex)}
-            role="button"
-            tabIndex={disabled ? -1 : 0}
-            aria-label={`Work pile ${pileIndex + 1} - ${pile.length} cards${isDestination ? ' - valid destination' : ''}`}
-          >
-            {pile.length > 0 ? (
-              <CardStack
-                cards={pile}
-                direction="vertical"
-                offset={24}
-                faceUp={true}
-                backColor={backColor}
-                selectedIndex={selectedIndexInPile}
-                disabledIndices={
-                  disabled
-                    ? Array.from({ length: pile.length }, (_, i) => i)
-                    : pile
-                        .map((_, i) => i)
-                        .filter((i) => !selectableIndices.includes(i))
-                }
-                onCardClick={(card, index) => handleCardClick(card, pileIndex, index)}
-                onCardDoubleClick={(card, index) => handleCardDoubleClick(card, pileIndex, index)}
-              />
-            ) : (
-              <div
-                className={`${styles.emptyPile} ${isDestination ? styles.emptyHighlight : ''}`}
-                onClick={() => handlePileClick(pileIndex)}
-              >
-                <Icon icon={LayersIcon} size="md" className={styles.emptyIcon} />
-                <span className={styles.emptyLabel}>{pileIndex + 1}</span>
-              </div>
-            )}
-          </div>
+            pileIndex={pileIndex}
+            pile={pile}
+            backColor={backColor}
+            isDestination={isDestination}
+            selectedIndexInPile={selectedIndexInPile}
+            selectableIndices={selectableIndices}
+            disabled={disabled}
+            onCardClick={handleCardClick}
+            onCardDoubleClick={handleCardDoubleClick}
+            onPileClick={handlePileClick}
+          />
         );
       })}
+    </div>
+  );
+}
+
+/* =============================================================================
+   DROPPABLE WORK PILE COMPONENT
+   ============================================================================= */
+
+interface DroppableWorkPileProps {
+  pileIndex: number;
+  pile: CardType[];
+  backColor: PlayerColor;
+  isDestination: boolean;
+  selectedIndexInPile: number;
+  selectableIndices: number[];
+  disabled: boolean;
+  onCardClick: (card: CardType, pileIndex: number, cardIndex: number) => void;
+  onCardDoubleClick: (card: CardType, pileIndex: number, cardIndex: number) => void;
+  onPileClick: (pileIndex: number) => void;
+}
+
+function DroppableWorkPile({
+  pileIndex,
+  pile,
+  backColor,
+  isDestination,
+  selectedIndexInPile,
+  selectableIndices,
+  disabled,
+  onCardClick,
+  onCardDoubleClick,
+  onPileClick,
+}: DroppableWorkPileProps) {
+  // Set up droppable
+  const dropId = createDropId('work', pileIndex);
+  const { setNodeRef, isOver } = useDroppable({
+    id: dropId,
+    disabled,
+  });
+
+  const isHighlighted = isDestination || isOver;
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`${styles.pileContainer} ${isHighlighted ? styles.validDestination : ''} ${isOver ? styles.dragOver : ''}`}
+      onClick={() => pile.length === 0 && onPileClick(pileIndex)}
+      role="button"
+      tabIndex={disabled ? -1 : 0}
+      aria-label={`Work pile ${pileIndex + 1} - ${pile.length} cards${isDestination ? ' - valid destination' : ''}`}
+    >
+      {pile.length > 0 ? (
+        <CardStack
+          cards={pile}
+          direction="vertical"
+          offset={24}
+          faceUp={true}
+          backColor={backColor}
+          selectedIndex={selectedIndexInPile}
+          disabledIndices={
+            disabled
+              ? Array.from({ length: pile.length }, (_, i) => i)
+              : pile
+                  .map((_, i) => i)
+                  .filter((i) => !selectableIndices.includes(i))
+          }
+          onCardClick={(card, index) => onCardClick(card, pileIndex, index)}
+          onCardDoubleClick={(card, index) => onCardDoubleClick(card, pileIndex, index)}
+        />
+      ) : (
+        <div
+          className={`${styles.emptyPile} ${isHighlighted ? styles.emptyHighlight : ''}`}
+          onClick={() => onPileClick(pileIndex)}
+        >
+          <Icon icon={LayersIcon} size="md" className={styles.emptyIcon} />
+          <span className={styles.emptyLabel}>{pileIndex + 1}</span>
+        </div>
+      )}
     </div>
   );
 }

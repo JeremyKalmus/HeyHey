@@ -91,6 +91,26 @@
   color: var(--arcade-green);
 }
 
+/* Drag over state - neubrutalist arcade style */
+.pileContainer.dragOver {
+  box-shadow: 0 0 0 var(--border-thick) var(--arcade-cyan),
+              var(--shadow-lg);
+  transform: translateY(-4px) scale(1.02);
+}
+
+.pileContainer.dragOver .emptyPile {
+  border-color: var(--arcade-cyan);
+  border-style: solid;
+  background: rgba(78, 205, 196, 0.2);
+}
+
+.pileContainer.dragOver .emptyIcon {
+  color: var(--arcade-cyan);
+}
+
+.pileContainer.dragOver .emptyLabel {
+  color: var(--arcade-cyan);
+}
 
 /* Responsive adjustments */
 @media (max-width: 500px) {
