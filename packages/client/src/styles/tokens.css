@@ -62,6 +62,10 @@
   --bg-dark-elevated: #0f3460;
   --bg-dark-overlay: rgba(0, 0, 0, 0.7);
 
+  /* Panel Backgrounds */
+  --bg-panel: #1a1a2e;
+  --bg-panel-elevated: #242445;
+
   /* ============================================
    * TEXT COLORS - Bold Contrast
    * ============================================ */
