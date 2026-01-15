@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import type { Card as CardType } from '@heyhey/shared';
-import { FoundationArea, type FoundationPile, type Suit } from '../FoundationArea';
+import type { Card as CardType, FoundationPile } from '@heyhey/shared';
+import { FoundationArea, type Suit } from '../FoundationArea';
 
 const meta: Meta<typeof FoundationArea> = {
   title: 'Game/FoundationArea',

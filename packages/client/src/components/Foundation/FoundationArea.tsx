@@ -1,7 +1,7 @@
 // FoundationArea - Shared Foundation Piles UI Component
 // Displays the 4 foundation piles (one per suit) where players race to build up from Ace to King
 
-import type { Card as CardType } from '@heyhey/shared';
+import type { Card as CardType, FoundationPile } from '@heyhey/shared';
 import type { ComponentType } from 'react';
 import type { LucideProps } from 'lucide-react';
 import { useDroppable } from '@dnd-kit/core';
@@ -37,12 +37,6 @@ const SUIT_ICONS: Record<Suit, ComponentType<LucideProps>> = {
   clubs: SuitClubIcon,
   spades: SuitSpadeIcon,
 };
-
-export interface FoundationPile {
-  suit: Suit;
-  cards: CardType[];
-  ownerId: string;
-}
 
 export interface FoundationAreaProps {
   /** The 4 foundation piles (one per suit) */

@@ -1,7 +1,7 @@
 // MultiFoundationArea - Multiplayer Foundation Piles UI Component
 // Displays N×4 foundation piles for multiplayer games, grouped by owner
 
-import type { Card as CardType } from '@heyhey/shared';
+import type { Card as CardType, FoundationPile } from '@heyhey/shared';
 import { useState, useEffect, useRef, type ComponentType } from 'react';
 import type { LucideProps } from 'lucide-react';
 import { useDroppable } from '@dnd-kit/core';
@@ -16,7 +16,7 @@ import {
 } from '../ui/Icon';
 import { createDropId } from '../../hooks/useDragAndDrop';
 import { soundManager } from '../../audio/SoundManager';
-import type { Suit, CardOwnershipMap, FoundationPile } from './FoundationArea';
+import type { Suit, CardOwnershipMap } from './FoundationArea';
 import styles from './MultiFoundationArea.module.css';
 
 const SUITS: Suit[] = ['hearts', 'diamonds', 'clubs', 'spades'];
