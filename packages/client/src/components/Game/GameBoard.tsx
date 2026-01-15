@@ -121,11 +121,9 @@ export function GameBoard({
   const isNertzSelected = selectedCard?.sourceType === 'nertz';
 
   // Handle background clicks to clear selection
-  const handleBackgroundClick = (e: React.MouseEvent) => {
-    // Only trigger if clicking the background itself, not child elements
-    if (e.target === e.currentTarget && onBackgroundClick) {
-      onBackgroundClick();
-    }
+  // Cards/interactive elements should call e.stopPropagation() to prevent this
+  const handleBackgroundClick = () => {
+    onBackgroundClick?.();
   };
 
   return (

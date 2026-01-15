@@ -22,7 +22,8 @@ export function HeyHeyButton({
   const { play } = useAudio();
   const [isPressed, setIsPressed] = useState(false);
 
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent background click handler from firing
     if (!nertzPileEmpty) return;
 
     // Play triumphant sound

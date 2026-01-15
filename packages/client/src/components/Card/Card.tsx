@@ -61,13 +61,15 @@ export function Card({
     .filter(Boolean)
     .join(' ');
 
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent background click handler from firing
     if (!disabled && onClick) {
       onClick(card);
     }
   };
 
-  const handleDoubleClick = () => {
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent background click handler from firing
     if (!disabled && onDoubleClick) {
       onDoubleClick(card);
     }

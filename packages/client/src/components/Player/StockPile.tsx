@@ -40,9 +40,8 @@ export function StockPile({
   const isEmpty = cards.length === 0;
   const isClickable = !disabled && ((!isEmpty && onDraw) || (isEmpty && canRecycle && onRecycle));
 
-  const handleClick = () => {
+  const doAction = () => {
     if (disabled) return;
-
     if (!isEmpty && onDraw) {
       onDraw();
     } else if (isEmpty && canRecycle && onRecycle) {
@@ -50,10 +49,15 @@ export function StockPile({
     }
   };
 
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent background click handler from firing
+    doAction();
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      handleClick();
+      doAction();
     }
   };
 
