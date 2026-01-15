@@ -37,20 +37,21 @@ export function PlayerCustomizationModal({
       <div style={{
         display: 'flex',
         justifyContent: 'flex-end',
-        gap: '12px',
-        marginTop: '16px',
-        paddingTop: '16px',
+        gap: '8px',
+        marginTop: '12px',
+        paddingTop: '12px',
         borderTop: '2px solid var(--color-black)',
       }}>
         <button
           onClick={onClose}
           style={{
-            padding: '12px 24px',
+            padding: '8px 16px',
             background: 'transparent',
             border: '2px solid var(--color-gray)',
-            borderRadius: '8px',
+            borderRadius: '4px',
             color: 'var(--color-white)',
             fontFamily: 'var(--font-family-base)',
+            fontSize: '0.875rem',
             fontWeight: 'bold',
             cursor: 'pointer',
           }}
@@ -61,15 +62,16 @@ export function PlayerCustomizationModal({
           onClick={handleSave}
           disabled={value.name.trim().length < 2}
           style={{
-            padding: '12px 24px',
+            padding: '8px 16px',
             background: value.name.trim().length >= 2 ? 'var(--arcade-green)' : 'var(--color-gray)',
             border: '2px solid var(--color-black)',
-            borderRadius: '8px',
+            borderRadius: '4px',
             color: 'var(--color-black)',
             fontFamily: 'var(--font-family-base)',
+            fontSize: '0.875rem',
             fontWeight: 'bold',
             cursor: value.name.trim().length >= 2 ? 'pointer' : 'not-allowed',
-            boxShadow: '3px 3px 0 var(--color-black)',
+            boxShadow: '2px 2px 0 var(--color-black)',
           }}
         >
           ✓ SAVE

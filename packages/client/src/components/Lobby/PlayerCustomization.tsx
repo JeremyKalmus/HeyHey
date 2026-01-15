@@ -1,5 +1,5 @@
+import { useRef, useEffect } from 'react';
 import type { PlayerColor } from '../Card/CardBack';
-import { Input } from './Input';
 import { ColorSelector } from './ColorSelector';
 import { Avatar, AvatarSelector, type AvatarString, DEFAULT_AVATAR } from '../ui/Avatar';
 import styles from './PlayerCustomization.module.css';
@@ -25,8 +25,15 @@ export function PlayerCustomization({
   nameError,
   maxNameLength = 20,
 }: PlayerCustomizationProps) {
-  const handleNameChange = (name: string) => {
-    onChange({ ...value, name });
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    // Focus the name input when component mounts
+    nameInputRef.current?.focus();
+  }, []);
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onChange({ ...value, name: e.target.value });
   };
 
   const handleColorChange = (color: PlayerColor) => {
@@ -39,8 +46,7 @@ export function PlayerCustomization({
 
   return (
     <div className={styles.container}>
-      <h3 className={styles.title}>◆ CUSTOMIZE ◆</h3>
-
+      {/* Compact preview with editable name */}
       <div className={styles.preview}>
         <div className={styles.previewAvatar}>
           <Avatar
@@ -49,42 +55,31 @@ export function PlayerCustomization({
             size="lg"
           />
         </div>
-        <div className={styles.previewInfo}>
-          <span className={styles.previewLabel}>PLAYER NAME</span>
-          <span className={styles.previewName}>
-            {value.name?.toUpperCase() || 'ENTER NAME'}
-          </span>
-        </div>
-      </div>
-
-      <div className={styles.fields}>
-        <Input
-          label="Player Name"
+        <input
+          ref={nameInputRef}
+          type="text"
+          className={`${styles.nameInput} ${nameError ? styles.nameInputError : ''}`}
           value={value.name}
           onChange={handleNameChange}
-          placeholder="ENTER YOUR NAME"
+          placeholder="ENTER NAME"
           maxLength={maxNameLength}
-          error={nameError}
-          autoFocus
+        />
+      </div>
+      {nameError && <span className={styles.errorText}>{nameError}</span>}
+
+      <div className={styles.fields}>
+        <ColorSelector
+          value={value.color}
+          onChange={handleColorChange}
+          disabledColors={disabledColors}
+          label="Select Color"
         />
 
-        <div className={styles.fieldGroup}>
-          <span className={styles.fieldLabel}>SELECT COLOR</span>
-          <ColorSelector
-            value={value.color}
-            onChange={handleColorChange}
-            disabledColors={disabledColors}
-          />
-        </div>
-
-        <div className={styles.fieldGroup}>
-          <span className={styles.fieldLabel}>SELECT AVATAR</span>
-          <AvatarSelector
-            value={value.avatar || DEFAULT_AVATAR}
-            onChange={handleAvatarChange}
-            color={value.color}
-          />
-        </div>
+        <AvatarSelector
+          value={value.avatar || DEFAULT_AVATAR}
+          onChange={handleAvatarChange}
+          label="Select Avatar"
+        />
       </div>
     </div>
   );

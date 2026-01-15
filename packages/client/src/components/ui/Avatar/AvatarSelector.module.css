@@ -38,18 +38,18 @@
 .iconGrid {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  gap: var(--space-sm, 8px);
+  gap: 6px;
 }
 
 .iconButton {
   aspect-ratio: 1;
-  min-width: 40px;
+  min-width: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--bg-primary, #fff);
-  border: var(--border-width-medium, 3px) solid var(--border-color, #000);
-  border-radius: var(--radius-md, 4px);
+  border: 2px solid var(--border-color, #000);
+  border-radius: 4px;
   box-shadow: 2px 2px 0 #000;
   cursor: pointer;
   transition: transform var(--transition-fast, 0.1s), box-shadow var(--transition-fast, 0.1s);

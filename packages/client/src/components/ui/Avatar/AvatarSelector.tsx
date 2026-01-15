@@ -14,11 +14,9 @@ import {
   SparklesIcon,
   CrownIcon,
 } from '../Icon';
-import { Avatar } from './Avatar';
 import type {
   AvatarIcon,
   AvatarString,
-  PlayerColor,
 } from './types';
 import {
   AVATAR_ICONS,
@@ -64,8 +62,6 @@ export interface AvatarSelectorProps {
   value: AvatarString;
   /** Called when avatar selection changes */
   onChange: (avatar: AvatarString) => void;
-  /** Player color for preview */
-  color?: PlayerColor;
   /** Section label */
   label?: string;
 }
@@ -88,7 +84,6 @@ export interface AvatarSelectorProps {
 export function AvatarSelector({
   value = DEFAULT_AVATAR,
   onChange,
-  color = 'blue',
   label = 'Avatar',
 }: AvatarSelectorProps) {
   const { icon: selectedIcon, shape: selectedShape } = parseAvatar(value);
@@ -101,36 +96,27 @@ export function AvatarSelector({
     <div className={styles.container}>
       {label && <span className={styles.label}>{label}</span>}
 
-      {/* Preview */}
-      <div className={styles.preview}>
-        <Avatar avatar={value} color={color} size="lg" />
+      {/* Icon Selection - compact grid */}
+      <div className={styles.iconGrid}>
+        {AVATAR_ICONS.map((icon) => {
+          const IconComponent = ICON_MAP[icon];
+          const isSelected = icon === selectedIcon;
+
+          return (
+            <button
+              key={icon}
+              type="button"
+              className={`${styles.iconButton} ${isSelected ? styles.selected : ''}`}
+              onClick={() => handleIconChange(icon)}
+              aria-label={`Select ${ICON_LABELS[icon]} icon`}
+              aria-pressed={isSelected}
+              title={ICON_LABELS[icon]}
+            >
+              <IconComponent size={18} strokeWidth={2.5} />
+            </button>
+          );
+        })}
       </div>
-
-      {/* Icon Selection */}
-      <div className={styles.section}>
-        <span className={styles.sectionLabel}>Icon</span>
-        <div className={styles.iconGrid}>
-          {AVATAR_ICONS.map((icon) => {
-            const IconComponent = ICON_MAP[icon];
-            const isSelected = icon === selectedIcon;
-
-            return (
-              <button
-                key={icon}
-                type="button"
-                className={`${styles.iconButton} ${isSelected ? styles.selected : ''}`}
-                onClick={() => handleIconChange(icon)}
-                aria-label={`Select ${ICON_LABELS[icon]} icon`}
-                aria-pressed={isSelected}
-                title={ICON_LABELS[icon]}
-              >
-                <IconComponent size={20} strokeWidth={3} />
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
     </div>
   );
 }

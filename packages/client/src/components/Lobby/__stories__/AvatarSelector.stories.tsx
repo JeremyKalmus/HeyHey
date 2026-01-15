@@ -23,17 +23,14 @@ type Story = StoryObj<typeof AvatarSelector>;
 
 function AvatarSelectorWithState({
   initialAvatar = DEFAULT_AVATAR,
-  color = 'blue',
 }: {
   initialAvatar?: AvatarString;
-  color?: 'blue' | 'red' | 'green' | 'purple' | 'orange';
 }) {
   const [avatar, setAvatar] = useState<AvatarString>(initialAvatar);
   return (
     <AvatarSelector
       value={avatar}
       onChange={setAvatar}
-      color={color}
     />
   );
 }
@@ -43,17 +40,17 @@ export const Default: Story = {
 };
 
 export const GhostHexagon: Story = {
-  render: () => <AvatarSelectorWithState initialAvatar="ghost:hexagon" color="purple" />,
+  render: () => <AvatarSelectorWithState initialAvatar="ghost:hexagon" />,
 };
 
 export const SkullDiamond: Story = {
-  render: () => <AvatarSelectorWithState initialAvatar="skull:diamond" color="red" />,
+  render: () => <AvatarSelectorWithState initialAvatar="skull:diamond" />,
 };
 
 export const CrownStar: Story = {
-  render: () => <AvatarSelectorWithState initialAvatar="crown:star" color="orange" />,
+  render: () => <AvatarSelectorWithState initialAvatar="crown:star" />,
 };
 
 export const BotSquare: Story = {
-  render: () => <AvatarSelectorWithState initialAvatar="bot:square" color="green" />,
+  render: () => <AvatarSelectorWithState initialAvatar="bot:square" />,
 };

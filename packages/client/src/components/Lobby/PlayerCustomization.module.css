@@ -1,93 +1,64 @@
 /**
- * PlayerCustomization - 90s Arcade Neubrutalist Style
- * Player customization panel with arcade feel
+ * PlayerCustomization - Compact 90s Arcade Style
  */
 
 .container {
   display: flex;
   flex-direction: column;
-  gap: var(--space-lg);
-  padding: var(--space-lg);
-  background: var(--bg-dark-elevated);
-  border: var(--border-thick) solid var(--color-black);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-neubrutalist);
+  gap: var(--space-md, 12px);
 }
 
-.title {
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-black);
-  text-transform: uppercase;
-  letter-spacing: var(--letter-spacing-wide);
-  color: var(--arcade-yellow);
-  margin: 0;
-  text-align: center;
-}
-
-/* Preview section */
+/* Preview section with editable name */
 .preview {
   display: flex;
   align-items: center;
-  gap: var(--space-lg);
-  padding: var(--space-lg);
+  gap: var(--space-md, 12px);
+  padding: var(--space-md, 12px);
   background: var(--color-black);
-  border: var(--border-medium) solid var(--arcade-cyan);
+  border: 2px solid var(--arcade-cyan);
   border-radius: var(--radius-md);
-  box-shadow:
-    inset 0 0 20px rgba(0, 245, 255, 0.1),
-    0 0 10px rgba(0, 245, 255, 0.2);
 }
 
 .previewAvatar {
   flex-shrink: 0;
 }
 
-.previewInfo {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
+.nameInput {
+  flex: 1;
   min-width: 0;
-}
-
-.previewLabel {
+  background: transparent;
+  border: none;
   font-family: var(--font-family-base);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-bold);
-  text-transform: uppercase;
-  letter-spacing: var(--letter-spacing-wide);
-  color: var(--arcade-cyan);
-}
-
-.previewName {
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-black);
+  font-size: var(--font-size-lg, 1.25rem);
+  font-weight: var(--font-weight-black, 900);
   color: var(--color-white);
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide, 0.05em);
+  outline: none;
 }
 
-/* Field sections */
+.nameInput::placeholder {
+  color: var(--color-gray, #666);
+  opacity: 0.5;
+}
+
+.nameInput:focus {
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+.nameInputError {
+  color: var(--arcade-pink, #FF4081);
+}
+
+.errorText {
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--arcade-pink, #FF4081);
+  margin-top: -8px;
+}
+
+/* Field sections - compact */
 .fields {
   display: flex;
   flex-direction: column;
-  gap: var(--space-lg);
-}
-
-.fieldGroup {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-}
-
-.fieldLabel {
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-black);
-  text-transform: uppercase;
-  letter-spacing: var(--letter-spacing-wide);
-  color: var(--text-inverse);
+  gap: var(--space-md, 12px);
 }
