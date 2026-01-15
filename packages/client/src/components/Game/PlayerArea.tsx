@@ -69,6 +69,8 @@ export interface PlayerAreaProps {
   onFoundationMove?: (card: Card, foundationIndex: number, source: MoveSource) => void;
   /** Callback when HeyHey is called */
   onCallHeyHey?: () => void;
+  /** Whether to show valid move destination hints (Easy Mode) */
+  showMoveHints?: boolean;
   /** Optional className */
   className?: string;
 }
@@ -88,6 +90,7 @@ export function PlayerArea({
   onMove,
   onFoundationMove,
   onCallHeyHey,
+  showMoveHints = false,
   className,
 }: PlayerAreaProps) {
   // Configure drag sensors - pointer for mouse, touch for mobile
@@ -354,6 +357,8 @@ export function PlayerArea({
           validDropTargets={dragDrop.validDropTargets}
           // Background click to clear selection
           onBackgroundClick={localPlayer.clearSelection}
+          // Hints settings
+          showMoveHints={showMoveHints}
           className={className}
         />
 

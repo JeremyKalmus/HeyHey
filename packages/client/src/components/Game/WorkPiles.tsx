@@ -34,6 +34,8 @@ export interface WorkPilesProps {
   onPileClick?: (pileIndex: number) => void;
   /** Whether interaction is disabled (e.g., game not started) */
   disabled?: boolean;
+  /** Whether to show valid move destination hints (Easy Mode) */
+  showMoveHints?: boolean;
   /** Optional className for additional styling */
   className?: string;
 }
@@ -47,6 +49,7 @@ export function WorkPiles({
   onCardDoubleClick,
   onPileClick,
   disabled = false,
+  showMoveHints = false,
   className,
 }: WorkPilesProps) {
   const handleCardClick = (card: CardType, pileIndex: number, cardIndex: number) => {
@@ -71,8 +74,15 @@ export function WorkPiles({
     onPileClick?.(pileIndex);
   };
 
-  const isValidDestination = (pileIndex: number): boolean => {
+  // Check if pile is a valid placement target (for functionality)
+  const isValidPlacement = (pileIndex: number): boolean => {
     return selectedCard !== null && selectedCard !== undefined && validDestinations.includes(pileIndex);
+  };
+
+  // Check if pile should be visually highlighted (only when hints enabled)
+  const shouldHighlight = (pileIndex: number): boolean => {
+    if (!showMoveHints) return false;
+    return isValidPlacement(pileIndex);
   };
 
   // Get indices of cards that can be selected/dragged
@@ -87,7 +97,8 @@ export function WorkPiles({
   return (
     <div className={`${styles.workPiles} ${className ?? ''}`}>
       {piles.map((pile, pileIndex) => {
-        const isDestination = isValidDestination(pileIndex);
+        const isValidTarget = isValidPlacement(pileIndex);
+        const isHighlighted = shouldHighlight(pileIndex);
         const selectableIndices = getSelectableIndices(pile);
 
         // Find the selected card index in this pile for highlighting cascade
@@ -102,7 +113,8 @@ export function WorkPiles({
             pileIndex={pileIndex}
             pile={pile}
             backColor={backColor}
-            isDestination={isDestination}
+            isValidTarget={isValidTarget}
+            isHighlighted={isHighlighted}
             selectedIndexInPile={selectedIndexInPile}
             selectableIndices={selectableIndices}
             disabled={disabled}
@@ -124,7 +136,10 @@ interface DroppableWorkPileProps {
   pileIndex: number;
   pile: CardType[];
   backColor: PlayerColor;
-  isDestination: boolean;
+  /** Whether this pile is a valid placement target (for functionality) */
+  isValidTarget: boolean;
+  /** Whether to show visual highlight (controlled by showMoveHints) */
+  isHighlighted: boolean;
   selectedIndexInPile: number;
   selectableIndices: number[];
   disabled: boolean;
@@ -137,7 +152,8 @@ function DroppableWorkPile({
   pileIndex,
   pile,
   backColor,
-  isDestination,
+  isValidTarget,
+  isHighlighted,
   selectedIndexInPile,
   selectableIndices,
   disabled,
@@ -152,11 +168,13 @@ function DroppableWorkPile({
     disabled,
   });
 
-  const isHighlighted = isDestination || isOver;
+  // Visual highlight: show when hints enabled OR when dragging over
+  const showHighlight = isHighlighted || isOver;
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (disabled) return;
-    if ((event.key === 'Enter' || event.key === ' ') && (pile.length === 0 || isDestination)) {
+    // Keyboard placement works for empty piles or valid targets (regardless of hints setting)
+    if ((event.key === 'Enter' || event.key === ' ') && (pile.length === 0 || isValidTarget)) {
       event.preventDefault();
       onPileClick(pileIndex);
     }
@@ -165,12 +183,12 @@ function DroppableWorkPile({
   return (
     <div
       ref={setNodeRef}
-      className={`${styles.pileContainer} ${isHighlighted ? styles.validDestination : ''} ${isOver ? styles.dragOver : ''}`}
+      className={`${styles.pileContainer} ${showHighlight ? styles.validDestination : ''} ${isOver ? styles.dragOver : ''}`}
       onClick={() => pile.length === 0 && onPileClick(pileIndex)}
       onKeyDown={handleKeyDown}
       role="button"
       tabIndex={disabled ? -1 : 0}
-      aria-label={`Work pile ${pileIndex + 1} - ${pile.length} cards${isDestination ? ' - valid destination' : ''}`}
+      aria-label={`Work pile ${pileIndex + 1} - ${pile.length} cards${isHighlighted ? ' - valid destination' : ''}`}
     >
       {pile.length > 0 ? (
         <CardStack

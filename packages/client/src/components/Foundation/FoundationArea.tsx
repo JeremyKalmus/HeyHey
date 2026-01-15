@@ -60,6 +60,8 @@ export interface FoundationAreaProps {
   hasPendingMoves?: boolean;
   /** Error message to display (e.g., move rejected) */
   error?: string | null;
+  /** Whether to show valid move destination hints (Easy Mode) */
+  showMoveHints?: boolean;
 }
 
 export function FoundationArea({
@@ -71,6 +73,7 @@ export function FoundationArea({
   cardOwnership,
   hasPendingMoves = false,
   error,
+  showMoveHints = false,
 }: FoundationAreaProps) {
   // Create a map for easy lookup
   const pileMap = new Map(piles.map((p) => [p.suit, p]));
@@ -81,6 +84,7 @@ export function FoundationArea({
     }
   };
 
+  // Check if foundation is a valid placement target (for functionality)
   const isValidTarget = (suit: Suit): boolean => {
     if (!canPlace || !selectedCard) return false;
 
@@ -97,6 +101,12 @@ export function FoundationArea({
 
     // Must be exactly one rank higher
     return selectedCard.rank === topCard.rank + 1;
+  };
+
+  // Check if foundation should be visually highlighted (only when hints enabled)
+  const shouldHighlight = (suit: Suit): boolean => {
+    if (!showMoveHints) return false;
+    return isValidTarget(suit);
   };
 
   // Get owner color for a card
@@ -120,6 +130,7 @@ export function FoundationArea({
           const topCard = cards[cards.length - 1];
           const cardCount = cards.length;
           const isTarget = isValidTarget(suit);
+          const isHighlighted = shouldHighlight(suit);
           const isClickable = canPlace && !!selectedCard;
 
           return (
@@ -129,7 +140,8 @@ export function FoundationArea({
               suitIndex={suitIndex}
               topCard={topCard}
               cardCount={cardCount}
-              isTarget={isTarget}
+              isValidTarget={isTarget}
+              isHighlighted={isHighlighted}
               isClickable={isClickable}
               getOwnerColor={getOwnerColor}
               onPileClick={handlePileClick}
@@ -152,7 +164,10 @@ interface DroppableFoundationPileProps {
   suitIndex: number;
   topCard: CardType | undefined;
   cardCount: number;
-  isTarget: boolean;
+  /** Whether this foundation is a valid placement target (for functionality) */
+  isValidTarget: boolean;
+  /** Whether to show visual highlight (controlled by showMoveHints) */
+  isHighlighted: boolean;
   isClickable: boolean;
   getOwnerColor: (card: CardType) => PlayerColor | undefined;
   onPileClick: (suit: Suit) => void;
@@ -163,7 +178,8 @@ function DroppableFoundationPile({
   suitIndex,
   topCard,
   cardCount,
-  isTarget,
+  isValidTarget: _isValidTarget,
+  isHighlighted,
   isClickable,
   getOwnerColor,
   onPileClick,
@@ -174,9 +190,11 @@ function DroppableFoundationPile({
     id: dropId,
   });
 
-  const isHighlighted = isTarget || isOver;
+  // Visual highlight: show when hints enabled OR when dragging over
+  const showHighlight = isHighlighted || isOver;
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
+    // Keyboard works when clickable (regardless of hints setting)
     if (!isClickable) return;
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
@@ -188,7 +206,7 @@ function DroppableFoundationPile({
     <div
       ref={setNodeRef}
       className={`${styles.pileWrapper} ${isClickable ? styles.clickable : ''} ${
-        isHighlighted ? styles.validTarget : ''
+        showHighlight ? styles.validTarget : ''
       } ${isOver ? styles.dragOver : ''}`}
       onClick={() => onPileClick(suit)}
       onKeyDown={handleKeyDown}

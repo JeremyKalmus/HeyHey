@@ -73,6 +73,10 @@ export interface GameBoardProps {
   // Background click (for clearing selection)
   onBackgroundClick?: () => void;
 
+  // Hints settings
+  /** Whether to show valid move destination hints (Easy Mode) */
+  showMoveHints?: boolean;
+
   // Optional class
   className?: string;
 }
@@ -116,6 +120,7 @@ export function GameBoard({
   dragSource: _dragSource,
   validDropTargets: _validDropTargets = [],
   onBackgroundClick,
+  showMoveHints = false,
   className,
 }: GameBoardProps) {
   const isNertzSelected = selectedCard?.sourceType === 'nertz';
@@ -143,6 +148,7 @@ export function GameBoard({
           selectedCard={foundationSelectedCard}
           onPileClick={onFoundationClick}
           canPlace={canPlaceOnFoundation}
+          showMoveHints={showMoveHints}
         />
       </div>
 
@@ -199,6 +205,7 @@ export function GameBoard({
               onCardDoubleClick={onWorkCardDoubleClick}
               onPileClick={onWorkPileClick}
               disabled={disabled}
+              showMoveHints={showMoveHints}
             />
           </div>
         </div>
