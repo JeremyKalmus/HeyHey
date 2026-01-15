@@ -116,9 +116,9 @@ export function GameBoard({
   onCallHeyHey,
   canPlaceOnFoundation = false,
   foundationSelectedCard,
-  isDragging: _isDragging = false,
+  isDragging = false,
   dragSource: _dragSource,
-  validDropTargets: _validDropTargets = [],
+  validDropTargets = [],
   onBackgroundClick,
   showMoveHints = false,
   className,
@@ -130,6 +130,18 @@ export function GameBoard({
   const handleBackgroundClick = () => {
     onBackgroundClick?.();
   };
+
+  // Combine click-selection destinations with drag destinations for highlighting
+  const dragWorkDestinations = isDragging
+    ? validDropTargets.filter(t => t.type === 'work').map(t => t.index)
+    : [];
+  const combinedWorkDestinations = [...new Set([...validWorkDestinations, ...dragWorkDestinations])];
+
+  // Check if any foundation is a valid drag target
+  const dragFoundationTargets = isDragging
+    ? validDropTargets.filter(t => t.type === 'foundation').map(t => t.index)
+    : [];
+  const canPlaceOnFoundationDrag = dragFoundationTargets.length > 0;
 
   return (
     <div
@@ -147,7 +159,7 @@ export function GameBoard({
           piles={foundationPiles}
           selectedCard={foundationSelectedCard}
           onPileClick={onFoundationClick}
-          canPlace={canPlaceOnFoundation}
+          canPlace={canPlaceOnFoundation || canPlaceOnFoundationDrag}
           showMoveHints={showMoveHints}
         />
       </div>
@@ -200,7 +212,7 @@ export function GameBoard({
               piles={workPiles}
               backColor={playerColor}
               selectedCard={selectedCard}
-              validDestinations={validWorkDestinations}
+              validDestinations={combinedWorkDestinations}
               onCardClick={onWorkCardClick}
               onCardDoubleClick={onWorkCardDoubleClick}
               onPileClick={onWorkPileClick}
