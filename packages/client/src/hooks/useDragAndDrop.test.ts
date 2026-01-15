@@ -60,6 +60,8 @@ function createGameState(overrides: Partial<GameState> = {}): GameState {
       createFoundation('spades'),
     ],
     config: { nertzPileSize: 13, drawCount: 3, targetScore: 100 },
+    roundNumber: 1,
+    currentStarterIndex: 0,
     ...overrides,
   };
 }

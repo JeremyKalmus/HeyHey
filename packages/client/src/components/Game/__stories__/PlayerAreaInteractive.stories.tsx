@@ -54,6 +54,8 @@ function createTestGameState(playerState: PlayerGameState): GameState {
       { suit: 'clubs', cards: [], ownerId: 'system' },
       { suit: 'spades', cards: [], ownerId: 'system' },
     ],
+    roundNumber: 1,
+    currentStarterIndex: 0,
     config: {
       nertzPileSize: 13,
       drawCount: 3,

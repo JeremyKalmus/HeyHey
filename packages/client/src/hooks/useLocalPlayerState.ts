@@ -272,6 +272,8 @@ export function useLocalPlayerState(
       players: [],
       foundations: [],
       config,
+      roundNumber: 1,
+      currentStarterIndex: 0,
     },
     playerId,
     onMove: (source, destination, cardCount) => {

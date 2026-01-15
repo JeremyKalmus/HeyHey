@@ -161,6 +161,8 @@ function FullMultiplayerGame({ playerCount, simulateOpponents = true, withLongPi
     players: [localPlayerState, ...opponents.map(o => o.playerState)],
     foundations: Array.from(playerFoundations.values()).flat(),
     config: { nertzPileSize: 13, drawCount: 3, targetScore: 100 },
+    roundNumber: 1,
+    currentStarterIndex: 0,
   };
 
   const config: GameConfig = { nertzPileSize: 13, drawCount: 3, targetScore: 100 };
