@@ -16,8 +16,6 @@ export interface RoomLobbyProps {
   onConfigChange: (config: GameConfig) => void;
   onStartGame: () => void;
   onLeaveRoom: () => void;
-  onToggleReady?: () => void;
-  isReady?: boolean;
   playerCustomization?: PlayerCustomizationData;
   onPlayerCustomizationChange?: (data: PlayerCustomizationData) => void;
 }
@@ -31,8 +29,6 @@ export function RoomLobby({
   onConfigChange,
   onStartGame,
   onLeaveRoom,
-  onToggleReady,
-  isReady = false,
   playerCustomization,
   onPlayerCustomizationChange,
 }: RoomLobbyProps) {
@@ -40,7 +36,6 @@ export function RoomLobby({
 
   const minPlayers = 2;
   const canStart = isHost && players.length >= minPlayers;
-  const allReady = players.every((p) => p.isHost || p.isReady);
 
   // Get colors taken by other players (not the current player)
   const disabledColors = players
@@ -78,7 +73,7 @@ export function RoomLobby({
         <div className={styles.headerLeft}>
           <h1 className={styles.title}>HEYHEY!</h1>
           <p className={styles.subtitle}>
-            {allReady && players.length >= minPlayers ? 'READY TO PLAY!' : 'WAITING FOR PLAYERS...'}
+            {players.length >= minPlayers ? 'READY TO PLAY!' : 'WAITING FOR PLAYERS...'}
           </p>
         </div>
 
@@ -128,27 +123,16 @@ export function RoomLobby({
         </Button>
 
         <div className={styles.footerRight}>
-          {!isHost && onToggleReady && (
-            <Button
-              variant={isReady ? 'secondary' : 'primary'}
-              onClick={onToggleReady}
-            >
-              {isReady ? '✕ NOT READY' : '✓ READY!'}
-            </Button>
-          )}
-
           {isHost && (
             <Button
               variant="primary"
               onClick={onStartGame}
-              disabled={!canStart || !allReady}
-              className={canStart && allReady ? styles.startButton : undefined}
+              disabled={!canStart}
+              className={canStart ? styles.startButton : undefined}
             >
               {players.length < minPlayers
                 ? `NEED ${minPlayers - players.length} MORE`
-                : !allReady
-                  ? 'WAITING...'
-                  : '▶ PLAY'}
+                : '▶ PLAY'}
             </Button>
           )}
         </div>

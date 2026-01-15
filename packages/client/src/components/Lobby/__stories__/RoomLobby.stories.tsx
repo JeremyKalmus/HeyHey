@@ -30,7 +30,6 @@ const meta: Meta<typeof RoomLobby> = {
     onConfigChange: fn(),
     onStartGame: fn(),
     onLeaveRoom: fn(),
-    onToggleReady: fn(),
   },
 };
 
@@ -78,14 +77,12 @@ function HostLobbyDemo() {
 
 // Interactive player lobby
 function PlayerLobbyDemo() {
-  const [isReady, setIsReady] = useState(false);
-
   return (
     <RoomLobby
       roomCode="ABC123"
       players={[
         { id: '1', name: 'Alice', color: 'blue', avatar: 'crown:hexagon', isHost: true, isReady: true },
-        { id: '2', name: 'You', color: 'red', avatar: 'user:circle', isHost: false, isReady },
+        { id: '2', name: 'You', color: 'red', avatar: 'user:circle', isHost: false, isReady: true },
       ]}
       currentPlayerId="2"
       isHost={false}
@@ -93,8 +90,6 @@ function PlayerLobbyDemo() {
       onConfigChange={() => {}}
       onStartGame={() => {}}
       onLeaveRoom={() => alert('Leaving...')}
-      onToggleReady={() => setIsReady(!isReady)}
-      isReady={isReady}
     />
   );
 }
@@ -105,7 +100,7 @@ export const AsHost: Story = {
     docs: {
       description: {
         story:
-          'Host view with ability to change settings and start the game when all players are ready.',
+          'Host view with ability to change settings and start the game when enough players have joined.',
       },
     },
   },
@@ -116,7 +111,7 @@ export const AsPlayer: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Player view with Ready toggle. Cannot modify settings or start game.',
+        story: 'Player view. Cannot modify settings or start game.',
       },
     },
   },
@@ -141,7 +136,7 @@ export const WaitingForMorePlayers: Story = {
   },
 };
 
-export const AllPlayersReady: Story = {
+export const ReadyToPlay: Story = {
   args: {
     roomCode: 'GAME42',
     players: [
@@ -157,7 +152,7 @@ export const AllPlayersReady: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'All players are ready - host can start the game!',
+        story: 'Enough players have joined - host can start the game!',
       },
     },
   },
@@ -183,7 +178,7 @@ export const FullRoom: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Maximum capacity with 8 players, all ready to play.',
+        story: 'Maximum capacity with 8 players.',
       },
     },
   },
@@ -197,7 +192,6 @@ function LobbyWithCustomizationDemo() {
     color: 'purple' as PlayerColor,
     avatar: DEFAULT_AVATAR,
   });
-  const [isReady, setIsReady] = useState(false);
 
   // Build players list including current player's customization
   const players: LobbyPlayer[] = [
@@ -209,7 +203,7 @@ function LobbyWithCustomizationDemo() {
       color: customization.color,
       avatar: customization.avatar,
       isHost: false,
-      isReady,
+      isReady: true,
     },
   ];
 
@@ -223,8 +217,6 @@ function LobbyWithCustomizationDemo() {
       onConfigChange={setConfig}
       onStartGame={() => {}}
       onLeaveRoom={() => alert('Leaving...')}
-      onToggleReady={() => setIsReady(!isReady)}
-      isReady={isReady}
       playerCustomization={customization}
       onPlayerCustomizationChange={setCustomization}
     />
@@ -236,7 +228,7 @@ export const WithPlayerCustomization: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Lobby with player customization panel for name, deck color, and avatar selection.',
+        story: 'Lobby with player customization. Click on your player to edit name, color, and avatar.',
       },
     },
   },
@@ -248,7 +240,7 @@ export const PlayersWithAvatars: Story = {
     players: [
       { id: '1', name: 'Alice', color: 'blue', avatar: 'crown:star', isHost: true, isReady: true },
       { id: '2', name: 'Bob', color: 'red', avatar: 'skull:diamond', isHost: false, isReady: true },
-      { id: '3', name: 'Charlie', color: 'green', avatar: 'bot:hexagon', isHost: false, isReady: false },
+      { id: '3', name: 'Charlie', color: 'green', avatar: 'bot:hexagon', isHost: false, isReady: true },
       { id: '4', name: 'Diana', color: 'yellow', avatar: 'ghost:circle', isHost: false, isReady: true },
     ],
     currentPlayerId: '1',
