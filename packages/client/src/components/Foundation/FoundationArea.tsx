@@ -63,6 +63,10 @@ export interface FoundationAreaProps {
   error?: string | null;
   /** Whether to show valid move destination hints (Easy Mode) */
   showMoveHints?: boolean;
+  /** Whether a drag is currently in progress */
+  isDragging?: boolean;
+  /** Foundation indices that are valid drag targets (0=hearts, 1=diamonds, 2=clubs, 3=spades) */
+  validDragFoundations?: number[];
 }
 
 export function FoundationArea({
@@ -75,6 +79,8 @@ export function FoundationArea({
   hasPendingMoves = false,
   error,
   showMoveHints = false,
+  isDragging = false,
+  validDragFoundations = [],
 }: FoundationAreaProps) {
   // Create a map for easy lookup
   const pileMap = new Map(piles.map((p) => [p.suit, p]));
@@ -86,7 +92,13 @@ export function FoundationArea({
   };
 
   // Check if foundation is a valid placement target (for functionality)
-  const isValidTarget = (suit: Suit): boolean => {
+  const isValidTarget = (suit: Suit, suitIndex: number): boolean => {
+    // During drag, check if this foundation is in the valid drag targets
+    if (isDragging) {
+      return validDragFoundations.includes(suitIndex);
+    }
+
+    // For click selection
     if (!canPlace || !selectedCard) return false;
 
     // Card must match the suit
@@ -105,9 +117,9 @@ export function FoundationArea({
   };
 
   // Check if foundation should be visually highlighted (only when hints enabled)
-  const shouldHighlight = (suit: Suit): boolean => {
+  const shouldHighlight = (suit: Suit, suitIndex: number): boolean => {
     if (!showMoveHints) return false;
-    return isValidTarget(suit);
+    return isValidTarget(suit, suitIndex);
   };
 
   // Get owner color for a card
@@ -130,8 +142,8 @@ export function FoundationArea({
           const cards = pile?.cards ?? [];
           const topCard = cards[cards.length - 1];
           const cardCount = cards.length;
-          const isTarget = isValidTarget(suit);
-          const isHighlighted = shouldHighlight(suit);
+          const isTarget = isValidTarget(suit, suitIndex);
+          const isHighlighted = shouldHighlight(suit, suitIndex);
           const isClickable = canPlace && !!selectedCard;
 
           return (

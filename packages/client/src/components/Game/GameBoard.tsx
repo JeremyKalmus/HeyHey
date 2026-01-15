@@ -161,6 +161,8 @@ export function GameBoard({
           onPileClick={onFoundationClick}
           canPlace={canPlaceOnFoundation || canPlaceOnFoundationDrag}
           showMoveHints={showMoveHints}
+          isDragging={isDragging}
+          validDragFoundations={dragFoundationTargets}
         />
       </div>
 
