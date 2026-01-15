@@ -111,7 +111,8 @@ export function WastePile({
                     style={{
                       left: visibleIndex * fanOffset,
                       zIndex: visibleIndex,
-                      opacity: isDragging ? 0.5 : 1,
+                      opacity: isDragging ? 0 : 1,
+                      pointerEvents: isDragging ? 'none' : 'auto',
                     }}
                     {...listeners}
                     {...attributes}

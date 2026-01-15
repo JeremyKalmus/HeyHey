@@ -100,7 +100,8 @@ export function NertzPile({
         className={`${styles.topCardContainer} ${isDragging ? styles.dragging : ''}`}
         style={{
           top: Math.min(bottomCards.length * 2, 10),
-          opacity: isDragging ? 0.5 : 1,
+          opacity: isDragging ? 0 : 1,
+          pointerEvents: isDragging ? 'none' : 'auto',
         }}
         {...listeners}
         {...attributes}
