@@ -1,0 +1,664 @@
+// FullMultiplayerGame Stories - Complete multiplayer game with playable local player
+// Combines MultiFoundationArea (shared foundations) with PlayerArea (your cards)
+
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import type { Card, PlayerGameState, GameState, GameConfig, Move, MoveSource } from '@heyhey/shared';
+import { createShuffledDeck } from '@heyhey/shared';
+import type { PlayerColor } from '../../Card/CardBack';
+import type { AvatarString } from '../../ui/Avatar';
+import type { FoundationPile as LocalFoundationPile } from '../../Foundation';
+import { MultiFoundationArea, type PlayerFoundationGroup } from '../../Foundation';
+import { OpponentMini } from '../OpponentMini';
+import { GameBoard } from '../GameBoard';
+import { Card as CardComponent } from '../../Card';
+import { useLocalPlayerState } from '../../../hooks/useLocalPlayerState';
+import { useDragAndDrop } from '../../../hooks/useDragAndDrop';
+import { usePlayerSettings } from '../../../hooks/usePlayerSettings';
+import { SettingsToggle } from '../../ui/SettingsToggle';
+import type { SelectedCard } from '../WorkPiles';
+
+// =============================================================================
+// CONSTANTS
+// =============================================================================
+
+const SUITS = ['hearts', 'diamonds', 'clubs', 'spades'] as const;
+const PLAYER_COLORS: PlayerColor[] = ['blue', 'red', 'green', 'yellow', 'purple', 'orange', 'pink', 'teal'];
+const PLAYER_NAMES = ['You', 'Alice', 'Bob', 'Charlie', 'Diana', 'Eve', 'Frank', 'Grace'];
+const PLAYER_AVATARS: AvatarString[] = [
+  'user:circle',
+  'smile:square',
+  'ghost:diamond',
+  'skull:hexagon',
+  'cat:star',
+  'bot:triangle',
+  'heart:circle',
+  'zap:square',
+];
+
+// =============================================================================
+// HELPERS
+// =============================================================================
+
+function createTestPlayerState(playerId: string): PlayerGameState {
+  const deck = createShuffledDeck(playerId);
+  return {
+    playerId,
+    deckId: playerId,
+    nertzPile: deck.slice(0, 13),
+    workPiles: [
+      [deck[13]!],
+      [deck[14]!],
+      [deck[15]!],
+      [deck[16]!],
+    ],
+    stockPile: deck.slice(17),
+    wastePile: [],
+  };
+}
+
+function createOpponentState(playerId: string, nertzCount: number): PlayerGameState {
+  const deck = createShuffledDeck(playerId);
+  return {
+    playerId,
+    deckId: playerId,
+    nertzPile: deck.slice(0, nertzCount),
+    workPiles: [
+      deck.slice(nertzCount, nertzCount + 2),
+      deck.slice(nertzCount + 2, nertzCount + 4),
+      deck.slice(nertzCount + 4, nertzCount + 6),
+      deck.slice(nertzCount + 6, nertzCount + 8),
+    ],
+    stockPile: deck.slice(nertzCount + 8, nertzCount + 30),
+    wastePile: deck.slice(nertzCount + 30, nertzCount + 33),
+  };
+}
+
+// =============================================================================
+// MAIN COMPONENT
+// =============================================================================
+
+interface FullMultiplayerGameProps {
+  playerCount: 2 | 4 | 6 | 8;
+  simulateOpponents?: boolean;
+}
+
+function FullMultiplayerGame({ playerCount, simulateOpponents = true }: FullMultiplayerGameProps) {
+  const localPlayerId = 'player-you';
+  const localPlayerColor = PLAYER_COLORS[0]!;
+
+  // Player settings (Easy Mode)
+  const { settings, toggleMoveHints } = usePlayerSettings({ playerId: localPlayerId });
+
+  // Local player state
+  const [localPlayerState, setLocalPlayerState] = useState<PlayerGameState>(() =>
+    createTestPlayerState(localPlayerId)
+  );
+
+  // Foundation piles for all players (each player has 4 suits)
+  const [playerFoundations, setPlayerFoundations] = useState<Map<string, LocalFoundationPile[]>>(() => {
+    const map = new Map<string, LocalFoundationPile[]>();
+    for (let i = 0; i < playerCount; i++) {
+      const playerId = i === 0 ? localPlayerId : `player-${i + 1}`;
+      map.set(playerId, SUITS.map(suit => ({ suit, cards: [], ownerId: playerId })));
+    }
+    return map;
+  });
+
+  // Opponent states
+  const [opponents, setOpponents] = useState<Array<{
+    playerId: string;
+    playerState: PlayerGameState;
+    name: string;
+    avatar: AvatarString;
+    color: PlayerColor;
+    isActive: boolean;
+  }>>(() =>
+    Array.from({ length: playerCount - 1 }, (_, i) => ({
+      playerId: `player-${i + 2}`,
+      playerState: createOpponentState(`player-${i + 2}`, 13 - Math.floor(Math.random() * 4)),
+      name: PLAYER_NAMES[i + 1] ?? `Player ${i + 2}`,
+      avatar: PLAYER_AVATARS[i + 1] ?? 'user:circle',
+      color: PLAYER_COLORS[i + 1] ?? 'blue',
+      isActive: false,
+    }))
+  );
+
+  // Build game state for validation
+  const gameState: GameState = {
+    gameId: 'multiplayer-test',
+    phase: 'playing',
+    players: [localPlayerState, ...opponents.map(o => o.playerState)],
+    foundations: Array.from(playerFoundations.values()).flat(),
+    config: { nertzPileSize: 13, drawCount: 3, targetScore: 100 },
+  };
+
+  const config: GameConfig = { nertzPileSize: 13, drawCount: 3, targetScore: 100 };
+
+  // Move log for debugging
+  const [moveLog, setMoveLog] = useState<string[]>([]);
+
+  // Handle local player moves
+  const handleMove = useCallback((move: Move) => {
+    setMoveLog(prev => [...prev.slice(-9), `You: ${move.type}`]);
+
+    setLocalPlayerState(prev => {
+      if (move.type === 'draw') {
+        const drawCount = 3;
+        const cardsToDraw = prev.stockPile.slice(-drawCount);
+        const newStock = prev.stockPile.slice(0, -drawCount);
+        const newWaste = [...prev.wastePile, ...cardsToDraw.reverse()];
+        return { ...prev, stockPile: newStock, wastePile: newWaste };
+      }
+
+      if (move.type === 'flipStock') {
+        const newStock = [...prev.wastePile].reverse();
+        return { ...prev, stockPile: newStock, wastePile: [] };
+      }
+
+      if (move.type === 'card') {
+        const { source, destination, cardCount = 1 } = move;
+        let movedCards: Card[] = [];
+        let newState = { ...prev };
+
+        // Remove from source
+        if (source.type === 'nertz') {
+          movedCards = prev.nertzPile.slice(-1);
+          newState.nertzPile = prev.nertzPile.slice(0, -1);
+        } else if (source.type === 'waste') {
+          movedCards = prev.wastePile.slice(-1);
+          newState.wastePile = prev.wastePile.slice(0, -1);
+        } else if (source.type === 'work' && source.pileIndex !== undefined) {
+          const pile = prev.workPiles[source.pileIndex] ?? [];
+          const startIdx = source.cardIndex ?? (pile.length - cardCount);
+          movedCards = pile.slice(startIdx);
+          const newPiles = [...prev.workPiles] as [Card[], Card[], Card[], Card[]];
+          newPiles[source.pileIndex] = pile.slice(0, startIdx);
+          newState.workPiles = newPiles;
+        }
+
+        // Add to work pile destination
+        if (destination.type === 'work' && destination.pileIndex !== undefined) {
+          const newPiles = [...newState.workPiles] as [Card[], Card[], Card[], Card[]];
+          newPiles[destination.pileIndex] = [
+            ...(newPiles[destination.pileIndex] ?? []),
+            ...movedCards,
+          ];
+          newState.workPiles = newPiles;
+        }
+
+        return newState;
+      }
+
+      return prev;
+    });
+  }, []);
+
+  // Handle foundation moves from local player
+  const handleFoundationMove = useCallback((card: Card, foundationIndex: number, source: MoveSource) => {
+    // Find which player owns this foundation (index / 4)
+    const playerIndex = Math.floor(foundationIndex / 4);
+    const suitIndex = foundationIndex % 4;
+    const playerId = playerIndex === 0 ? localPlayerId : `player-${playerIndex + 1}`;
+
+    setMoveLog(prev => [...prev.slice(-9), `You: ${card.rank} of ${card.suit} → foundation`]);
+
+    // Remove card from source
+    setLocalPlayerState(prev => {
+      if (source.type === 'nertz') {
+        return { ...prev, nertzPile: prev.nertzPile.slice(0, -1) };
+      } else if (source.type === 'waste') {
+        return { ...prev, wastePile: prev.wastePile.slice(0, -1) };
+      } else if (source.type === 'work' && source.pileIndex !== undefined) {
+        const newPiles = [...prev.workPiles] as [Card[], Card[], Card[], Card[]];
+        const pile = newPiles[source.pileIndex] ?? [];
+        newPiles[source.pileIndex] = pile.slice(0, -1);
+        return { ...prev, workPiles: newPiles };
+      }
+      return prev;
+    });
+
+    // Add card to foundation
+    setPlayerFoundations(prev => {
+      const newMap = new Map(prev);
+      const piles = newMap.get(playerId);
+      if (piles) {
+        const newPiles = [...piles];
+        newPiles[suitIndex] = {
+          ...newPiles[suitIndex]!,
+          cards: [...newPiles[suitIndex]!.cards, card],
+        };
+        newMap.set(playerId, newPiles);
+      }
+      return newMap;
+    });
+  }, []);
+
+  // Simulate opponent moves
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (!simulateOpponents) return;
+
+    const makeOpponentMove = () => {
+      // Pick random opponent
+      const oppIndex = Math.floor(Math.random() * opponents.length);
+      const opponent = opponents[oppIndex];
+      if (!opponent) return;
+
+      // Try to play from nertz pile to foundation
+      const nertzTop = opponent.playerState.nertzPile[opponent.playerState.nertzPile.length - 1];
+      if (!nertzTop) return;
+
+      // Find valid foundation
+      let foundValidMove = false;
+      const allFoundations = Array.from(playerFoundations.values()).flat();
+
+      for (let i = 0; i < allFoundations.length; i++) {
+        const foundation = allFoundations[i]!;
+        const topCard = foundation.cards[foundation.cards.length - 1];
+        const expectedRank = topCard ? topCard.rank + 1 : 1;
+
+        if (nertzTop.suit === foundation.suit && nertzTop.rank === expectedRank) {
+          // Valid move found!
+          foundValidMove = true;
+
+          // Update opponent state
+          setOpponents(prev => {
+            const updated = [...prev];
+            updated[oppIndex] = {
+              ...updated[oppIndex]!,
+              playerState: {
+                ...updated[oppIndex]!.playerState,
+                nertzPile: updated[oppIndex]!.playerState.nertzPile.slice(0, -1),
+              },
+              isActive: true,
+            };
+            // Clear active state after short delay
+            setTimeout(() => {
+              setOpponents(p => {
+                const u = [...p];
+                if (u[oppIndex]) u[oppIndex] = { ...u[oppIndex]!, isActive: false };
+                return u;
+              });
+            }, 500);
+            return updated;
+          });
+
+          // Update foundation
+          const ownerIndex = Math.floor(i / 4);
+          const suitIndex = i % 4;
+          const ownerId = ownerIndex === 0 ? localPlayerId : `player-${ownerIndex + 1}`;
+
+          setPlayerFoundations(prev => {
+            const newMap = new Map(prev);
+            const piles = newMap.get(ownerId);
+            if (piles) {
+              const newPiles = [...piles];
+              newPiles[suitIndex] = {
+                ...newPiles[suitIndex]!,
+                cards: [...newPiles[suitIndex]!.cards, nertzTop],
+              };
+              newMap.set(ownerId, newPiles);
+            }
+            return newMap;
+          });
+
+          setMoveLog(prev => [...prev.slice(-9), `${opponent.name}: ${nertzTop.rank} of ${nertzTop.suit}`]);
+          break;
+        }
+      }
+
+      // If no foundation move, try work pile moves (simplified)
+      if (!foundValidMove && Math.random() < 0.3) {
+        // Just mark as active briefly to show activity
+        setOpponents(prev => {
+          const updated = [...prev];
+          updated[oppIndex] = { ...updated[oppIndex]!, isActive: true };
+          setTimeout(() => {
+            setOpponents(p => {
+              const u = [...p];
+              if (u[oppIndex]) u[oppIndex] = { ...u[oppIndex]!, isActive: false };
+              return u;
+            });
+          }, 300);
+          return updated;
+        });
+      }
+    };
+
+    intervalRef.current = setInterval(makeOpponentMove, 1500 + Math.random() * 1500);
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [simulateOpponents, opponents, playerFoundations]);
+
+  // Reset game
+  const handleReset = useCallback(() => {
+    setLocalPlayerState(createTestPlayerState(localPlayerId));
+    setOpponents(
+      Array.from({ length: playerCount - 1 }, (_, i) => ({
+        playerId: `player-${i + 2}`,
+        playerState: createOpponentState(`player-${i + 2}`, 13 - Math.floor(Math.random() * 4)),
+        name: PLAYER_NAMES[i + 1] ?? `Player ${i + 2}`,
+        avatar: PLAYER_AVATARS[i + 1] ?? 'user:circle',
+        color: PLAYER_COLORS[i + 1] ?? 'blue',
+        isActive: false,
+      }))
+    );
+    const newFoundations = new Map<string, LocalFoundationPile[]>();
+    for (let i = 0; i < playerCount; i++) {
+      const playerId = i === 0 ? localPlayerId : `player-${i + 1}`;
+      newFoundations.set(playerId, SUITS.map(suit => ({ suit, cards: [], ownerId: playerId })));
+    }
+    setPlayerFoundations(newFoundations);
+    setMoveLog([]);
+  }, [playerCount]);
+
+  // Convert foundations to PlayerFoundationGroup format for MultiFoundationArea
+  const playerGroups: PlayerFoundationGroup[] = Array.from(playerFoundations.entries()).map(
+    ([playerId, piles], index) => ({
+      playerId,
+      playerName: index === 0 ? 'You' : (PLAYER_NAMES[index] ?? `Player ${index + 1}`),
+      playerColor: PLAYER_COLORS[index] ?? 'blue',
+      piles,
+    })
+  );
+
+  // Check if local player can call HeyHey
+  const canCallHeyHey = localPlayerState.nertzPile.length === 0;
+
+  // Drag-drop setup
+  const pointerSensor = useSensor(PointerSensor, {
+    activationConstraint: { distance: 8 },
+  });
+  const sensors = useSensors(pointerSensor);
+
+  // Use local player state hook
+  const localPlayer = useLocalPlayerState({
+    serverState: localPlayerState,
+    gameState,
+    config,
+    playerId: localPlayerId,
+    onMove: handleMove,
+    onFoundationMove: handleFoundationMove,
+  });
+
+  // Use drag-drop hook
+  const handleDragMove = useCallback(
+    (source: MoveSource, destination: { type: 'work' | 'foundation'; pileIndex?: number; foundationIndex?: number }, cardCount?: number) => {
+      const move: Move = {
+        type: 'card',
+        playerId: localPlayerId,
+        source,
+        destination: destination.type === 'work'
+          ? { type: 'work', pileIndex: destination.pileIndex! }
+          : { type: 'foundation', foundationIndex: destination.foundationIndex ?? 0 },
+        cardCount,
+      };
+      handleMove(move);
+    },
+    [handleMove]
+  );
+
+  const dragDrop = useDragAndDrop({
+    gameState,
+    config,
+    playerId: localPlayerId,
+    onMove: handleDragMove,
+    onFoundationMove: handleFoundationMove,
+  });
+
+  // Convert selection for GameBoard
+  const selectedCard: SelectedCard | null = localPlayer.selectedCard
+    ? {
+        card: localPlayer.selectedCard.card,
+        sourceType: localPlayer.selectedCard.source.type === 'nertz' ? 'nertz'
+          : localPlayer.selectedCard.source.type === 'work' ? 'workPile' : 'waste',
+        sourcePileIndex: localPlayer.selectedCard.source.type === 'work'
+          ? localPlayer.selectedCard.source.pileIndex : undefined,
+        cardIndex: localPlayer.selectedCard.source.type === 'work'
+          ? (localPlayer.selectedCard.source.cardIndex ?? 0) : 0,
+      }
+    : null;
+
+  const selectedWasteIndex = localPlayer.selectedCard?.source.type === 'waste'
+    ? localPlayerState.wastePile.length - 1
+    : undefined;
+
+  // Compute valid destinations for drag
+  const dragWorkDestinations = dragDrop.isDragging
+    ? dragDrop.validDropTargets.filter(t => t.type === 'work').map(t => t.index)
+    : [];
+  const combinedWorkDestinations = [...new Set([...localPlayer.validWorkPileDestinations, ...dragWorkDestinations])];
+
+  const dragFoundationTargets = dragDrop.isDragging
+    ? dragDrop.validDropTargets.filter(t => t.type === 'foundation').map(t => t.index)
+    : [];
+
+  return (
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '16px',
+      padding: '16px',
+      minHeight: '100vh',
+      background: '#0a0a12',
+    }}>
+      {/* Header */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '8px 16px',
+        background: 'rgba(255, 210, 63, 0.1)',
+        borderRadius: '8px',
+      }}>
+        <div style={{
+          color: '#FFD23F',
+          fontFamily: 'Inter, sans-serif',
+          fontWeight: 900,
+          fontSize: '1.25rem',
+          textTransform: 'uppercase',
+        }}>
+          {playerCount}-Player Game
+        </div>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <SettingsToggle
+            showMoveHints={settings.showMoveHints}
+            onToggleHints={toggleMoveHints}
+          />
+          <button
+            onClick={handleReset}
+            style={{
+              padding: '6px 12px',
+              background: '#3b82f6',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+            }}
+          >
+            Reset
+          </button>
+        </div>
+      </div>
+
+      {/* Opponents Row */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        gap: '12px',
+        flexWrap: 'wrap',
+      }}>
+        {opponents.map((opp) => (
+          <OpponentMini
+            key={opp.playerId}
+            playerState={opp.playerState}
+            name={opp.name}
+            avatar={opp.avatar}
+            color={opp.color}
+            isActive={opp.isActive}
+          />
+        ))}
+      </div>
+
+      {/* Shared Foundations (Multi-player) */}
+      <MultiFoundationArea
+        playerGroups={playerGroups}
+        canPlace={localPlayer.validFoundationDestinations.length > 0 || dragFoundationTargets.length > 0}
+        showMoveHints={settings.showMoveHints}
+      />
+
+      {/* Your Play Area */}
+      <DndContext
+        sensors={sensors}
+        onDragStart={dragDrop.handleDragStart}
+        onDragOver={dragDrop.handleDragOver}
+        onDragEnd={dragDrop.handleDragEnd}
+        onDragCancel={dragDrop.handleDragCancel}
+      >
+        <GameBoard
+          nertzPile={localPlayerState.nertzPile}
+          workPiles={localPlayerState.workPiles as [Card[], Card[], Card[], Card[]]}
+          stockPile={localPlayerState.stockPile}
+          wastePile={localPlayerState.wastePile}
+          foundationPiles={[]} // Using MultiFoundationArea above instead
+          playerColor={localPlayerColor}
+          playerName="You"
+          currentRound={1}
+          selectedCard={selectedCard}
+          validWorkDestinations={combinedWorkDestinations}
+          selectedWasteIndex={selectedWasteIndex}
+          canCallHeyHey={canCallHeyHey}
+          canRecycleStock={localPlayerState.stockPile.length === 0 && localPlayerState.wastePile.length > 0}
+          disabled={false}
+          onNertzCardClick={localPlayer.handleNertzClick}
+          onNertzCardDoubleClick={localPlayer.handleNertzDoubleClick}
+          onWorkCardClick={localPlayer.handleWorkPileClick}
+          onWorkCardDoubleClick={localPlayer.handleWorkPileDoubleClick}
+          onWorkPileClick={localPlayer.handleWorkPileTarget}
+          onStockDraw={localPlayer.drawCards}
+          onStockRecycle={localPlayer.recycleWaste}
+          onWasteCardClick={localPlayer.handleWasteClick}
+          onWasteCardDoubleClick={localPlayer.handleWasteDoubleClick}
+          onCallHeyHey={() => setMoveLog(prev => [...prev, 'HeyHey called!'])}
+          canPlaceOnFoundation={localPlayer.validFoundationDestinations.length > 0}
+          foundationSelectedCard={localPlayer.selectedCard?.card ?? null}
+          isDragging={dragDrop.isDragging}
+          dragSource={dragDrop.dragSource}
+          validDropTargets={dragDrop.validDropTargets}
+          onBackgroundClick={localPlayer.clearSelection}
+          showMoveHints={settings.showMoveHints}
+        />
+
+        <DragOverlay>
+          {dragDrop.dragSource && (
+            <CardComponent
+              card={dragDrop.dragSource.card}
+              faceUp={true}
+              backColor={localPlayerColor}
+            />
+          )}
+        </DragOverlay>
+      </DndContext>
+
+      {/* Debug/Info Panel */}
+      <div style={{
+        padding: '12px',
+        background: 'rgba(0, 0, 0, 0.5)',
+        borderRadius: '8px',
+        color: '#fff',
+        fontSize: '0.8rem',
+        display: 'flex',
+        gap: '24px',
+        flexWrap: 'wrap',
+      }}>
+        <div><strong>Your Nertz:</strong> {localPlayerState.nertzPile.length}</div>
+        <div><strong>Stock:</strong> {localPlayerState.stockPile.length}</div>
+        <div><strong>Waste:</strong> {localPlayerState.wastePile.length}</div>
+        <div style={{ flex: 1, maxHeight: '60px', overflow: 'auto' }}>
+          <strong>Log:</strong>
+          {moveLog.slice(-5).map((log, i) => (
+            <span key={i} style={{ marginLeft: '8px', opacity: 0.8 }}>{log}</span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// =============================================================================
+// STORYBOOK META
+// =============================================================================
+
+const meta: Meta<typeof FullMultiplayerGame> = {
+  title: 'Game/FullMultiplayerGame',
+  component: FullMultiplayerGame,
+  parameters: {
+    layout: 'fullscreen',
+    backgrounds: {
+      default: 'dark',
+      values: [{ name: 'dark', value: '#0a0a12' }],
+    },
+  },
+};
+
+export default meta;
+type Story = StoryObj<typeof FullMultiplayerGame>;
+
+/**
+ * Full 4-player game with playable local player area.
+ * - Top: Opponent status indicators
+ * - Middle: Shared foundation piles (4 per player = 16 total)
+ * - Bottom: Your playable cards (nertz, work piles, stock/waste)
+ */
+export const FourPlayer: Story = {
+  args: {
+    playerCount: 4,
+    simulateOpponents: true,
+  },
+};
+
+/**
+ * Head-to-head 2-player game.
+ */
+export const TwoPlayer: Story = {
+  args: {
+    playerCount: 2,
+    simulateOpponents: true,
+  },
+};
+
+/**
+ * Full 6-player chaos.
+ */
+export const SixPlayer: Story = {
+  args: {
+    playerCount: 6,
+    simulateOpponents: true,
+  },
+};
+
+/**
+ * Maximum 8-player madness!
+ */
+export const EightPlayer: Story = {
+  args: {
+    playerCount: 8,
+    simulateOpponents: true,
+  },
+};
+
+/**
+ * Practice mode - no opponents, just your cards and foundations.
+ */
+export const SoloPlaytest: Story = {
+  args: {
+    playerCount: 2,
+    simulateOpponents: false,
+  },
+};
