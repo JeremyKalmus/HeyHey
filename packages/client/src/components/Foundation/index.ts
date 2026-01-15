@@ -5,3 +5,9 @@ export {
   type Suit,
   type CardOwnershipMap,
 } from './FoundationArea';
+
+export {
+  MultiFoundationArea,
+  type MultiFoundationAreaProps,
+  type PlayerFoundationGroup,
+} from './MultiFoundationArea';
