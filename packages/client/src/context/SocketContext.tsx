@@ -46,7 +46,7 @@ export function SocketProvider({ serverUrl, children }: SocketProviderProps) {
   const [connectionError, setConnectionError] = useState<string | null>(null);
 
   // Determine server URL
-  const url = serverUrl ?? import.meta.env.VITE_SERVER_URL ?? 'http://localhost:3001';
+  const url = serverUrl ?? import.meta.env.VITE_SERVER_URL ?? 'http://localhost:3000';
 
   // Initialize socket connection
   useEffect(() => {

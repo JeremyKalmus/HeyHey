@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { isValidRoomCode, ROOM_CODE_PREFIX } from '@heyhey/shared';
 import { Modal } from './Modal';
 import { Input } from './Input';
 import { Button } from './Button';
@@ -41,8 +42,8 @@ export function JoinRoomModal({
     if (!trimmedCode) {
       setCodeError('Please enter a room code');
       hasError = true;
-    } else if (trimmedCode.length !== 6) {
-      setCodeError('Room code must be 6 characters');
+    } else if (!isValidRoomCode(trimmedCode)) {
+      setCodeError('Invalid room code format');
       hasError = true;
     }
 
@@ -62,8 +63,8 @@ export function JoinRoomModal({
   };
 
   const handleCodeChange = (value: string) => {
-    // Uppercase and remove non-alphanumeric characters
-    const cleaned = value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    // Uppercase and allow alphanumeric + hyphen for HEYHEY-XXXX format
+    const cleaned = value.toUpperCase().replace(/[^A-Z0-9-]/g, '');
     setRoomCode(cleaned);
     setCodeError('');
   };
@@ -88,13 +89,13 @@ export function JoinRoomModal({
           label="Room Code"
           value={roomCode}
           onChange={handleCodeChange}
-          placeholder="ABCD12"
-          maxLength={6}
+          placeholder="HEYHEY-XXXX"
+          maxLength={11}
           error={codeError}
         />
 
         <p className={styles.hint}>
-          Ask the host for the 6-character room code.
+          Ask the host for the room code (e.g., {ROOM_CODE_PREFIX}-XXXX).
         </p>
 
         <div className={styles.actions}>
