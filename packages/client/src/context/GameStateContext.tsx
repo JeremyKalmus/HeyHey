@@ -43,6 +43,7 @@ export interface GameStateContextValue {
   joinRoom: (roomCode: string, playerName: string) => void;
   leaveRoom: () => void;
   updateSettings: (settings: Partial<GameConfig>) => void;
+  updatePlayer: (updates: { name?: string; color?: string; avatar?: string }) => void;
   startGame: () => void;
   setupComplete: () => void;
   makeMove: (move: Move) => void;
@@ -73,6 +74,7 @@ type GameAction =
   | { type: 'ROOM_JOINED'; room: RoomState; playerId: string }
   | { type: 'PLAYER_JOINED'; player: LobbyPlayer }
   | { type: 'PLAYER_LEFT'; playerId: string }
+  | { type: 'PLAYER_UPDATED'; player: LobbyPlayer }
   | { type: 'SETTINGS_UPDATED'; settings: GameConfig }
   | { type: 'HOST_CHANGED'; newHostId: string }
   | { type: 'GAME_STARTED'; gameId: string }
@@ -136,6 +138,18 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         room: {
           ...state.room,
           players: state.room.players.filter((p) => p.id !== action.playerId),
+        },
+      };
+
+    case 'PLAYER_UPDATED':
+      if (!state.room) return state;
+      return {
+        ...state,
+        room: {
+          ...state.room,
+          players: state.room.players.map((p) =>
+            p.id === action.player.id ? action.player : p
+          ),
         },
       };
 
@@ -346,6 +360,10 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
       dispatch({ type: 'PLAYER_LEFT', playerId: payload.playerId });
     };
 
+    const onPlayerUpdated = (payload: { player: LobbyPlayer }) => {
+      dispatch({ type: 'PLAYER_UPDATED', player: payload.player });
+    };
+
     const onSettingsUpdated = (payload: { settings: GameConfig }) => {
       dispatch({ type: 'SETTINGS_UPDATED', settings: payload.settings });
     };
@@ -400,6 +418,7 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
     socket.on('roomJoined', onRoomJoined);
     socket.on('playerJoined', onPlayerJoined);
     socket.on('playerLeft', onPlayerLeft);
+    socket.on('playerUpdated', onPlayerUpdated);
     socket.on('settingsUpdated', onSettingsUpdated);
     socket.on('hostChanged', onHostChanged);
     socket.on('gameStarted', onGameStarted);
@@ -419,6 +438,7 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
       socket.off('roomJoined', onRoomJoined);
       socket.off('playerJoined', onPlayerJoined);
       socket.off('playerLeft', onPlayerLeft);
+      socket.off('playerUpdated', onPlayerUpdated);
       socket.off('settingsUpdated', onSettingsUpdated);
       socket.off('hostChanged', onHostChanged);
       socket.off('gameStarted', onGameStarted);
@@ -472,6 +492,16 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
       socket.emit('updateSettings', { settings });
     },
     [socket, isConnected, isHost]
+  );
+
+  const updatePlayer = useCallback(
+    (updates: { name?: string; color?: string; avatar?: string }) => {
+      if (!socket || !isConnected) {
+        return;
+      }
+      socket.emit('updatePlayer', updates);
+    },
+    [socket, isConnected]
   );
 
   const startGame = useCallback(() => {
@@ -547,6 +577,7 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
     joinRoom,
     leaveRoom,
     updateSettings,
+    updatePlayer,
     startGame,
     setupComplete,
     makeMove,

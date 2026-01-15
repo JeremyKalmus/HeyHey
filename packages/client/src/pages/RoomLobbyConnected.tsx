@@ -29,6 +29,7 @@ export function RoomLobbyConnected() {
     gameId,
     gamePhase,
     updateSettings,
+    updatePlayer,
     startGame,
     leaveRoom,
     error,
@@ -44,19 +45,34 @@ export function RoomLobbyConnected() {
       const playerIndex = room.players.findIndex(p => p.id === playerId);
       const currentPlayer = room.players.find(p => p.id === playerId);
       if (currentPlayer && playerIndex >= 0) {
-        setPlayerCustomization({
+        // Use server data if available, otherwise use defaults
+        const initialData: PlayerCustomizationData = {
           name: currentPlayer.name,
-          color: PLAYER_COLORS[playerIndex % PLAYER_COLORS.length]!,
-          avatar: DEFAULT_AVATARS[playerIndex % DEFAULT_AVATARS.length]!,
-        });
+          color: (currentPlayer.color as PlayerColor) ?? PLAYER_COLORS[playerIndex % PLAYER_COLORS.length]!,
+          avatar: (currentPlayer.avatar as AvatarString) ?? DEFAULT_AVATARS[playerIndex % DEFAULT_AVATARS.length]!,
+        };
+        setPlayerCustomization(initialData);
+        // If server doesn't have our customization yet, send it
+        if (!currentPlayer.color || !currentPlayer.avatar) {
+          updatePlayer({
+            name: initialData.name,
+            color: initialData.color,
+            avatar: initialData.avatar,
+          });
+        }
       }
     }
-  }, [room, playerId, playerCustomization]);
+  }, [room, playerId, playerCustomization, updatePlayer]);
 
   const handleCustomizationChange = useCallback((data: PlayerCustomizationData) => {
     setPlayerCustomization(data);
-    // TODO: Send to server when we add that support
-  }, []);
+    // Send to server for sync with other players
+    updatePlayer({
+      name: data.name,
+      color: data.color,
+      avatar: data.avatar,
+    });
+  }, [updatePlayer]);
 
   // Redirect to home if no room
   useEffect(() => {
@@ -76,27 +92,17 @@ export function RoomLobbyConnected() {
   const clientPlayers: LobbyPlayer[] = useMemo(() => {
     if (!room) return [];
     return room.players.map((p, index) => {
-      // Use customization data for current player
-      if (p.id === playerId && playerCustomization) {
-        return {
-          id: p.id,
-          name: playerCustomization.name,
-          color: playerCustomization.color,
-          avatar: playerCustomization.avatar,
-          isHost: p.isHost,
-          isReady: p.isHost, // Host is always ready
-        };
-      }
+      // Use server data with fallback defaults
       return {
         id: p.id,
         name: p.name,
-        color: PLAYER_COLORS[index % PLAYER_COLORS.length]!,
-        avatar: DEFAULT_AVATARS[index % DEFAULT_AVATARS.length]!,
+        color: (p.color as PlayerColor) ?? PLAYER_COLORS[index % PLAYER_COLORS.length]!,
+        avatar: (p.avatar as AvatarString) ?? DEFAULT_AVATARS[index % DEFAULT_AVATARS.length]!,
         isHost: p.isHost,
         isReady: p.isHost, // Host is always ready
       };
     });
-  }, [room, playerId, playerCustomization]);
+  }, [room]);
 
   const handleConfigChange = (config: GameConfig) => {
     updateSettings(config);

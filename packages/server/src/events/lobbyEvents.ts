@@ -6,6 +6,7 @@ import type {
   CreateRoomPayload,
   JoinRoomPayload,
   UpdateSettingsPayload,
+  UpdatePlayerPayload,
   MakeMovePayload,
   StateUpdate,
   MoveRejection,
@@ -131,6 +132,26 @@ export function registerLobbyEvents(io: TypedServer): void {
       });
 
       console.log(`Settings updated in room ${result.roomCode}`);
+    });
+
+    // Update Player (name, color, avatar)
+    socket.on('updatePlayer', (payload: UpdatePlayerPayload) => {
+      const result = lobbyManager.updatePlayer(socket.id, payload);
+
+      if (!result.success) {
+        socket.emit('error', {
+          code: result.error,
+          message: `Failed to update player: ${result.error}`,
+        });
+        return;
+      }
+
+      // Broadcast to all players in room (including sender)
+      io.to(result.roomCode).emit('playerUpdated', {
+        player: result.player,
+      });
+
+      console.log(`Player ${result.player.name} updated in room ${result.roomCode}`);
     });
 
     // Start Game

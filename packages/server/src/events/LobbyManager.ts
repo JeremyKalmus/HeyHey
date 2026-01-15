@@ -19,6 +19,8 @@ export class LobbyManager {
   private socketToRoom: Map<string, string> = new Map();
   private socketToPlayer: Map<string, { playerId: string; playerName: string }> =
     new Map();
+  private playerCustomization: Map<string, { color?: string; avatar?: string }> =
+    new Map();
 
   createRoom(
     socketId: string,
@@ -92,6 +94,7 @@ export class LobbyManager {
 
     this.socketToRoom.delete(socketId);
     this.socketToPlayer.delete(socketId);
+    this.playerCustomization.delete(socketId);
 
     if (result.roomClosed) {
       this.roomSettings.delete(roomCode);
@@ -146,6 +149,58 @@ export class LobbyManager {
     return { success: true, settings: newSettings, roomCode };
   }
 
+  updatePlayer(
+    socketId: string,
+    updates: { name?: string; color?: string; avatar?: string }
+  ): { success: true; player: LobbyPlayer; roomCode: string } | { success: false; error: string } {
+    const roomCode = this.socketToRoom.get(socketId);
+    if (!roomCode) {
+      return { success: false, error: 'not_in_room' };
+    }
+
+    const room = this.roomManager.getRoom(roomCode);
+    if (!room) {
+      return { success: false, error: 'room_not_found' };
+    }
+
+    const playerInfo = this.socketToPlayer.get(socketId);
+    if (!playerInfo) {
+      return { success: false, error: 'player_not_found' };
+    }
+
+    // Update name if provided
+    if (updates.name !== undefined) {
+      playerInfo.playerName = updates.name;
+      this.socketToPlayer.set(socketId, playerInfo);
+      // Update in room manager
+      const roomPlayer = room.players.get(socketId);
+      if (roomPlayer) {
+        roomPlayer.name = updates.name;
+      }
+    }
+
+    // Update customization (color, avatar)
+    const currentCustomization = this.playerCustomization.get(socketId) ?? {};
+    if (updates.color !== undefined) {
+      currentCustomization.color = updates.color;
+    }
+    if (updates.avatar !== undefined) {
+      currentCustomization.avatar = updates.avatar;
+    }
+    this.playerCustomization.set(socketId, currentCustomization);
+
+    // Return the updated player info
+    const player: LobbyPlayer = {
+      id: socketId,
+      name: playerInfo.playerName,
+      isHost: room.hostId === socketId,
+      color: currentCustomization.color,
+      avatar: currentCustomization.avatar,
+    };
+
+    return { success: true, player, roomCode };
+  }
+
   startGame(socketId: string): { success: true; roomCode: string } | { success: false; error: string } {
     const roomCode = this.socketToRoom.get(socketId);
     if (!roomCode) {
@@ -190,11 +245,16 @@ export class LobbyManager {
 
   private toRoomState(room: Room, settings: GameConfig): RoomState {
     const players: LobbyPlayer[] = Array.from(room.players.values()).map(
-      (p: RoomPlayer) => ({
-        id: p.id,
-        name: p.name,
-        isHost: p.id === room.hostId,
-      })
+      (p: RoomPlayer) => {
+        const customization = this.playerCustomization.get(p.id) ?? {};
+        return {
+          id: p.id,
+          name: p.name,
+          isHost: p.id === room.hostId,
+          color: customization.color,
+          avatar: customization.avatar,
+        };
+      }
     );
 
     return {

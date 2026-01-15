@@ -25,6 +25,8 @@ export interface LobbyPlayer {
   id: string;
   name: string;
   isHost: boolean;
+  color?: string;  // Player's chosen color (e.g., 'blue', 'red')
+  avatar?: string; // Player's avatar string (e.g., 'ghost:hexagon')
 }
 
 export interface RoomState {
@@ -40,6 +42,7 @@ export interface ClientToServerEvents {
   joinRoom: (payload: JoinRoomPayload) => void;
   leaveRoom: () => void;
   updateSettings: (payload: UpdateSettingsPayload) => void;
+  updatePlayer: (payload: UpdatePlayerPayload) => void;
   startGame: () => void;
   setupComplete: () => void;
   foundationMove: (payload: FoundationMovePayload) => void;
@@ -51,6 +54,7 @@ export interface ServerToClientEvents {
   roomJoined: (payload: RoomJoinedPayload) => void;
   playerJoined: (payload: PlayerJoinedPayload) => void;
   playerLeft: (payload: PlayerLeftPayload) => void;
+  playerUpdated: (payload: PlayerUpdatedPayload) => void;
   settingsUpdated: (payload: SettingsUpdatedPayload) => void;
   gameStarted: (payload: GameStartedPayload) => void;
   error: (payload: ErrorPayload) => void;
@@ -75,6 +79,12 @@ export interface UpdateSettingsPayload {
   settings: Partial<GameConfig>;
 }
 
+export interface UpdatePlayerPayload {
+  name?: string;
+  color?: string;
+  avatar?: string;
+}
+
 // Event Payloads - Server to Client
 export interface RoomCreatedPayload {
   room: RoomState;
@@ -92,6 +102,10 @@ export interface PlayerJoinedPayload {
 
 export interface PlayerLeftPayload {
   playerId: string;
+}
+
+export interface PlayerUpdatedPayload {
+  player: LobbyPlayer;
 }
 
 export interface SettingsUpdatedPayload {
