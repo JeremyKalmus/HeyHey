@@ -3,18 +3,23 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { DndContext, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { useGameState } from '../context/GameStateContext';
 import { WaitingToStart } from '../components/Game/WaitingToStart';
+import { SetupPhase } from '../components/Game/SetupPhase';
 import { GameBoard } from '../components/Game/GameBoard';
+import { Card as CardComponent } from '../components/Card';
 import { MultiFoundationArea, type PlayerFoundationGroup } from '../components/Foundation';
+import { Avatar } from '../components/ui/Avatar';
+import { SettingsToggle } from '../components/ui/SettingsToggle';
 import type { FoundationPile } from '@heyhey/shared';
 import type { PlayerColor } from '../components/Card/CardBack';
+import type { AvatarString } from '../components/ui/Avatar';
 import type { Card, PlayerGameState, GameState, GameConfig, Move, MoveSource } from '@heyhey/shared';
 import { createShuffledDeck } from '@heyhey/shared';
 import { useLocalPlayerState } from '../hooks/useLocalPlayerState';
 import { useDragAndDrop } from '../hooks/useDragAndDrop';
-import type { SelectedCard } from '../components/Game/WorkPiles';
+import { usePlayerSettings } from '../hooks/usePlayerSettings';
 
 const SUITS = ['hearts', 'diamonds', 'clubs', 'spades'] as const;
 
@@ -50,19 +55,25 @@ export function GameScreenConnected() {
     currentStarterIndex,
   } = useGameState();
 
-  // Local player state (cards dealt when game starts)
+  // Local setup state - tracks if player has completed their card dealing
+  const [localSetupDone, setLocalSetupDone] = useState(false);
+
+  // Local player state (cards dealt when local setup completes)
   const [localPlayerState, setLocalPlayerState] = useState<PlayerGameState | null>(null);
 
   // Foundation piles for all players
   const [playerFoundations, setPlayerFoundations] = useState<Map<string, FoundationPile[]>>(new Map());
 
-  // Initialize state when entering playing phase
-  useEffect(() => {
-    if (gamePhase === 'playing' && !localPlayerState && playerId && room) {
-      const nertzSize = room.settings.nertzPileSize || 13;
-      setLocalPlayerState(createDealtPlayerState(playerId, nertzSize));
+  // Player settings (hints toggle)
+  const { settings, toggleMoveHints } = usePlayerSettings({ playerId: playerId || '' });
 
-      // Initialize foundations for all players
+  // Get current player info
+  const currentPlayer = room?.players.find((p) => p.id === playerId);
+  const playerColor = (currentPlayer?.color as PlayerColor) || 'blue';
+
+  // Initialize foundations when entering playing phase (but NOT cards yet)
+  useEffect(() => {
+    if (gamePhase === 'playing' && playerFoundations.size === 0 && room) {
       const foundations = new Map<string, FoundationPile[]>();
       room.players.forEach((player) => {
         foundations.set(
@@ -72,12 +83,21 @@ export function GameScreenConnected() {
       });
       setPlayerFoundations(foundations);
     }
-  }, [gamePhase, localPlayerState, playerId, room]);
+  }, [gamePhase, playerFoundations.size, room]);
+
+  // Handle local setup complete - deal cards
+  const handleLocalSetupComplete = useCallback(() => {
+    if (!playerId || !room) return;
+    const nertzSize = room.settings.nertzPileSize || 13;
+    setLocalPlayerState(createDealtPlayerState(playerId, nertzSize));
+    setLocalSetupDone(true);
+  }, [playerId, room]);
 
   // Reset state when entering waiting phase (new round)
   useEffect(() => {
     if (gamePhase === 'waiting_for_start') {
       setLocalPlayerState(null);
+      setLocalSetupDone(false);
       setPlayerFoundations(new Map());
     }
   }, [gamePhase]);
@@ -265,9 +285,8 @@ export function GameScreenConnected() {
     return null;
   }
 
-  // Get current player info
-  const currentPlayer = room?.players.find((p) => p.id === playerId);
-  const playerColor = (currentPlayer?.color as PlayerColor) || 'blue';
+  // Get other players for opponent display
+  const opponents = room?.players.filter((p) => p.id !== playerId) || [];
 
   // Get starter info for WaitingToStart
   const players = room?.players || [];
@@ -314,24 +333,7 @@ export function GameScreenConnected() {
         </div>
       );
 
-    case 'playing':
-      if (!localPlayerState) {
-        return (
-          <div
-            style={{
-              minHeight: '100vh',
-              background: '#1a1a2e',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#fff',
-            }}
-          >
-            <p>Loading game...</p>
-          </div>
-        );
-      }
-
+    case 'playing': {
       // Convert foundations to PlayerFoundationGroup format
       const playerGroups: PlayerFoundationGroup[] = Array.from(playerFoundations.entries()).map(
         ([pid, piles], index) => {
@@ -345,54 +347,6 @@ export function GameScreenConnected() {
         }
       );
 
-      // Convert selection for GameBoard
-      const selectedCard: SelectedCard | null = localPlayer.selectedCard
-        ? {
-            card: localPlayer.selectedCard.card,
-            sourceType:
-              localPlayer.selectedCard.source.type === 'nertz'
-                ? 'nertz'
-                : localPlayer.selectedCard.source.type === 'work'
-                  ? 'workPile'
-                  : 'waste',
-            sourcePileIndex:
-              localPlayer.selectedCard.source.type === 'work'
-                ? localPlayer.selectedCard.source.pileIndex
-                : undefined,
-            cardIndex:
-              localPlayer.selectedCard.source.type === 'work'
-                ? (localPlayer.selectedCard.source.cardIndex ?? 0)
-                : 0,
-          }
-        : null;
-
-      const selectedWasteIndex =
-        localPlayer.selectedCard?.source.type === 'waste'
-          ? localPlayerState.wastePile.length - 1
-          : undefined;
-
-      // Combine click and drag destinations
-      const dragWorkDestinations = dragDrop.isDragging
-        ? dragDrop.validDropTargets.filter((t) => t.type === 'work').map((t) => t.index)
-        : [];
-      const combinedWorkDestinations = [
-        ...new Set([...localPlayer.validWorkPileDestinations, ...dragWorkDestinations]),
-      ];
-
-      const dragFoundationTargets = dragDrop.isDragging
-        ? dragDrop.validDropTargets.filter((t) => t.type === 'foundation').map((t) => t.index)
-        : [];
-      const combinedFoundationTargets = [
-        ...new Set([...localPlayer.validFoundationDestinations, ...dragFoundationTargets]),
-      ];
-
-      // Handle foundation click
-      const handleMultiFoundationClick = (_pid: string, _suit: string, globalIndex: number) => {
-        localPlayer.handleFoundationClick(globalIndex);
-      };
-
-      const canCallHeyHey = localPlayerState.nertzPile.length === 0;
-
       return (
         <div
           style={{
@@ -404,54 +358,174 @@ export function GameScreenConnected() {
             background: '#0a0a12',
           }}
         >
-          <DndContext
-            sensors={sensors}
-            onDragStart={dragDrop.handleDragStart}
-            onDragOver={dragDrop.handleDragOver}
-            onDragEnd={dragDrop.handleDragEnd}
-            onDragCancel={dragDrop.handleDragCancel}
+          {/* Header bar with opponents and settings */}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '4px 8px',
+            }}
           >
-            {/* Shared Foundations (Multi-player) */}
-            <MultiFoundationArea
-              playerGroups={playerGroups}
-              selectedCard={localPlayer.selectedCard?.card ?? null}
-              onPileClick={handleMultiFoundationClick}
-              canPlace={combinedFoundationTargets.length > 0}
-              showMoveHints={false}
-              isDragging={dragDrop.isDragging}
-              validDragFoundations={dragFoundationTargets}
-            />
+            {/* Opponents - just avatars */}
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              {opponents.map((opp) => (
+                <div
+                  key={opp.id}
+                  style={{ opacity: 0.7 }}
+                  title={opp.name}
+                >
+                  <Avatar
+                    avatar={(opp.avatar as AvatarString) || 'user:circle'}
+                    color={(opp.color as PlayerColor) || 'blue'}
+                    size="sm"
+                  />
+                </div>
+              ))}
+            </div>
 
-            {/* Your Play Area */}
-            <GameBoard
-              nertzPile={localPlayerState.nertzPile}
-              workPiles={localPlayerState.workPiles as [Card[], Card[], Card[], Card[]]}
-              stockPile={localPlayerState.stockPile}
-              wastePile={localPlayerState.wastePile}
-              foundationPiles={[]}
-              playerColor={playerColor}
-              currentRound={roundNumber}
-              selectedCard={selectedCard}
-              validWorkDestinations={combinedWorkDestinations}
-              selectedWasteIndex={selectedWasteIndex}
-              canCallHeyHey={canCallHeyHey}
-              canRecycleStock={localPlayerState.stockPile.length === 0}
-              onNertzCardClick={localPlayer.handleNertzClick}
-              onNertzCardDoubleClick={localPlayer.handleNertzDoubleClick}
-              onWorkCardClick={localPlayer.handleWorkPileClick}
-              onWorkCardDoubleClick={localPlayer.handleWorkPileDoubleClick}
-              onWorkPileClick={localPlayer.handleWorkPileTarget}
-              onStockDraw={localPlayer.drawCards}
-              onStockRecycle={localPlayer.recycleWaste}
-              onWasteCardClick={localPlayer.handleWasteClick}
-              onWasteCardDoubleClick={localPlayer.handleWasteDoubleClick}
-              onBackgroundClick={localPlayer.clearSelection}
-              hideFoundation={true}
-              hideTopBar={true}
-            />
-          </DndContext>
+            {/* Controls */}
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <SettingsToggle
+                showMoveHints={settings.showMoveHints}
+                onToggleHints={toggleMoveHints}
+              />
+            </div>
+          </div>
+
+          {/* Show SetupPhase or GameBoard depending on local setup state */}
+          {!localSetupDone ? (
+            <>
+              {/* Shared Foundations (empty during setup) */}
+              <MultiFoundationArea
+                playerGroups={playerGroups}
+                selectedCard={null}
+                onPileClick={() => {}}
+                canPlace={false}
+                showMoveHints={false}
+                isDragging={false}
+                validDragFoundations={[]}
+              />
+
+              {/* Setup Phase in player area */}
+              <SetupPhase
+                playerColor={playerColor}
+                deckId={playerId || 'player-1'}
+                config={{ nertzPileSize: config.nertzPileSize }}
+                onSetupComplete={handleLocalSetupComplete}
+              />
+            </>
+          ) : localPlayerState ? (
+            <DndContext
+              sensors={sensors}
+              onDragStart={dragDrop.handleDragStart}
+              onDragOver={dragDrop.handleDragOver}
+              onDragEnd={dragDrop.handleDragEnd}
+              onDragCancel={dragDrop.handleDragCancel}
+            >
+              {/* Shared Foundations (Multi-player) */}
+              <MultiFoundationArea
+                playerGroups={playerGroups}
+                selectedCard={localPlayer.selectedCard?.card ?? null}
+                onPileClick={(_pid: string, _suit: string, globalIndex: number) => {
+                  localPlayer.handleFoundationClick(globalIndex);
+                }}
+                canPlace={localPlayer.validFoundationDestinations.length > 0 || dragDrop.validDropTargets.some((t) => t.type === 'foundation')}
+                showMoveHints={settings.showMoveHints}
+                isDragging={dragDrop.isDragging}
+                validDragFoundations={dragDrop.validDropTargets.filter((t) => t.type === 'foundation').map((t) => t.index)}
+              />
+
+              {/* Your Play Area */}
+              <GameBoard
+                nertzPile={localPlayerState.nertzPile}
+                workPiles={localPlayerState.workPiles as [Card[], Card[], Card[], Card[]]}
+                stockPile={localPlayerState.stockPile}
+                wastePile={localPlayerState.wastePile}
+                foundationPiles={[]}
+                playerColor={playerColor}
+                currentRound={roundNumber}
+                selectedCard={
+                  localPlayer.selectedCard
+                    ? {
+                        card: localPlayer.selectedCard.card,
+                        sourceType:
+                          localPlayer.selectedCard.source.type === 'nertz'
+                            ? 'nertz'
+                            : localPlayer.selectedCard.source.type === 'work'
+                              ? 'workPile'
+                              : 'waste',
+                        sourcePileIndex:
+                          localPlayer.selectedCard.source.type === 'work'
+                            ? localPlayer.selectedCard.source.pileIndex
+                            : undefined,
+                        cardIndex:
+                          localPlayer.selectedCard.source.type === 'work'
+                            ? (localPlayer.selectedCard.source.cardIndex ?? 0)
+                            : 0,
+                      }
+                    : null
+                }
+                validWorkDestinations={[
+                  ...new Set([
+                    ...localPlayer.validWorkPileDestinations,
+                    ...(dragDrop.isDragging
+                      ? dragDrop.validDropTargets.filter((t) => t.type === 'work').map((t) => t.index)
+                      : []),
+                  ]),
+                ]}
+                selectedWasteIndex={
+                  localPlayer.selectedCard?.source.type === 'waste'
+                    ? localPlayerState.wastePile.length - 1
+                    : undefined
+                }
+                canCallHeyHey={localPlayerState.nertzPile.length === 0}
+                canRecycleStock={localPlayerState.stockPile.length === 0 && localPlayerState.wastePile.length > 0}
+                onNertzCardClick={localPlayer.handleNertzClick}
+                onNertzCardDoubleClick={localPlayer.handleNertzDoubleClick}
+                onWorkCardClick={localPlayer.handleWorkPileClick}
+                onWorkCardDoubleClick={localPlayer.handleWorkPileDoubleClick}
+                onWorkPileClick={localPlayer.handleWorkPileTarget}
+                onStockDraw={localPlayer.drawCards}
+                onStockRecycle={localPlayer.recycleWaste}
+                onWasteCardClick={localPlayer.handleWasteClick}
+                onWasteCardDoubleClick={localPlayer.handleWasteDoubleClick}
+                onBackgroundClick={localPlayer.clearSelection}
+                hideFoundation={true}
+                hideTopBar={true}
+                showMoveHints={settings.showMoveHints}
+                isDragging={dragDrop.isDragging}
+                dragSource={dragDrop.dragSource}
+                validDropTargets={dragDrop.validDropTargets}
+                maxPileHeight={280}
+              />
+
+              <DragOverlay>
+                {dragDrop.dragSource && (
+                  <CardComponent
+                    card={dragDrop.dragSource.card}
+                    faceUp={true}
+                    backColor={playerColor}
+                  />
+                )}
+              </DragOverlay>
+            </DndContext>
+          ) : (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#fff',
+                flex: 1,
+              }}
+            >
+              <p>Loading game...</p>
+            </div>
+          )}
         </div>
       );
+    }
 
     case 'scoring':
       return (
