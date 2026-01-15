@@ -75,6 +75,10 @@ export interface MultiFoundationAreaProps {
   lastOpponentMove?: OpponentMove | null;
   /** Whether to play sounds for opponent moves */
   enableOpponentSounds?: boolean;
+  /** Whether a drag is currently in progress */
+  isDragging?: boolean;
+  /** Foundation indices that are valid drag targets (global indices across all players) */
+  validDragFoundations?: number[];
 }
 
 function makeCardKey(card: CardType): string {
@@ -92,6 +96,8 @@ export function MultiFoundationArea({
   showMoveHints = false,
   lastOpponentMove,
   enableOpponentSounds = true,
+  isDragging = false,
+  validDragFoundations = [],
 }: MultiFoundationAreaProps) {
   // Track which pile is currently animating
   const [animatingPile, setAnimatingPile] = useState<string | null>(null);
@@ -127,8 +133,8 @@ export function MultiFoundationArea({
     return cardOwnership.get(key)?.color;
   };
 
-  // Check if a foundation is a valid placement target
-  const isValidTarget = (pile: FoundationPile): boolean => {
+  // Check if a foundation is a valid placement target (for click selection)
+  const isValidClickTarget = (pile: FoundationPile): boolean => {
     if (!canPlace || !selectedCard) return false;
 
     // Card must match the suit
@@ -150,6 +156,16 @@ export function MultiFoundationArea({
     return playerIndex * 4 + suitIndex;
   };
 
+  // Check if a foundation is a valid target (click OR drag)
+  const isValidTarget = (pile: FoundationPile, globalIndex: number): boolean => {
+    // During drag, check if this foundation is in valid drag targets
+    if (isDragging) {
+      return validDragFoundations.includes(globalIndex);
+    }
+    // For click selection
+    return isValidClickTarget(pile);
+  };
+
   // Determine grid layout based on player count
   const playerCount = playerGroups.length;
   const layoutClass = playerCount <= 2 ? styles.twoPlayers :
@@ -159,10 +175,7 @@ export function MultiFoundationArea({
 
   return (
     <div className={`${styles.multiFoundationArea} ${layoutClass} ${hasPendingMoves ? styles.pending : ''}`}>
-      <div className={styles.header}>
-        <span className={styles.areaLabel}>Foundations</span>
-        {hasPendingMoves && <span className={styles.syncIndicator}>Syncing...</span>}
-      </div>
+      {hasPendingMoves && <div className={styles.header}><span className={styles.syncIndicator}>Syncing...</span></div>}
       {error && <div className={styles.errorMessage}>{error}</div>}
 
       <div className={styles.playersGrid}>
@@ -199,7 +212,7 @@ interface PlayerFoundationRowProps {
   selectedCard?: CardType | null;
   canPlace: boolean;
   showMoveHints: boolean;
-  isValidTarget: (pile: FoundationPile) => boolean;
+  isValidTarget: (pile: FoundationPile, globalIndex: number) => boolean;
   getOwnerColor: (card: CardType) => PlayerColor | undefined;
   getGlobalIndex: (playerIndex: number, suitIndex: number) => number;
   onPileClick?: (playerId: string, suit: Suit, globalIndex: number) => void;
@@ -241,7 +254,7 @@ function PlayerFoundationRow({
           const topCard = cards[cards.length - 1];
           const cardCount = cards.length;
           const globalIndex = getGlobalIndex(playerIndex, suitIndex);
-          const isTarget = pile ? isValidTarget(pile) : false;
+          const isTarget = pile ? isValidTarget(pile, globalIndex) : false;
           const isHighlighted = showMoveHints && isTarget;
           const isClickable = canPlace && !!selectedCard;
           const pileKey = `${group.playerId}-${suit}`;
@@ -354,7 +367,6 @@ function DroppableFoundationPile({
           </div>
         )}
       </div>
-      <span className={styles.cardCount}>{cardCount}</span>
     </div>
   );
 }

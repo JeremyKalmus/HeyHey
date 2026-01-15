@@ -555,6 +555,8 @@ function FullMultiplayerGame({ playerCount, simulateOpponents = true, withLongPi
           onPileClick={handleMultiFoundationClick}
           canPlace={combinedFoundationTargets.length > 0}
           showMoveHints={settings.showMoveHints}
+          isDragging={dragDrop.isDragging}
+          validDragFoundations={dragFoundationTargets}
         />
 
         {/* Your Play Area */}

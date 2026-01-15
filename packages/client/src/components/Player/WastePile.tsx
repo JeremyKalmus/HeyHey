@@ -150,7 +150,6 @@ export function WastePile({
           </div>
         )}
       </div>
-      <span className={styles.cardCount}>{cards.length}</span>
     </div>
   );
 }

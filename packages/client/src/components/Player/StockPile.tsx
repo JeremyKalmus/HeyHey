@@ -98,7 +98,6 @@ export function StockPile({
           />
         )}
       </div>
-      <span className={styles.cardCount}>{cards.length}</span>
     </div>
   );
 }

@@ -178,9 +178,10 @@ export function useDragAndDrop(options: UseDragAndDropOptions): UseDragAndDropRe
       targets.push({ type: 'work', index: pileIndex });
     }
 
-    // Check foundation piles (only for single card moves)
+    // Check ALL foundation piles (only for single card moves)
+    // In multiplayer, there are 4 foundations per player
     if (dragSource.cardCount === 1) {
-      for (let i = 0; i < 4; i++) {
+      for (let i = 0; i < gameState.foundations.length; i++) {
         const foundation = gameState.foundations[i];
         if (!foundation) continue;
 
