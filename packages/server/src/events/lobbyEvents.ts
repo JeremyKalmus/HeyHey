@@ -250,41 +250,6 @@ export function registerLobbyEvents(io: TypedServer): void {
       }
     });
 
-    // Start Round - only the current starter can call this
-    socket.on('startRound', () => {
-      const roomCode = lobbyManager.getRoomCode(socket.id);
-
-      if (!roomCode) {
-        socket.emit('error', {
-          code: 'not_in_room',
-          message: 'You are not in a room.',
-        });
-        return;
-      }
-
-      const manager = getOrCreateGameManager(io);
-      const result = manager.processStartRound(roomCode, socket.id);
-
-      if (!result.success) {
-        socket.emit('error', {
-          code: result.error,
-          message: `Cannot start round: ${result.error}`,
-        });
-        return;
-      }
-
-      // Transition to playing phase
-      manager.transitionToPlaying(roomCode);
-
-      // Broadcast roundStarted to all players
-      io.to(roomCode).emit('roundStarted', {
-        timestamp: Date.now(),
-        roundNumber: result.roundNumber,
-      });
-
-      console.log(`Round ${result.roundNumber} started by ${result.starterName} in room ${roomCode}`);
-    });
-
     // Foundation Move - handle shared foundation plays with conflict resolution
     socket.on('foundationMove', (payload: FoundationMovePayload) => {
       const roomCode = lobbyManager.getRoomCode(socket.id);
