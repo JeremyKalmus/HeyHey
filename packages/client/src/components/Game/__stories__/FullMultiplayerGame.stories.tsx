@@ -41,8 +41,35 @@ const PLAYER_AVATARS: AvatarString[] = [
 // HELPERS
 // =============================================================================
 
-function createTestPlayerState(playerId: string): PlayerGameState {
+// Create a full K->A sequence (13 cards, alternating colors for valid solitaire)
+function createFullKingToAce(deckId: string): Card[] {
+  return Array.from({ length: 13 }, (_, i) => ({
+    suit: (i % 2 === 0 ? 'hearts' : 'spades') as Card['suit'],
+    rank: 13 - i, // K=13, Q=12, ... A=1
+    deckId,
+  }));
+}
+
+function createTestPlayerState(playerId: string, withLongPile = false): PlayerGameState {
   const deck = createShuffledDeck(playerId);
+
+  if (withLongPile) {
+    // Create a state with one full K→A pile to test compression
+    return {
+      playerId,
+      deckId: playerId,
+      nertzPile: deck.slice(0, 5), // Only 5 cards left in nertz
+      workPiles: [
+        createFullKingToAce(playerId), // Full 13-card pile
+        [deck[13]!, deck[14]!, deck[15]!], // 3 cards
+        [deck[16]!, deck[17]!], // 2 cards
+        [deck[18]!], // 1 card
+      ],
+      stockPile: deck.slice(19, 30),
+      wastePile: deck.slice(30, 33),
+    };
+  }
+
   return {
     playerId,
     deckId: playerId,
@@ -82,9 +109,11 @@ function createOpponentState(playerId: string, nertzCount: number): PlayerGameSt
 interface FullMultiplayerGameProps {
   playerCount: 2 | 4 | 6 | 8;
   simulateOpponents?: boolean;
+  /** Start with a full K→A work pile to test compression */
+  withLongPile?: boolean;
 }
 
-function FullMultiplayerGame({ playerCount, simulateOpponents = true }: FullMultiplayerGameProps) {
+function FullMultiplayerGame({ playerCount, simulateOpponents = true, withLongPile = false }: FullMultiplayerGameProps) {
   const localPlayerId = 'player-you';
   const localPlayerColor = PLAYER_COLORS[0]!;
 
@@ -93,7 +122,7 @@ function FullMultiplayerGame({ playerCount, simulateOpponents = true }: FullMult
 
   // Local player state
   const [localPlayerState, setLocalPlayerState] = useState<PlayerGameState>(() =>
-    createTestPlayerState(localPlayerId)
+    createTestPlayerState(localPlayerId, withLongPile)
   );
 
   // Foundation piles for all players (each player has 4 suits)
@@ -430,6 +459,21 @@ function FullMultiplayerGame({ playerCount, simulateOpponents = true }: FullMult
     ? dragDrop.validDropTargets.filter(t => t.type === 'foundation').map(t => t.index)
     : [];
 
+  // Combine click-selection and drag foundation targets
+  const combinedFoundationTargets = [...new Set([
+    ...localPlayer.validFoundationDestinations,
+    ...dragFoundationTargets,
+  ])];
+
+  // Handle clicking on a foundation pile in MultiFoundationArea
+  const handleMultiFoundationClick = useCallback(
+    (_playerId: string, _suit: string, globalIndex: number) => {
+      // Use the localPlayer's foundation click handler
+      localPlayer.handleFoundationClick(globalIndex);
+    },
+    [localPlayer]
+  );
+
   return (
     <div style={{
       display: 'flex',
@@ -496,15 +540,7 @@ function FullMultiplayerGame({ playerCount, simulateOpponents = true }: FullMult
         </div>
       </div>
 
-      {/* Shared Foundations (Multi-player) - compact */}
-      <MultiFoundationArea
-        playerGroups={playerGroups}
-        canPlace={localPlayer.validFoundationDestinations.length > 0 || dragFoundationTargets.length > 0}
-        showMoveHints={settings.showMoveHints}
-        compact={true}
-      />
-
-      {/* Your Play Area */}
+      {/* DndContext wraps both foundations and player area for drag-drop */}
       <DndContext
         sensors={sensors}
         onDragStart={dragDrop.handleDragStart}
@@ -512,6 +548,16 @@ function FullMultiplayerGame({ playerCount, simulateOpponents = true }: FullMult
         onDragEnd={dragDrop.handleDragEnd}
         onDragCancel={dragDrop.handleDragCancel}
       >
+        {/* Shared Foundations (Multi-player) - compact */}
+        <MultiFoundationArea
+          playerGroups={playerGroups}
+          selectedCard={localPlayer.selectedCard?.card ?? null}
+          onPileClick={handleMultiFoundationClick}
+          canPlace={combinedFoundationTargets.length > 0}
+          showMoveHints={settings.showMoveHints}
+        />
+
+        {/* Your Play Area */}
         <GameBoard
           nertzPile={localPlayerState.nertzPile}
           workPiles={localPlayerState.workPiles as [Card[], Card[], Card[], Card[]]}
@@ -632,5 +678,17 @@ export const SoloPlaytest: Story = {
   args: {
     playerCount: 2,
     simulateOpponents: false,
+  },
+};
+
+/**
+ * Test with a full K→A work pile (13 cards) to verify compression.
+ * This tests the "above the fold" layout with maximum work pile height.
+ */
+export const WithLongWorkPile: Story = {
+  args: {
+    playerCount: 4,
+    simulateOpponents: false,
+    withLongPile: true,
   },
 };
