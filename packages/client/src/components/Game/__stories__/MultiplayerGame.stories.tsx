@@ -1,4 +1,4 @@
-// MultiplayerGame Stories - Static multiplayer game layouts
+// MultiplayerGame Stories - Static and interactive multiplayer game layouts
 // Shows MultiFoundationArea with OpponentMini displays for various player counts
 
 import type { Meta, StoryObj } from '@storybook/react-vite';
@@ -8,6 +8,11 @@ import type { AvatarString } from '../../ui/Avatar';
 import type { FoundationPile } from '../../Foundation';
 import { MultiFoundationArea, type PlayerFoundationGroup } from '../../Foundation';
 import { OpponentMini } from '../OpponentMini';
+import {
+  useSimulatedOpponents,
+  toPlayerFoundationGroups,
+  toPlayerGameState,
+} from '../../../hooks/useSimulatedOpponents';
 
 // =============================================================================
 // HELPERS
@@ -404,6 +409,228 @@ export const EarlyGame: Story = {
         story: `
 Just starting out! Only a few aces have been played.
 Everyone still has most of their Nertz pile intact.
+        `,
+      },
+    },
+  },
+};
+
+// =============================================================================
+// INTERACTIVE SIMULATION STORIES
+// =============================================================================
+
+/**
+ * Interactive simulation component using useSimulatedOpponents hook
+ */
+function InteractiveSimulation({ playerCount }: { playerCount: 2 | 4 | 6 | 8 }) {
+  const {
+    playerFoundations,
+    opponents,
+    lastMove,
+    isRunning,
+    moveCount,
+    start,
+    stop,
+    reset,
+  } = useSimulatedOpponents({
+    playerCount,
+    playerNames: PLAYER_NAMES.slice(0, playerCount),
+    playerColors: PLAYER_COLORS.slice(0, playerCount),
+    minInterval: 800,
+    maxInterval: 2500,
+    autoStart: true,
+  });
+
+  // Convert simulation state to component props
+  const playerGroups = toPlayerFoundationGroups(playerFoundations);
+
+  return (
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '24px',
+      padding: '24px',
+      minHeight: '100vh',
+      background: '#0a0a12',
+    }}>
+      {/* Header with controls */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: '16px',
+      }}>
+        <div style={{
+          color: '#FFD23F',
+          fontFamily: 'Inter, sans-serif',
+          fontWeight: 900,
+          fontSize: '1.5rem',
+          textTransform: 'uppercase',
+          letterSpacing: '0.1em',
+        }}>
+          {playerCount}-Player Simulation
+        </div>
+
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <button
+            onClick={isRunning ? stop : start}
+            style={{
+              padding: '8px 16px',
+              background: isRunning ? '#dc2626' : '#22c55e',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+            }}
+          >
+            {isRunning ? 'Stop' : 'Start'}
+          </button>
+          <button
+            onClick={reset}
+            style={{
+              padding: '8px 16px',
+              background: '#3b82f6',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+            }}
+          >
+            Reset
+          </button>
+        </div>
+      </div>
+
+      {/* Stats bar */}
+      <div style={{
+        display: 'flex',
+        gap: '24px',
+        justifyContent: 'center',
+        flexWrap: 'wrap',
+        padding: '12px',
+        background: 'rgba(255, 210, 63, 0.1)',
+        borderRadius: '8px',
+      }}>
+        <div style={{ color: '#fff', fontFamily: 'monospace' }}>
+          <span style={{ color: '#FFD23F' }}>Moves:</span> {moveCount}
+        </div>
+        <div style={{ color: '#fff', fontFamily: 'monospace' }}>
+          <span style={{ color: '#FFD23F' }}>Status:</span> {isRunning ? 'Running' : 'Paused'}
+        </div>
+        {lastMove && (
+          <div style={{ color: '#fff', fontFamily: 'monospace' }}>
+            <span style={{ color: '#FFD23F' }}>Last:</span>{' '}
+            {lastMove.playerName} played {lastMove.rank} of {lastMove.suit}
+          </div>
+        )}
+      </div>
+
+      {/* Opponents Row */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        gap: '16px',
+        flexWrap: 'wrap',
+      }}>
+        {opponents.map((opp) => (
+          <OpponentMini
+            key={opp.playerId}
+            playerState={toPlayerGameState(opp)}
+            name={opp.playerName}
+            avatar={PLAYER_AVATARS[
+              PLAYER_NAMES.indexOf(opp.playerName)
+            ] ?? 'user:circle'}
+            color={opp.playerColor}
+            isActive={opp.isActive}
+          />
+        ))}
+      </div>
+
+      {/* Shared Foundations */}
+      <MultiFoundationArea
+        playerGroups={playerGroups}
+        canPlace={false}
+      />
+
+      {/* Info Panel */}
+      <div style={{
+        padding: '12px 16px',
+        background: 'rgba(0, 100, 200, 0.2)',
+        borderRadius: '8px',
+        color: '#fff',
+        fontSize: '0.85rem',
+        textAlign: 'center',
+      }}>
+        <strong>Live Simulation</strong> • Opponents make random valid moves every 0.8-2.5 seconds •
+        Watch the Nertz piles decrease as cards flow to foundations!
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Interactive 4-player simulation with opponents making moves.
+ * Watch the foundations fill up as opponents race to empty their Nertz piles!
+ */
+export const InteractiveFourPlayer: Story = {
+  render: () => <InteractiveSimulation playerCount={4} />,
+  parameters: {
+    docs: {
+      description: {
+        story: `
+**Live simulation of a 4-player Nertz game!**
+
+Opponents automatically make valid moves at random intervals (0.8-2.5 seconds).
+Watch as:
+- Cards appear on foundation piles from different players
+- Nertz pile counts decrease as opponents play cards
+- Activity indicators show who just made a move
+
+Use the controls to start/stop/reset the simulation.
+        `,
+      },
+    },
+  },
+};
+
+/**
+ * Interactive 8-player chaos simulation.
+ * Maximum players, maximum excitement!
+ */
+export const InteractiveEightPlayer: Story = {
+  render: () => <InteractiveSimulation playerCount={8} />,
+  parameters: {
+    docs: {
+      description: {
+        story: `
+**8-player chaos mode!**
+
+With 8 players and 32 foundation piles, the action is non-stop.
+This demonstrates the scalability of the MultiFoundationArea component
+and the simulation hook handling many concurrent moves.
+        `,
+      },
+    },
+  },
+};
+
+/**
+ * Interactive 2-player head-to-head simulation.
+ * Classic duel format.
+ */
+export const InteractiveTwoPlayer: Story = {
+  render: () => <InteractiveSimulation playerCount={2} />,
+  parameters: {
+    docs: {
+      description: {
+        story: `
+**Head-to-head duel simulation!**
+
+Classic 2-player Nertz with just you and one opponent.
+Simpler layout, intense competition.
         `,
       },
     },
