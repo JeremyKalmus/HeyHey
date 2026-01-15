@@ -1,0 +1,80 @@
+# Config Seed Vault - HeyHey
+# Auto-discovered patterns from keeper-plant
+
+game_config:
+  name: GameConfig
+  location: packages/shared/src/types/index.ts
+  options:
+    - name: nertzPileSize
+      type: "10 | 13"
+      default: 13
+      description: Number of cards in the Nertz pile
+      # discovered
+
+    - name: drawCount
+      type: "1 | 3"
+      default: 3
+      description: Cards drawn from stock at a time
+      # discovered
+
+    - name: targetScore
+      type: number
+      default: 100
+      range: 1-1000
+      description: Score needed to win the game
+      # discovered
+
+  defaults_location: packages/server/src/events/LobbyManager.ts
+  # discovered
+
+environment_variables:
+  client:
+    - name: VITE_SERVER_URL
+      required: false
+      default: "http://localhost:3000"
+      description: Socket.io server URL
+      location: packages/client/src/context/SocketContext.tsx
+      # discovered
+
+  server:
+    - name: PORT
+      required: false
+      default: 3000
+      description: Server listen port
+      location: packages/server/src/index.ts (implicit)
+      # discovered
+
+  # No .env files discovered - defaults are hardcoded
+  # discovered
+
+feature_flags:
+  status: not_implemented
+  # No feature flag system discovered
+  # discovered
+
+build_config:
+  client:
+    bundler: vite
+    config_file: packages/client/vite.config.ts
+    framework: react
+    # discovered
+
+  server:
+    runtime: node
+    typescript: true
+    module_system: esm
+    # discovered
+
+  shared:
+    purpose: Shared types between client and server
+    build: tsc
+    output: dist/
+    # discovered
+
+monorepo:
+  structure: npm workspaces
+  packages:
+    - packages/client (React + Vite)
+    - packages/server (Node + Socket.io)
+    - packages/shared (TypeScript types)
+  # discovered

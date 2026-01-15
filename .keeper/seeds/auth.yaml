@@ -1,0 +1,50 @@
+# Auth Seed Vault - HeyHey
+# Auto-discovered patterns from keeper-plant
+
+auth_model:
+  type: socket_session
+  description: |
+    No traditional auth (JWT/OAuth). Players identified by socket.id.
+    Room access controlled by room codes (6-char alphanumeric).
+  # discovered
+
+identification:
+  method: socket.id
+  persistence: session-only (lost on disconnect)
+  mapping:
+    - socketToRoom: Map<socketId, roomCode>
+    - socketToPlayer: Map<socketId, {playerId, playerName}>
+  location: packages/server/src/events/LobbyManager.ts
+  # discovered
+
+room_access:
+  join_method: 6-character room code
+  code_format: uppercase alphanumeric (A-Z, 0-9)
+  code_generation: packages/shared/src/room/RoomManager.ts
+  validation: case-insensitive lookup
+  # discovered
+
+permissions:
+  host_only_actions:
+    - updateSettings
+    - startGame
+  any_player_actions:
+    - updatePlayer (own customization)
+    - leaveRoom
+    - setupComplete
+    - makeMove
+    - foundationMove
+    - callNertz
+  # discovered
+
+host_assignment:
+  initial: Room creator becomes host
+  transfer: First remaining player when host leaves
+  broadcast: hostChanged event
+  location: packages/server/src/events/LobbyManager.ts (leaveRoom)
+  # discovered
+
+# No JWT tokens, OAuth, or traditional scopes/roles
+scopes: []
+roles: []
+middleware: []

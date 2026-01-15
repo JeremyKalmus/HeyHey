@@ -1,0 +1,194 @@
+# Frontend Seed Vault - HeyHey
+# Auto-discovered patterns from keeper-plant
+
+components:
+  # UI Components (packages/client/src/components/ui/)
+  - name: Avatar
+    location: packages/client/src/components/ui/Avatar.tsx
+    variants: [default]
+    props: [avatar (AvatarString), size, className]
+    when_to_use: Display player avatar with icon and shape
+    # discovered
+
+  - name: Button
+    location: packages/client/src/components/ui/Button.tsx
+    variants: [primary, secondary, ghost, danger]
+    props: [variant, size, disabled, onClick, children]
+    when_to_use: All clickable actions
+    # discovered
+
+  - name: Card (UI)
+    location: packages/client/src/components/ui/Card.tsx
+    variants: [default]
+    props: [children, className]
+    when_to_use: Container for grouped content
+    # discovered
+
+  - name: Input
+    location: packages/client/src/components/ui/Input.tsx
+    variants: [default]
+    props: [label, error, value, onChange]
+    when_to_use: Text input fields
+    # discovered
+
+  - name: Modal
+    location: packages/client/src/components/ui/Modal.tsx
+    variants: [default]
+    props: [isOpen, onClose, title, children]
+    when_to_use: Overlay dialogs
+    # discovered
+
+  # Card Components (packages/client/src/components/Card/)
+  - name: PlayingCard
+    location: packages/client/src/components/Card/PlayingCard.tsx
+    variants: [default]
+    props: [card, size, onClick, isDraggable]
+    when_to_use: Display a playing card face
+    # discovered
+
+  - name: CardBack
+    location: packages/client/src/components/Card/CardBack.tsx
+    variants: [default]
+    props: [color (PlayerColor), size]
+    when_to_use: Display card back with player color
+    # discovered
+
+  - name: CardPile
+    location: packages/client/src/components/Card/CardPile.tsx
+    variants: [default]
+    props: [cards, spread, onClick]
+    when_to_use: Stack of cards (nertz pile, stock, etc.)
+    # discovered
+
+  - name: FoundationPile
+    location: packages/client/src/components/Card/FoundationPile.tsx
+    variants: [default]
+    props: [pile, onCardDrop]
+    when_to_use: Shared foundation pile in center
+    # discovered
+
+  # Lobby Components (packages/client/src/components/Lobby/)
+  - name: RoomLobby
+    location: packages/client/src/components/Lobby/RoomLobby.tsx
+    variants: [default]
+    props: [roomCode, players, isHost, gameConfig, onConfigChange, onStartGame, onLeaveRoom, playerCustomization, onPlayerCustomizationChange]
+    when_to_use: Main lobby view before game starts
+    # discovered
+
+  - name: PlayerList
+    location: packages/client/src/components/Lobby/PlayerList.tsx
+    variants: [default]
+    props: [players, currentPlayerId]
+    when_to_use: Display list of players in lobby
+    # discovered
+
+  - name: PlayerCustomization
+    location: packages/client/src/components/Lobby/PlayerCustomization.tsx
+    variants: [default]
+    props: [initialData, onSave, onCancel]
+    when_to_use: Modal for player name/color/avatar selection
+    # discovered
+
+  - name: GameSettings
+    location: packages/client/src/components/Lobby/GameSettings.tsx
+    variants: [default]
+    props: [config, onChange, disabled]
+    when_to_use: Game configuration options (nertz pile size, draw count, target score)
+    # discovered
+
+  - name: AvatarSelector
+    location: packages/client/src/components/Lobby/AvatarSelector.tsx
+    variants: [default]
+    props: [value, onChange]
+    when_to_use: Grid selector for avatar icon+shape combos
+    # discovered
+
+  - name: ColorSelector
+    location: packages/client/src/components/Lobby/ColorSelector.tsx
+    variants: [default]
+    props: [value, onChange]
+    when_to_use: Grid selector for player colors
+    # discovered
+
+  # Game Components (packages/client/src/components/Game/)
+  - name: PlayerArea
+    location: packages/client/src/components/Game/PlayerArea.tsx
+    variants: [default]
+    props: [playerState, isCurrentPlayer, onCardClick, onDraw]
+    when_to_use: Individual player's card layout during gameplay
+    # discovered
+
+hooks:
+  - name: useSocket
+    location: packages/client/src/context/SocketContext.tsx
+    purpose: Access socket.io connection
+    returns: "{socket, isConnected}"
+    when_to_use: Direct socket access (prefer useGameState for game logic)
+    # discovered
+
+  - name: useGameState
+    location: packages/client/src/context/GameStateContext.tsx
+    purpose: Access and modify game/lobby state
+    returns: "{room, playerId, isHost, gameId, gamePhase, updateSettings, updatePlayer, startGame, leaveRoom, error, clearError}"
+    when_to_use: All lobby and game state operations
+    # discovered
+
+  - name: useLocalPlayerState
+    location: packages/client/src/hooks/useLocalPlayerState.ts
+    purpose: Manage local player's card state during gameplay
+    returns: "{playerState, draw, flipStock, moveCard}"
+    when_to_use: Local card manipulation before server sync
+    # discovered
+
+state_stores:
+  - name: SocketContext
+    location: packages/client/src/context/SocketContext.tsx
+    manages: Socket.io connection lifecycle
+    pattern: React Context + useRef for socket instance
+    # discovered
+
+  - name: GameStateContext
+    location: packages/client/src/context/GameStateContext.tsx
+    manages: Room state, player state, game phase, settings
+    pattern: React Context + useReducer
+    actions: [SET_ROOM, CLEAR_ROOM, PLAYER_JOINED, PLAYER_LEFT, PLAYER_UPDATED, SETTINGS_UPDATED, GAME_STARTED, ALL_PLAYERS_READY, SET_ERROR, CLEAR_ERROR, HOST_CHANGED]
+    # discovered
+
+design_tokens:
+  player_colors:
+    - red
+    - blue
+    - green
+    - yellow
+    - purple
+    - orange
+    - pink
+    - teal
+    location: packages/client/src/components/Card/CardBack.tsx (PlayerColor type)
+    # discovered
+
+  avatar_icons:
+    - user
+    - smile
+    - ghost
+    - skull
+    - cat
+    - bot
+    - heart
+    - zap
+    location: packages/client/src/components/ui/Avatar.tsx (AvatarIcon type)
+    # discovered
+
+  avatar_shapes:
+    - circle
+    - square
+    - diamond
+    - hexagon
+    - star
+    - triangle
+    location: packages/client/src/components/ui/Avatar.tsx (AvatarShape type)
+    # discovered
+
+i18n:
+  status: not_implemented
+  # No i18n discovered - all strings are hardcoded

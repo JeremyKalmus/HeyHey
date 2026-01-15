@@ -1,0 +1,266 @@
+# Backend Seed Vault - HeyHey
+# Auto-discovered patterns from keeper-plant
+
+socket_events:
+  # Client to Server Events
+  client_to_server:
+    - name: createRoom
+      payload: CreateRoomPayload
+      handler: lobbyEvents.ts
+      description: Create a new game room
+      # discovered
+
+    - name: joinRoom
+      payload: JoinRoomPayload
+      handler: lobbyEvents.ts
+      description: Join existing room by code
+      # discovered
+
+    - name: leaveRoom
+      payload: none
+      handler: lobbyEvents.ts
+      description: Leave current room
+      # discovered
+
+    - name: updateSettings
+      payload: UpdateSettingsPayload
+      handler: lobbyEvents.ts
+      description: Host updates game config
+      # discovered
+
+    - name: updatePlayer
+      payload: UpdatePlayerPayload
+      handler: lobbyEvents.ts
+      description: Player updates name/color/avatar
+      # discovered
+
+    - name: startGame
+      payload: none
+      handler: lobbyEvents.ts
+      description: Host starts the game
+      # discovered
+
+    - name: setupComplete
+      payload: none
+      handler: lobbyEvents.ts
+      description: Player finished setup phase
+      # discovered
+
+    - name: foundationMove
+      payload: FoundationMovePayload
+      handler: lobbyEvents.ts
+      description: Play card to shared foundation
+      # discovered
+
+    - name: makeMove
+      payload: MakeMovePayload
+      handler: lobbyEvents.ts
+      description: Make a card move (local piles)
+      # discovered
+
+    - name: callNertz
+      payload: none
+      handler: lobbyEvents.ts
+      description: Call Nertz to end round
+      # discovered
+
+  # Server to Client Events
+  server_to_client:
+    - name: roomCreated
+      payload: RoomCreatedPayload
+      description: Room successfully created
+      # discovered
+
+    - name: roomJoined
+      payload: RoomJoinedPayload
+      description: Successfully joined room
+      # discovered
+
+    - name: playerJoined
+      payload: PlayerJoinedPayload
+      description: Another player joined the room
+      # discovered
+
+    - name: playerLeft
+      payload: PlayerLeftPayload
+      description: Player left the room
+      # discovered
+
+    - name: playerUpdated
+      payload: PlayerUpdatedPayload
+      description: Player customization changed
+      # discovered
+
+    - name: settingsUpdated
+      payload: SettingsUpdatedPayload
+      description: Game settings changed
+      # discovered
+
+    - name: gameStarted
+      payload: GameStartedPayload
+      description: Game has started
+      # discovered
+
+    - name: hostChanged
+      payload: HostChangedPayload
+      description: New host assigned
+      # discovered
+
+    - name: allPlayersReady
+      payload: "{gameId: string}"
+      description: All players completed setup
+      # discovered
+
+    - name: playerSetupComplete
+      payload: "{playerId, playersReady, totalPlayers}"
+      description: One player finished setup
+      # discovered
+
+    - name: foundationUpdated
+      payload: FoundationUpdatedPayload
+      description: Foundation pile changed
+      # discovered
+
+    - name: foundationMoveRejected
+      payload: FoundationMoveRejectedPayload
+      description: Foundation move was invalid
+      # discovered
+
+    - name: stateUpdate
+      payload: StateUpdate
+      description: Game state delta broadcast
+      # discovered
+
+    - name: moveRejected
+      payload: MoveRejection
+      description: Move was invalid
+      # discovered
+
+    - name: error
+      payload: ErrorPayload
+      description: Error occurred
+      # discovered
+
+managers:
+  - name: LobbyManager
+    location: packages/server/src/events/LobbyManager.ts
+    responsibilities:
+      - Room creation and joining
+      - Player tracking (socket to room mapping)
+      - Settings management
+      - Player customization storage
+      - Start game validation
+    pattern: Stateful singleton with Maps for storage
+    # discovered
+
+  - name: SetupManager
+    location: packages/server/src/events/SetupManager.ts
+    responsibilities:
+      - Track setup phase completion per player
+      - Determine when all players ready
+    pattern: Stateful singleton
+    # discovered
+
+  - name: GameManager
+    location: packages/server/src/events/GameManager.ts
+    responsibilities:
+      - Process card moves
+      - Validate moves
+      - Broadcast state updates
+      - Handle foundation conflicts
+      - Score rounds
+    pattern: Stateful singleton with broadcast/reject callbacks
+    # discovered
+
+  - name: RoomManager
+    location: packages/shared/src/room/RoomManager.ts
+    responsibilities:
+      - Core room CRUD operations
+      - Room code generation
+      - Host management
+    pattern: Shared between client/server (in shared package)
+    # discovered
+
+broadcast_patterns:
+  # Standard pattern for state sync
+  - name: Settings Sync
+    flow: |
+      1. Client: socket.emit('updateSettings', {settings})
+      2. Server: lobbyManager.updateSettings(socketId, settings)
+      3. Server: io.to(roomCode).emit('settingsUpdated', {settings})
+      4. Client: reducer handles SETTINGS_UPDATED action
+    # discovered
+
+  - name: Player Sync
+    flow: |
+      1. Client: socket.emit('updatePlayer', {name, color, avatar})
+      2. Server: lobbyManager.updatePlayer(socketId, updates)
+      3. Server: io.to(roomCode).emit('playerUpdated', {player})
+      4. Client: reducer handles PLAYER_UPDATED action
+    # discovered
+
+  - name: Foundation Sync
+    flow: |
+      1. Client: socket.emit('foundationMove', {card, foundationIndex, source, clientSequence})
+      2. Server: gameManager.processFoundationMove(roomCode, socketId, payload)
+      3. Success: io.to(roomCode).emit('foundationUpdated', {...})
+      4. Failure: socket.emit('foundationMoveRejected', {...})
+    conflict_resolution: Server sequence numbers, rejected moves get current state
+    # discovered
+
+error_handling:
+  error_codes:
+    # Room errors
+    - room_not_found
+    - invalid_code
+    - already_in_room
+
+    # Permission errors
+    - not_in_room
+    - not_host
+
+    # Validation errors
+    - invalid_nertz_pile_size
+    - invalid_draw_count
+    - invalid_target_score
+    - not_enough_players
+
+    # Setup errors
+    - setup_not_initialized
+    - already_complete
+
+    # Move errors (MoveValidationError type)
+    - invalid_source
+    - invalid_destination
+    - empty_source
+    - no_card_selected
+    - wrong_color_for_work
+    - wrong_rank_for_work
+    - wrong_suit_for_foundation
+    - wrong_rank_for_foundation
+    - work_pile_full
+    - foundation_full
+    - stock_not_empty
+    - waste_empty
+    - player_not_found
+    - invalid_card_count
+  # discovered
+
+  pattern: |
+    if (!result.success) {
+      socket.emit('error', {
+        code: result.error,
+        message: getErrorMessage(result.error),
+      });
+      return;
+    }
+  # discovered
+
+logging:
+  pattern: console.log with contextual messages
+  examples:
+    - "Client connected: ${socket.id}"
+    - "Room created: ${room.code} by ${playerName}"
+    - "Player ${name} updated in room ${roomCode}"
+    - "Game started in room ${roomCode}: ${gameId}"
+  # discovered
