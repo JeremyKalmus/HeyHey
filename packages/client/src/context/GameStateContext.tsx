@@ -37,6 +37,8 @@ export interface GameStateContextValue {
   // Round/Scoring state
   roundResult: RoundResult | null;
   totalScores: { playerId: string; total: number }[];
+  roundNumber: number;
+  currentStarterIndex: number;
 
   // Celebration state
   nertzCallerId: string | null;
@@ -49,6 +51,7 @@ export interface GameStateContextValue {
   updatePlayer: (updates: { name?: string; color?: string; avatar?: string }) => void;
   startGame: () => void;
   setupComplete: () => void;
+  startRound: () => void;
   makeMove: (move: Move) => void;
   callNertz: () => void;
   foundationMove: (card: PlayerGameState['nertzPile'][0], foundationIndex: number, source: MoveSource) => void;
@@ -71,6 +74,8 @@ interface GameState {
   nertzCallerId: string | null;
   error: string | null;
   moveSequence: number;
+  roundNumber: number;
+  currentStarterIndex: number;
 }
 
 type GameAction =
@@ -90,6 +95,7 @@ type GameAction =
   | { type: 'FOUNDATION_MOVE_REJECTED'; reason: string }
   | { type: 'ROUND_SCORED'; roundResult: RoundResult; totalScores: { playerId: string; total: number }[] }
   | { type: 'GAME_ENDED'; winner: string }
+  | { type: 'ROUND_STARTED'; roundNumber: number }
   | { type: 'SET_ERROR'; error: string }
   | { type: 'CLEAR_ERROR' }
   | { type: 'LEAVE_ROOM' }
@@ -112,6 +118,8 @@ const initialState: GameState = {
   nertzCallerId: null,
   error: null,
   moveSequence: 0,
+  roundNumber: 1,
+  currentStarterIndex: 0,
 };
 
 function gameReducer(state: GameState, action: GameAction): GameState {
@@ -203,7 +211,14 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     case 'ALL_PLAYERS_READY':
       return {
         ...state,
+        gamePhase: 'waiting_for_start',
+      };
+
+    case 'ROUND_STARTED':
+      return {
+        ...state,
         gamePhase: 'playing',
+        roundNumber: action.roundNumber,
       };
 
     case 'STATE_UPDATE':
@@ -390,6 +405,10 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
       dispatch({ type: 'ALL_PLAYERS_READY' });
     };
 
+    const onRoundStarted = (payload: { roundNumber: number }) => {
+      dispatch({ type: 'ROUND_STARTED', roundNumber: payload.roundNumber });
+    };
+
     const onError = (payload: { code: string; message: string }) => {
       dispatch({ type: 'SET_ERROR', error: payload.message });
     };
@@ -430,6 +449,7 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
     socket.on('gameStarted', onGameStarted);
     socket.on('playerSetupComplete', onPlayerSetupComplete);
     socket.on('allPlayersReady', onAllPlayersReady);
+    socket.on('roundStarted', onRoundStarted);
     socket.on('error', onError);
     socket.on('stateUpdate', onStateUpdate);
     socket.on('moveRejected', onMoveRejected);
@@ -450,6 +470,7 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
       socket.off('gameStarted', onGameStarted);
       socket.off('playerSetupComplete', onPlayerSetupComplete);
       socket.off('allPlayersReady', onAllPlayersReady);
+      socket.off('roundStarted', onRoundStarted);
       socket.off('error', onError);
       socket.off('stateUpdate', onStateUpdate);
       socket.off('moveRejected', onMoveRejected);
@@ -524,6 +545,13 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
     socket.emit('setupComplete');
   }, [socket, isConnected]);
 
+  const startRound = useCallback(() => {
+    if (!socket || !isConnected) {
+      return;
+    }
+    socket.emit('startRound');
+  }, [socket, isConnected]);
+
   const makeMove = useCallback(
     (move: Move) => {
       if (!socket || !isConnected) {
@@ -581,6 +609,10 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
     // Celebration
     nertzCallerId: state.nertzCallerId,
 
+    // Round info
+    roundNumber: state.roundNumber,
+    currentStarterIndex: state.currentStarterIndex,
+
     // Actions
     createRoom,
     joinRoom,
@@ -589,6 +621,7 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
     updatePlayer,
     startGame,
     setupComplete,
+    startRound,
     makeMove,
     callNertz,
     foundationMove,
