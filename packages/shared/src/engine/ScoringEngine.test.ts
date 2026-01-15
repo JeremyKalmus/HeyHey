@@ -41,10 +41,10 @@ function createTestGameState(overrides: Partial<GameState> = {}): GameState {
     phase: 'scoring',
     players: [],
     foundations: [
-      { suit: 'hearts', cards: [] },
-      { suit: 'diamonds', cards: [] },
-      { suit: 'clubs', cards: [] },
-      { suit: 'spades', cards: [] },
+      { suit: 'hearts', cards: [], ownerId: 'system' },
+      { suit: 'diamonds', cards: [], ownerId: 'system' },
+      { suit: 'clubs', cards: [], ownerId: 'system' },
+      { suit: 'spades', cards: [], ownerId: 'system' },
     ],
     config: {
       nertzPileSize: 13,
@@ -75,10 +75,10 @@ describe('ScoringEngine', () => {
     it('counts cards belonging to specific player', () => {
       const state = createTestGameState({
         foundations: [
-          { suit: 'hearts', cards: [card('hearts', 1, 'deck1'), card('hearts', 2, 'deck1')] },
-          { suit: 'diamonds', cards: [card('diamonds', 1, 'deck2')] },
-          { suit: 'clubs', cards: [] },
-          { suit: 'spades', cards: [card('spades', 1, 'deck1')] },
+          { suit: 'hearts', cards: [card('hearts', 1, 'deck1'), card('hearts', 2, 'deck1')], ownerId: 'deck1' },
+          { suit: 'diamonds', cards: [card('diamonds', 1, 'deck2')], ownerId: 'deck2' },
+          { suit: 'clubs', cards: [], ownerId: 'system' },
+          { suit: 'spades', cards: [card('spades', 1, 'deck1')], ownerId: 'deck1' },
         ],
       });
       expect(countFoundationCards(state, 'deck1')).toBe(3);
@@ -88,10 +88,10 @@ describe('ScoringEngine', () => {
     it('counts cards across all foundations', () => {
       const state = createTestGameState({
         foundations: [
-          { suit: 'hearts', cards: [card('hearts', 1, 'deck1')] },
-          { suit: 'diamonds', cards: [card('diamonds', 1, 'deck1')] },
-          { suit: 'clubs', cards: [card('clubs', 1, 'deck1')] },
-          { suit: 'spades', cards: [card('spades', 1, 'deck1')] },
+          { suit: 'hearts', cards: [card('hearts', 1, 'deck1')], ownerId: 'deck1' },
+          { suit: 'diamonds', cards: [card('diamonds', 1, 'deck1')], ownerId: 'deck1' },
+          { suit: 'clubs', cards: [card('clubs', 1, 'deck1')], ownerId: 'deck1' },
+          { suit: 'spades', cards: [card('spades', 1, 'deck1')], ownerId: 'deck1' },
         ],
       });
       expect(countFoundationCards(state, 'deck1')).toBe(4);
@@ -127,10 +127,10 @@ describe('ScoringEngine', () => {
       const state = createTestGameState({
         players: [createTestPlayer({ playerId: 'player1', deckId: 'deck1', nertzPile: [] })],
         foundations: [
-          { suit: 'hearts', cards: [card('hearts', 1, 'deck1'), card('hearts', 2, 'deck1')] },
-          { suit: 'diamonds', cards: [] },
-          { suit: 'clubs', cards: [] },
-          { suit: 'spades', cards: [] },
+          { suit: 'hearts', cards: [card('hearts', 1, 'deck1'), card('hearts', 2, 'deck1')], ownerId: 'deck1' },
+          { suit: 'diamonds', cards: [], ownerId: 'system' },
+          { suit: 'clubs', cards: [], ownerId: 'system' },
+          { suit: 'spades', cards: [], ownerId: 'system' },
         ],
       });
 
@@ -148,10 +148,10 @@ describe('ScoringEngine', () => {
           nertzPile: [card('spades', 1, 'deck1'), card('spades', 2, 'deck1')],
         })],
         foundations: [
-          { suit: 'hearts', cards: [card('hearts', 1, 'deck1'), card('hearts', 2, 'deck1'), card('hearts', 3, 'deck1')] },
-          { suit: 'diamonds', cards: [] },
-          { suit: 'clubs', cards: [] },
-          { suit: 'spades', cards: [] },
+          { suit: 'hearts', cards: [card('hearts', 1, 'deck1'), card('hearts', 2, 'deck1'), card('hearts', 3, 'deck1')], ownerId: 'deck1' },
+          { suit: 'diamonds', cards: [], ownerId: 'system' },
+          { suit: 'clubs', cards: [], ownerId: 'system' },
+          { suit: 'spades', cards: [], ownerId: 'system' },
         ],
       });
 
@@ -175,10 +175,10 @@ describe('ScoringEngine', () => {
           ],
         })],
         foundations: [
-          { suit: 'hearts', cards: [card('hearts', 1, 'deck1')] },
-          { suit: 'diamonds', cards: [] },
-          { suit: 'clubs', cards: [] },
-          { suit: 'spades', cards: [] },
+          { suit: 'hearts', cards: [card('hearts', 1, 'deck1')], ownerId: 'deck1' },
+          { suit: 'diamonds', cards: [], ownerId: 'system' },
+          { suit: 'clubs', cards: [], ownerId: 'system' },
+          { suit: 'spades', cards: [], ownerId: 'system' },
         ],
       });
 
@@ -204,10 +204,10 @@ describe('ScoringEngine', () => {
           createTestPlayer({ playerId: 'player2', deckId: 'deck2', nertzPile: [card('clubs', 1, 'deck2')] }),
         ],
         foundations: [
-          { suit: 'hearts', cards: [card('hearts', 1, 'deck1'), card('hearts', 2, 'deck2')] },
-          { suit: 'diamonds', cards: [] },
-          { suit: 'clubs', cards: [] },
-          { suit: 'spades', cards: [] },
+          { suit: 'hearts', cards: [card('hearts', 1, 'deck1'), card('hearts', 2, 'deck2')], ownerId: 'deck1' },
+          { suit: 'diamonds', cards: [], ownerId: 'system' },
+          { suit: 'clubs', cards: [], ownerId: 'system' },
+          { suit: 'spades', cards: [], ownerId: 'system' },
         ],
       });
 

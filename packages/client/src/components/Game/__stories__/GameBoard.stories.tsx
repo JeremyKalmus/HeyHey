@@ -52,10 +52,10 @@ const sampleWastePile: CardType[] = [
 ];
 
 const sampleFoundationPiles: FoundationPile[] = [
-  { suit: 'hearts', cards: [createCard('hearts', 1), createCard('hearts', 2), createCard('hearts', 3)] },
-  { suit: 'diamonds', cards: [createCard('diamonds', 1)] },
-  { suit: 'clubs', cards: [] },
-  { suit: 'spades', cards: [createCard('spades', 1), createCard('spades', 2)] },
+  { suit: 'hearts', cards: [createCard('hearts', 1), createCard('hearts', 2), createCard('hearts', 3)], ownerId: 'deck-1' },
+  { suit: 'diamonds', cards: [createCard('diamonds', 1)], ownerId: 'deck-1' },
+  { suit: 'clubs', cards: [], ownerId: 'system' },
+  { suit: 'spades', cards: [createCard('spades', 1), createCard('spades', 2)], ownerId: 'deck-1' },
 ];
 
 

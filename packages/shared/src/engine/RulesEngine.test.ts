@@ -32,10 +32,10 @@ function createTestGameState(overrides: Partial<GameState> = {}): GameState {
     phase: 'playing',
     players: [],
     foundations: [
-      { suit: 'hearts', cards: [] },
-      { suit: 'diamonds', cards: [] },
-      { suit: 'clubs', cards: [] },
-      { suit: 'spades', cards: [] },
+      { suit: 'hearts', cards: [], ownerId: 'system' },
+      { suit: 'diamonds', cards: [], ownerId: 'system' },
+      { suit: 'clubs', cards: [], ownerId: 'system' },
+      { suit: 'spades', cards: [], ownerId: 'system' },
     ],
     config: {
       nertzPileSize: 13,
@@ -108,18 +108,18 @@ describe('RulesEngine', () => {
 
   describe('canPlaceOnFoundation', () => {
     it('allows Ace on empty foundation of matching suit', () => {
-      const foundation: FoundationPile = { suit: 'hearts', cards: [] };
+      const foundation: FoundationPile = { suit: 'hearts', cards: [], ownerId: 'system' };
       expect(canPlaceOnFoundation(card('hearts', 1), foundation)).toBe(true);
     });
 
     it('rejects non-Ace on empty foundation', () => {
-      const foundation: FoundationPile = { suit: 'hearts', cards: [] };
+      const foundation: FoundationPile = { suit: 'hearts', cards: [], ownerId: 'system' };
       expect(canPlaceOnFoundation(card('hearts', 2), foundation)).toBe(false);
       expect(canPlaceOnFoundation(card('hearts', 13), foundation)).toBe(false);
     });
 
     it('rejects wrong suit', () => {
-      const foundation: FoundationPile = { suit: 'hearts', cards: [] };
+      const foundation: FoundationPile = { suit: 'hearts', cards: [], ownerId: 'system' };
       expect(canPlaceOnFoundation(card('diamonds', 1), foundation)).toBe(false);
     });
 
@@ -127,6 +127,7 @@ describe('RulesEngine', () => {
       const foundation: FoundationPile = {
         suit: 'hearts',
         cards: [card('hearts', 1), card('hearts', 2)],
+        ownerId: 'system',
       };
       expect(canPlaceOnFoundation(card('hearts', 3), foundation)).toBe(true);
     });
@@ -135,6 +136,7 @@ describe('RulesEngine', () => {
       const foundation: FoundationPile = {
         suit: 'hearts',
         cards: [card('hearts', 1), card('hearts', 2)],
+        ownerId: 'system',
       };
       // Skip a rank
       expect(canPlaceOnFoundation(card('hearts', 4), foundation)).toBe(false);
@@ -148,6 +150,7 @@ describe('RulesEngine', () => {
       const foundation: FoundationPile = {
         suit: 'hearts',
         cards: Array.from({ length: 13 }, (_, i) => card('hearts', i + 1)),
+        ownerId: 'system',
       };
       expect(canPlaceOnFoundation(card('hearts', 1), foundation)).toBe(false);
     });

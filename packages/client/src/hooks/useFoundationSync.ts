@@ -79,7 +79,7 @@ function makeCardKey(card: Card): string {
 }
 
 function createEmptyFoundations(): FoundationPile[] {
-  return SUITS.map((suit) => ({ suit, cards: [] }));
+  return SUITS.map((suit) => ({ suit, cards: [], ownerId: 'system' }));
 }
 
 /**

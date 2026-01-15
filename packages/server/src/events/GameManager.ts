@@ -77,10 +77,10 @@ export class GameManager {
         wastePile: [],
       })),
       foundations: [
-        { suit: 'hearts', cards: [] },
-        { suit: 'diamonds', cards: [] },
-        { suit: 'clubs', cards: [] },
-        { suit: 'spades', cards: [] },
+        { suit: 'hearts', cards: [], ownerId: playerIds[0] ?? 'system' },
+        { suit: 'diamonds', cards: [], ownerId: playerIds[0] ?? 'system' },
+        { suit: 'clubs', cards: [], ownerId: playerIds[0] ?? 'system' },
+        { suit: 'spades', cards: [], ownerId: playerIds[0] ?? 'system' },
       ],
       config: { nertzPileSize: 13, drawCount: 3, targetScore: 100 },
     };

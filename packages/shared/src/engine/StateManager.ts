@@ -264,7 +264,8 @@ export function createInitialGameState(
   const suits: Card['suit'][] = ['hearts', 'diamonds', 'clubs', 'spades'];
   const foundations = suits.map(suit => ({
     suit,
-    cards: [],
+    cards: [] as Card[],
+    ownerId: 'system',
   }));
 
   return {

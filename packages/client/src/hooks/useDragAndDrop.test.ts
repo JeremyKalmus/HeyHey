@@ -44,8 +44,8 @@ function createPlayerState(
   };
 }
 
-function createFoundation(suit: Card['suit'], cards: Card[] = []): FoundationPile {
-  return { suit, cards };
+function createFoundation(suit: Card['suit'], cards: Card[] = [], ownerId = 'player1'): FoundationPile {
+  return { suit, cards, ownerId };
 }
 
 function createGameState(overrides: Partial<GameState> = {}): GameState {

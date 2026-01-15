@@ -170,10 +170,10 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         gamePhase: 'setup',
         // Initialize empty foundations (4 piles, one per suit)
         foundations: [
-          { suit: 'hearts', cards: [] },
-          { suit: 'diamonds', cards: [] },
-          { suit: 'clubs', cards: [] },
-          { suit: 'spades', cards: [] },
+          { suit: 'hearts', cards: [], ownerId: 'system' },
+          { suit: 'diamonds', cards: [], ownerId: 'system' },
+          { suit: 'clubs', cards: [], ownerId: 'system' },
+          { suit: 'spades', cards: [], ownerId: 'system' },
         ],
       };
 

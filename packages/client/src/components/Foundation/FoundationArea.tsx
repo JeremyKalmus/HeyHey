@@ -41,6 +41,7 @@ const SUIT_ICONS: Record<Suit, ComponentType<LucideProps>> = {
 export interface FoundationPile {
   suit: Suit;
   cards: CardType[];
+  ownerId: string;
 }
 
 export interface FoundationAreaProps {

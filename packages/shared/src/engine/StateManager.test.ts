@@ -33,10 +33,10 @@ function createTestGameState(overrides: Partial<GameState> = {}): GameState {
     phase: 'playing',
     players: [],
     foundations: [
-      { suit: 'hearts', cards: [] },
-      { suit: 'diamonds', cards: [] },
-      { suit: 'clubs', cards: [] },
-      { suit: 'spades', cards: [] },
+      { suit: 'hearts', cards: [], ownerId: 'system' },
+      { suit: 'diamonds', cards: [], ownerId: 'system' },
+      { suit: 'clubs', cards: [], ownerId: 'system' },
+      { suit: 'spades', cards: [], ownerId: 'system' },
     ],
     config: {
       nertzPileSize: 13,

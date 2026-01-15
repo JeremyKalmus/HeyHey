@@ -154,6 +154,7 @@ export interface PlayerGameState {
 export interface FoundationPile {
   suit: Card['suit'];
   cards: Card[]; // Bottom to top, starts with Ace
+  ownerId: string; // Player who contributed this foundation pile (for multiplayer)
 }
 
 export interface GameState {

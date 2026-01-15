@@ -34,10 +34,10 @@ import { useAudio } from '../../audio';
 
 // Static default for empty foundations to avoid recreating on each render
 const DEFAULT_FOUNDATION_PILES: FoundationPile[] = [
-  { suit: 'hearts', cards: [] },
-  { suit: 'diamonds', cards: [] },
-  { suit: 'clubs', cards: [] },
-  { suit: 'spades', cards: [] },
+  { suit: 'hearts', cards: [], ownerId: 'default' },
+  { suit: 'diamonds', cards: [], ownerId: 'default' },
+  { suit: 'clubs', cards: [], ownerId: 'default' },
+  { suit: 'spades', cards: [], ownerId: 'default' },
 ];
 
 export interface PlayerAreaProps {
@@ -269,6 +269,7 @@ export function PlayerArea({
     return gameState.foundations.map((f: SharedFoundationPile) => ({
       suit: f.suit,
       cards: f.cards,
+      ownerId: f.ownerId,
     }));
   }, [gameState]);
 

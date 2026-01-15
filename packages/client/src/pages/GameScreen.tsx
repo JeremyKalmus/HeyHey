@@ -91,6 +91,7 @@ export function GameScreen() {
     return foundations.map((f) => ({
       suit: f.suit,
       cards: f.cards,
+      ownerId: f.ownerId,
     }));
   }, [foundations]);
 

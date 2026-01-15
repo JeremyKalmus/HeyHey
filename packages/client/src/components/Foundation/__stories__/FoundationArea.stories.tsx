@@ -30,7 +30,7 @@ function createPiles(hearts: number, diamonds: number, clubs: number, spades: nu
     for (let rank = 1; rank <= topRank; rank++) {
       cards.push(createCard(suit, rank));
     }
-    return { suit, cards };
+    return { suit, cards, ownerId: 'player-1' };
   };
 
   return [
