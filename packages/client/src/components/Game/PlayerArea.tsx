@@ -352,6 +352,8 @@ export function PlayerArea({
           isDragging={dragDrop.isDragging}
           dragSource={dragDrop.dragSource}
           validDropTargets={dragDrop.validDropTargets}
+          // Background click to clear selection
+          onBackgroundClick={localPlayer.clearSelection}
           className={className}
         />
 

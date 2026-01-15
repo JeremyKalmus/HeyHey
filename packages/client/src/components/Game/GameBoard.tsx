@@ -70,6 +70,9 @@ export interface GameBoardProps {
   dragSource?: DragSource | null;
   validDropTargets?: DropTarget[];
 
+  // Background click (for clearing selection)
+  onBackgroundClick?: () => void;
+
   // Optional class
   className?: string;
 }
@@ -112,12 +115,24 @@ export function GameBoard({
   isDragging: _isDragging = false,
   dragSource: _dragSource,
   validDropTargets: _validDropTargets = [],
+  onBackgroundClick,
   className,
 }: GameBoardProps) {
   const isNertzSelected = selectedCard?.sourceType === 'nertz';
 
+  // Handle background clicks to clear selection
+  const handleBackgroundClick = (e: React.MouseEvent) => {
+    // Only trigger if clicking the background itself, not child elements
+    if (e.target === e.currentTarget && onBackgroundClick) {
+      onBackgroundClick();
+    }
+  };
+
   return (
-    <div className={`${styles.gameBoard} ${className ?? ''}`}>
+    <div
+      className={`${styles.gameBoard} ${className ?? ''}`}
+      onClick={handleBackgroundClick}
+    >
       {/* Top Bar - Round Counter only (no scores - keeps game exciting!) */}
       <div className={styles.topBar}>
         <ScoreDisplay.Round current={currentRound} total={totalRounds} />
