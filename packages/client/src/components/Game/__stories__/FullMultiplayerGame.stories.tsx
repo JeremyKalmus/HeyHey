@@ -10,9 +10,9 @@ import type { PlayerColor } from '../../Card/CardBack';
 import type { AvatarString } from '../../ui/Avatar';
 import type { FoundationPile as LocalFoundationPile } from '../../Foundation';
 import { MultiFoundationArea, type PlayerFoundationGroup } from '../../Foundation';
-import { OpponentMini } from '../OpponentMini';
 import { GameBoard } from '../GameBoard';
 import { Card as CardComponent } from '../../Card';
+import { Avatar } from '../../ui/Avatar';
 import { useLocalPlayerState } from '../../../hooks/useLocalPlayerState';
 import { useDragAndDrop } from '../../../hooks/useDragAndDrop';
 import { usePlayerSettings } from '../../../hooks/usePlayerSettings';
@@ -136,12 +136,8 @@ function FullMultiplayerGame({ playerCount, simulateOpponents = true }: FullMult
 
   const config: GameConfig = { nertzPileSize: 13, drawCount: 3, targetScore: 100 };
 
-  // Move log for debugging
-  const [moveLog, setMoveLog] = useState<string[]>([]);
-
   // Handle local player moves
   const handleMove = useCallback((move: Move) => {
-    setMoveLog(prev => [...prev.slice(-9), `You: ${move.type}`]);
 
     setLocalPlayerState(prev => {
       if (move.type === 'draw') {
@@ -201,8 +197,6 @@ function FullMultiplayerGame({ playerCount, simulateOpponents = true }: FullMult
     const playerIndex = Math.floor(foundationIndex / 4);
     const suitIndex = foundationIndex % 4;
     const playerId = playerIndex === 0 ? localPlayerId : `player-${playerIndex + 1}`;
-
-    setMoveLog(prev => [...prev.slice(-9), `You: ${card.rank} of ${card.suit} → foundation`]);
 
     // Remove card from source
     setLocalPlayerState(prev => {
@@ -305,7 +299,6 @@ function FullMultiplayerGame({ playerCount, simulateOpponents = true }: FullMult
             return newMap;
           });
 
-          setMoveLog(prev => [...prev.slice(-9), `${opponent.name}: ${nertzTop.rank} of ${nertzTop.suit}`]);
           break;
         }
       }
@@ -354,7 +347,6 @@ function FullMultiplayerGame({ playerCount, simulateOpponents = true }: FullMult
       newFoundations.set(playerId, SUITS.map(suit => ({ suit, cards: [], ownerId: playerId })));
     }
     setPlayerFoundations(newFoundations);
-    setMoveLog([]);
   }, [playerCount]);
 
   // Convert foundations to PlayerFoundationGroup format for MultiFoundationArea
@@ -442,30 +434,46 @@ function FullMultiplayerGame({ playerCount, simulateOpponents = true }: FullMult
     <div style={{
       display: 'flex',
       flexDirection: 'column',
-      gap: '16px',
-      padding: '16px',
+      gap: '8px',
+      padding: '8px',
       minHeight: '100vh',
       background: '#0a0a12',
     }}>
-      {/* Header */}
+      {/* Compact header with opponents and controls */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: '8px 16px',
-        background: 'rgba(255, 210, 63, 0.1)',
-        borderRadius: '8px',
+        padding: '4px 8px',
       }}>
-        <div style={{
-          color: '#FFD23F',
-          fontFamily: 'Inter, sans-serif',
-          fontWeight: 900,
-          fontSize: '1.25rem',
-          textTransform: 'uppercase',
-        }}>
-          {playerCount}-Player Game
+        {/* Opponents - just avatars with activity pulse */}
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          {opponents.map((opp) => (
+            <div
+              key={opp.playerId}
+              style={{
+                position: 'relative',
+                opacity: opp.isActive ? 1 : 0.7,
+                transition: 'opacity 0.2s',
+              }}
+              title={opp.name}
+            >
+              {opp.isActive && (
+                <div style={{
+                  position: 'absolute',
+                  inset: -3,
+                  borderRadius: '50%',
+                  border: '2px solid #FFD23F',
+                  animation: 'pulse 0.5s ease-out',
+                }} />
+              )}
+              <Avatar avatar={opp.avatar} color={opp.color} size="sm" />
+            </div>
+          ))}
         </div>
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+
+        {/* Controls */}
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <SettingsToggle
             showMoveHints={settings.showMoveHints}
             onToggleHints={toggleMoveHints}
@@ -473,11 +481,12 @@ function FullMultiplayerGame({ playerCount, simulateOpponents = true }: FullMult
           <button
             onClick={handleReset}
             style={{
-              padding: '6px 12px',
+              padding: '4px 8px',
               background: '#3b82f6',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
+              fontSize: '0.75rem',
               fontWeight: 'bold',
               cursor: 'pointer',
             }}
@@ -487,30 +496,12 @@ function FullMultiplayerGame({ playerCount, simulateOpponents = true }: FullMult
         </div>
       </div>
 
-      {/* Opponents Row */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        gap: '12px',
-        flexWrap: 'wrap',
-      }}>
-        {opponents.map((opp) => (
-          <OpponentMini
-            key={opp.playerId}
-            playerState={opp.playerState}
-            name={opp.name}
-            avatar={opp.avatar}
-            color={opp.color}
-            isActive={opp.isActive}
-          />
-        ))}
-      </div>
-
-      {/* Shared Foundations (Multi-player) */}
+      {/* Shared Foundations (Multi-player) - compact */}
       <MultiFoundationArea
         playerGroups={playerGroups}
         canPlace={localPlayer.validFoundationDestinations.length > 0 || dragFoundationTargets.length > 0}
         showMoveHints={settings.showMoveHints}
+        compact={true}
       />
 
       {/* Your Play Area */}
@@ -528,6 +519,7 @@ function FullMultiplayerGame({ playerCount, simulateOpponents = true }: FullMult
           wastePile={localPlayerState.wastePile}
           foundationPiles={[]}
           hideFoundation={true}
+          hideTopBar={true}
           playerColor={localPlayerColor}
           playerName="You"
           currentRound={1}
@@ -546,7 +538,7 @@ function FullMultiplayerGame({ playerCount, simulateOpponents = true }: FullMult
           onStockRecycle={localPlayer.recycleWaste}
           onWasteCardClick={localPlayer.handleWasteClick}
           onWasteCardDoubleClick={localPlayer.handleWasteDoubleClick}
-          onCallHeyHey={() => setMoveLog(prev => [...prev, 'HeyHey called!'])}
+          onCallHeyHey={() => {}}
           canPlaceOnFoundation={localPlayer.validFoundationDestinations.length > 0}
           foundationSelectedCard={localPlayer.selectedCard?.card ?? null}
           isDragging={dragDrop.isDragging}
@@ -566,28 +558,6 @@ function FullMultiplayerGame({ playerCount, simulateOpponents = true }: FullMult
           )}
         </DragOverlay>
       </DndContext>
-
-      {/* Debug/Info Panel */}
-      <div style={{
-        padding: '12px',
-        background: 'rgba(0, 0, 0, 0.5)',
-        borderRadius: '8px',
-        color: '#fff',
-        fontSize: '0.8rem',
-        display: 'flex',
-        gap: '24px',
-        flexWrap: 'wrap',
-      }}>
-        <div><strong>Your Nertz:</strong> {localPlayerState.nertzPile.length}</div>
-        <div><strong>Stock:</strong> {localPlayerState.stockPile.length}</div>
-        <div><strong>Waste:</strong> {localPlayerState.wastePile.length}</div>
-        <div style={{ flex: 1, maxHeight: '60px', overflow: 'auto' }}>
-          <strong>Log:</strong>
-          {moveLog.slice(-5).map((log, i) => (
-            <span key={i} style={{ marginLeft: '8px', opacity: 0.8 }}>{log}</span>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }

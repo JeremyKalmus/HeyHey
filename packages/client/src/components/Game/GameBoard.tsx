@@ -80,6 +80,9 @@ export interface GameBoardProps {
   /** Hide the foundation area (when using MultiFoundationArea externally) */
   hideFoundation?: boolean;
 
+  /** Hide the top bar (round counter) */
+  hideTopBar?: boolean;
+
   // Optional class
   className?: string;
 }
@@ -125,6 +128,7 @@ export function GameBoard({
   onBackgroundClick,
   showMoveHints = false,
   hideFoundation = false,
+  hideTopBar = false,
   className,
 }: GameBoardProps) {
   const isNertzSelected = selectedCard?.sourceType === 'nertz';
@@ -152,10 +156,12 @@ export function GameBoard({
       className={`${styles.gameBoard} ${className ?? ''}`}
       onClick={handleBackgroundClick}
     >
-      {/* Top Bar - Round Counter only (no scores - keeps game exciting!) */}
-      <div className={styles.topBar}>
-        <ScoreDisplay.Round current={currentRound} total={totalRounds} />
-      </div>
+      {/* Top Bar - Round Counter only (hidden in multiplayer mode) */}
+      {!hideTopBar && (
+        <div className={styles.topBar}>
+          <ScoreDisplay.Round current={currentRound} total={totalRounds} />
+        </div>
+      )}
 
       {/* Foundation Area - CENTER FOCUS (hidden when using MultiFoundationArea externally) */}
       {!hideFoundation && (
