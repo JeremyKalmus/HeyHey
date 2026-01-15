@@ -170,3 +170,31 @@
   text-transform: uppercase;
   letter-spacing: var(--letter-spacing-wide);
 }
+
+/* Clickable player (current player can click to edit) */
+.player.clickable {
+  cursor: pointer;
+  border-color: var(--arcade-cyan);
+}
+
+.player.clickable:hover {
+  background: var(--bg-dark-elevated);
+  border-color: var(--arcade-yellow);
+}
+
+.player.clickable:focus {
+  outline: 2px solid var(--arcade-cyan);
+  outline-offset: 2px;
+}
+
+.editHint {
+  font-size: var(--font-size-lg);
+  color: var(--arcade-cyan);
+  opacity: 0.5;
+  transition: var(--transition-fast);
+}
+
+.player.clickable:hover .editHint {
+  opacity: 1;
+  color: var(--arcade-yellow);
+}

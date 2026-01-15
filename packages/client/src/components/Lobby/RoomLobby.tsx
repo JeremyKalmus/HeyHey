@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import type { GameConfig } from '@heyhey/shared';
 import { Button } from './Button';
 import { PlayerList, type LobbyPlayer } from './PlayerList';
 import { GameSettings } from './GameSettings';
-import { PlayerCustomization, type PlayerCustomizationData } from './PlayerCustomization';
+import { PlayerCustomizationModal } from './PlayerCustomizationModal';
+import type { PlayerCustomizationData } from './PlayerCustomization';
 import styles from './RoomLobby.module.css';
 
 export interface RoomLobbyProps {
@@ -34,6 +36,8 @@ export function RoomLobby({
   playerCustomization,
   onPlayerCustomizationChange,
 }: RoomLobbyProps) {
+  const [isCustomizationOpen, setIsCustomizationOpen] = useState(false);
+
   const minPlayers = 2;
   const canStart = isHost && players.length >= minPlayers;
   const allReady = players.every((p) => p.isHost || p.isReady);
@@ -42,6 +46,17 @@ export function RoomLobby({
   const disabledColors = players
     .filter((p) => p.id !== currentPlayerId)
     .map((p) => p.color);
+
+  const handlePlayerClick = () => {
+    if (playerCustomization && onPlayerCustomizationChange) {
+      setIsCustomizationOpen(true);
+    }
+  };
+
+  const handleCustomizationSave = () => {
+    // Changes are saved immediately via onChange, so just close the modal
+    setIsCustomizationOpen(false);
+  };
 
   const handleCopyCode = async () => {
     try {
@@ -78,17 +93,11 @@ export function RoomLobby({
 
       <div className={styles.content}>
         <div className={styles.leftPanel}>
-          {playerCustomization && onPlayerCustomizationChange && (
-            <PlayerCustomization
-              value={playerCustomization}
-              onChange={onPlayerCustomizationChange}
-              disabledColors={disabledColors}
-            />
-          )}
           <PlayerList
             players={players}
             currentPlayerId={currentPlayerId}
             maxPlayers={8}
+            onCurrentPlayerClick={playerCustomization ? handlePlayerClick : undefined}
           />
         </div>
 
@@ -100,6 +109,18 @@ export function RoomLobby({
           />
         </div>
       </div>
+
+      {/* Player Customization Modal */}
+      {playerCustomization && onPlayerCustomizationChange && (
+        <PlayerCustomizationModal
+          isOpen={isCustomizationOpen}
+          onClose={() => setIsCustomizationOpen(false)}
+          value={playerCustomization}
+          onChange={onPlayerCustomizationChange}
+          onSave={handleCustomizationSave}
+          disabledColors={disabledColors}
+        />
+      )}
 
       <footer className={styles.footer}>
         <Button variant="ghost" onClick={onLeaveRoom}>
@@ -127,7 +148,7 @@ export function RoomLobby({
                 ? `NEED ${minPlayers - players.length} MORE`
                 : !allReady
                   ? 'WAITING...'
-                  : '▶ START GAME'}
+                  : '▶ PLAY'}
             </Button>
           )}
         </div>

@@ -1,15 +1,22 @@
 // RoomLobbyConnected - Wires RoomLobby to context and routing
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useGameState } from '../context';
 import { RoomLobby } from '../components/Lobby/RoomLobby';
 import type { LobbyPlayer } from '../components/Lobby/PlayerList';
+import type { PlayerCustomizationData } from '../components/Lobby/PlayerCustomization';
 import type { PlayerColor } from '../components/Card/CardBack';
+import type { AvatarString } from '../components/ui/Avatar';
 import type { GameConfig } from '@heyhey/shared';
 
 // Default colors assigned to players in order
 const PLAYER_COLORS: PlayerColor[] = [
   'red', 'blue', 'green', 'yellow', 'purple', 'orange', 'pink', 'teal',
+];
+
+const DEFAULT_AVATARS: AvatarString[] = [
+  'user:circle', 'smile:square', 'ghost:diamond', 'skull:hexagon',
+  'cat:star', 'bot:triangle', 'heart:circle', 'zap:square',
 ];
 
 export function RoomLobbyConnected() {
@@ -28,6 +35,29 @@ export function RoomLobbyConnected() {
     clearError,
   } = useGameState();
 
+  // Player customization state (local until we add server support)
+  const [playerCustomization, setPlayerCustomization] = useState<PlayerCustomizationData | null>(null);
+
+  // Initialize customization from room data when available
+  useEffect(() => {
+    if (room && playerId && !playerCustomization) {
+      const playerIndex = room.players.findIndex(p => p.id === playerId);
+      const currentPlayer = room.players.find(p => p.id === playerId);
+      if (currentPlayer && playerIndex >= 0) {
+        setPlayerCustomization({
+          name: currentPlayer.name,
+          color: PLAYER_COLORS[playerIndex % PLAYER_COLORS.length]!,
+          avatar: DEFAULT_AVATARS[playerIndex % DEFAULT_AVATARS.length]!,
+        });
+      }
+    }
+  }, [room, playerId, playerCustomization]);
+
+  const handleCustomizationChange = useCallback((data: PlayerCustomizationData) => {
+    setPlayerCustomization(data);
+    // TODO: Send to server when we add that support
+  }, []);
+
   // Redirect to home if no room
   useEffect(() => {
     if (!room) {
@@ -45,14 +75,28 @@ export function RoomLobbyConnected() {
   // Map server LobbyPlayer to client LobbyPlayer with colors
   const clientPlayers: LobbyPlayer[] = useMemo(() => {
     if (!room) return [];
-    return room.players.map((p, index) => ({
-      id: p.id,
-      name: p.name,
-      color: PLAYER_COLORS[index % PLAYER_COLORS.length]!,
-      isHost: p.isHost,
-      isReady: p.isHost, // Host is always ready
-    }));
-  }, [room]);
+    return room.players.map((p, index) => {
+      // Use customization data for current player
+      if (p.id === playerId && playerCustomization) {
+        return {
+          id: p.id,
+          name: playerCustomization.name,
+          color: playerCustomization.color,
+          avatar: playerCustomization.avatar,
+          isHost: p.isHost,
+          isReady: p.isHost, // Host is always ready
+        };
+      }
+      return {
+        id: p.id,
+        name: p.name,
+        color: PLAYER_COLORS[index % PLAYER_COLORS.length]!,
+        avatar: DEFAULT_AVATARS[index % DEFAULT_AVATARS.length]!,
+        isHost: p.isHost,
+        isReady: p.isHost, // Host is always ready
+      };
+    });
+  }, [room, playerId, playerCustomization]);
 
   const handleConfigChange = (config: GameConfig) => {
     updateSettings(config);
@@ -88,6 +132,8 @@ export function RoomLobbyConnected() {
         onConfigChange={handleConfigChange}
         onStartGame={handleStartGame}
         onLeaveRoom={handleLeaveRoom}
+        playerCustomization={playerCustomization ?? undefined}
+        onPlayerCustomizationChange={handleCustomizationChange}
       />
       {error && (
         <div style={{
