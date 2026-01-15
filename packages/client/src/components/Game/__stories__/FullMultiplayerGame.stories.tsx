@@ -546,6 +546,7 @@ function FullMultiplayerGame({ playerCount, simulateOpponents = true }: FullMult
           validDropTargets={dragDrop.validDropTargets}
           onBackgroundClick={localPlayer.clearSelection}
           showMoveHints={settings.showMoveHints}
+          maxPileHeight={280}
         />
 
         <DragOverlay>

@@ -83,6 +83,9 @@ export interface GameBoardProps {
   /** Hide the top bar (round counter) */
   hideTopBar?: boolean;
 
+  /** Max height for work piles - compresses cards when they get long */
+  maxPileHeight?: number;
+
   // Optional class
   className?: string;
 }
@@ -129,6 +132,7 @@ export function GameBoard({
   showMoveHints = false,
   hideFoundation = false,
   hideTopBar = false,
+  maxPileHeight,
   className,
 }: GameBoardProps) {
   const isNertzSelected = selectedCard?.sourceType === 'nertz';
@@ -233,6 +237,7 @@ export function GameBoard({
               disabled={disabled}
               showMoveHints={showMoveHints}
               isDragging={isDragging}
+              maxPileHeight={maxPileHeight}
             />
           </div>
         </div>

@@ -28,6 +28,8 @@ export interface CardStackProps {
   pileIndex?: number;
   /** Index of the card currently being dragged (to fade cards below) */
   draggingFromIndex?: number;
+  /** Max height for vertical stacks - compresses offset to fit (e.g., 300) */
+  maxHeight?: number;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -49,10 +51,23 @@ export function CardStack({
   draggableAllCards = false,
   pileIndex,
   draggingFromIndex,
+  maxHeight,
   className,
   style,
 }: CardStackProps) {
   const visibleCards = maxVisible ? cards.slice(-maxVisible) : cards;
+
+  // Calculate effective offset - compress if stack would exceed maxHeight
+  const cardHeight = 100;
+  const count = visibleCards.length || 1;
+  let effectiveOffset = offset;
+
+  if (direction === 'vertical' && maxHeight && count > 1) {
+    // Stack height = cardHeight + (count - 1) * offset
+    // Solve for offset: offset = (maxHeight - cardHeight) / (count - 1)
+    const maxOffset = (maxHeight - cardHeight) / (count - 1);
+    effectiveOffset = Math.min(offset, Math.max(maxOffset, 12)); // Min 12px to stay readable
+  }
 
   const directionClass =
     direction === 'horizontal'
@@ -63,13 +78,13 @@ export function CardStack({
 
   const getCardStyle = (index: number): React.CSSProperties => {
     if (direction === 'horizontal') {
-      return { left: index * offset };
+      return { left: index * effectiveOffset };
     } else if (direction === 'vertical') {
-      return { top: index * offset };
+      return { top: index * effectiveOffset };
     } else {
       const midpoint = (visibleCards.length - 1) / 2;
       const rotation = (index - midpoint) * fanAngle;
-      const translateX = (index - midpoint) * (offset * 1.5);
+      const translateX = (index - midpoint) * (effectiveOffset * 1.5);
       return {
         transform: `translateX(${translateX}px) rotate(${rotation}deg)`,
         transformOrigin: 'bottom center',
@@ -79,21 +94,19 @@ export function CardStack({
 
   const getStackDimensions = (): React.CSSProperties => {
     const cardWidth = 70;
-    const cardHeight = 100;
-    const count = visibleCards.length || 1;
 
     if (direction === 'horizontal') {
       return {
-        width: cardWidth + (count - 1) * offset,
+        width: cardWidth + (count - 1) * effectiveOffset,
         height: cardHeight,
       };
     } else if (direction === 'vertical') {
       return {
         width: cardWidth,
-        height: cardHeight + (count - 1) * offset,
+        height: cardHeight + (count - 1) * effectiveOffset,
       };
     } else {
-      const spread = (count - 1) * offset * 1.5 * 2;
+      const spread = (count - 1) * effectiveOffset * 1.5 * 2;
       return {
         width: cardWidth + spread,
         height: cardHeight + 20,

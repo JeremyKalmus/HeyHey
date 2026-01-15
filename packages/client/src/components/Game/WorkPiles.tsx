@@ -38,6 +38,8 @@ export interface WorkPilesProps {
   showMoveHints?: boolean;
   /** Whether a drag is currently in progress */
   isDragging?: boolean;
+  /** Max height for work pile stacks - compresses cards to fit */
+  maxPileHeight?: number;
   /** Optional className for additional styling */
   className?: string;
 }
@@ -53,6 +55,7 @@ export function WorkPiles({
   disabled = false,
   showMoveHints = false,
   isDragging = false,
+  maxPileHeight,
   className,
 }: WorkPilesProps) {
   const handleCardClick = (card: CardType, pileIndex: number, cardIndex: number) => {
@@ -123,6 +126,7 @@ export function WorkPiles({
             selectedIndexInPile={selectedIndexInPile}
             selectableIndices={selectableIndices}
             disabled={disabled}
+            maxPileHeight={maxPileHeight}
             onCardClick={handleCardClick}
             onCardDoubleClick={handleCardDoubleClick}
             onPileClick={handlePileClick}
@@ -148,6 +152,7 @@ interface DroppableWorkPileProps {
   selectedIndexInPile: number;
   selectableIndices: number[];
   disabled: boolean;
+  maxPileHeight?: number;
   onCardClick: (card: CardType, pileIndex: number, cardIndex: number) => void;
   onCardDoubleClick: (card: CardType, pileIndex: number, cardIndex: number) => void;
   onPileClick: (pileIndex: number) => void;
@@ -162,6 +167,7 @@ function DroppableWorkPile({
   selectedIndexInPile,
   selectableIndices,
   disabled,
+  maxPileHeight,
   onCardClick,
   onCardDoubleClick,
   onPileClick,
@@ -214,6 +220,7 @@ function DroppableWorkPile({
           onCardDoubleClick={(card, index) => onCardDoubleClick(card, pileIndex, index)}
           draggableAllCards={!disabled}
           pileIndex={pileIndex}
+          maxHeight={maxPileHeight}
         />
       ) : (
         <div
