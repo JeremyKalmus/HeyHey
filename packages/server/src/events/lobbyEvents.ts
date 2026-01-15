@@ -291,6 +291,50 @@ export function registerLobbyEvents(io: TypedServer): void {
       }
     });
 
+    // Start Round (only the designated starter can call this)
+    socket.on('startRound', () => {
+      const roomCode = lobbyManager.getRoomCode(socket.id);
+
+      if (!roomCode) {
+        socket.emit('error', {
+          code: 'not_in_room',
+          message: 'You are not in a room.',
+        });
+        return;
+      }
+
+      const manager = getOrCreateGameManager(io);
+      const result = manager.processStartRound(roomCode, socket.id);
+
+      if (!result.success) {
+        socket.emit('error', {
+          code: result.error,
+          message: getStartRoundErrorMessage(result.error),
+        });
+        return;
+      }
+
+      // Broadcast roundStarting to all players
+      io.to(roomCode).emit('roundStarting', {
+        starterId: result.starterId,
+        starterName: result.starterName,
+        roundNumber: result.roundNumber,
+      });
+
+      // Transition to playing phase
+      manager.transitionToPlaying(roomCode);
+
+      // Broadcast roundStarted to all players
+      io.to(roomCode).emit('roundStarted', {
+        timestamp: Date.now(),
+        roundNumber: result.roundNumber,
+      });
+
+      console.log(
+        `Round ${result.roundNumber} started by ${result.starterName} in room ${roomCode}`
+      );
+    });
+
     // Handle disconnect
     socket.on('disconnect', () => {
       // Handle game disconnect
@@ -399,6 +443,19 @@ function getSetupErrorMessage(error: string): string {
       return 'Setup has already been completed.';
     default:
       return 'Failed to complete setup.';
+  }
+}
+
+function getStartRoundErrorMessage(error: string): string {
+  switch (error) {
+    case 'game_not_found':
+      return 'Game not found.';
+    case 'not_in_waiting_phase':
+      return 'Round cannot be started now.';
+    case 'not_starter':
+      return 'Only the designated starter can start this round.';
+    default:
+      return 'Failed to start round.';
   }
 }
 
