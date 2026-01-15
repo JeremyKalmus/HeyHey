@@ -1,0 +1,96 @@
+/* SettingsToggle Component - Neubrutalist Arcade Style */
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs, 4px);
+  padding: var(--space-xs, 4px) var(--space-sm, 8px);
+  background: var(--bg-dark-surface, #16213e);
+  border: var(--border-medium, 3px) solid var(--color-white, #ffffff);
+  border-radius: var(--radius-md, 4px);
+  cursor: pointer;
+  transition: all var(--transition-fast, 0.15s ease-out);
+  box-shadow: 2px 2px 0px var(--color-black, #000000);
+  font-family: var(--font-family-mono, 'Courier New', monospace);
+}
+
+.toggle:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 4px 4px 0px var(--color-black, #000000);
+}
+
+.toggle:active {
+  transform: translate(0, 0);
+  box-shadow: 2px 2px 0px var(--color-black, #000000);
+}
+
+/* Focus state for keyboard navigation */
+.toggle:focus {
+  outline: none;
+  border-color: var(--arcade-cyan, #00F5FF);
+  box-shadow: 2px 2px 0px var(--color-black, #000000),
+              0 0 0 2px var(--arcade-cyan, #00F5FF);
+}
+
+.toggle:focus:hover {
+  box-shadow: 4px 4px 0px var(--color-black, #000000),
+              0 0 0 2px var(--arcade-cyan, #00F5FF);
+}
+
+/* Icon styling */
+.icon {
+  color: var(--color-gray, #9ca3af);
+  transition: color var(--transition-fast, 0.15s ease-out),
+              transform var(--transition-fast, 0.15s ease-out);
+}
+
+.toggle:hover .icon {
+  color: var(--color-white, #ffffff);
+}
+
+/* Label styling */
+.label {
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: var(--font-weight-black, 900);
+  color: var(--color-gray, #9ca3af);
+  letter-spacing: var(--letter-spacing-wide, 0.05em);
+  transition: color var(--transition-fast, 0.15s ease-out);
+}
+
+.toggle:hover .label {
+  color: var(--color-white, #ffffff);
+}
+
+/* Active state (hints enabled) */
+.toggle.active {
+  background: rgba(0, 255, 136, 0.15);
+  border-color: var(--arcade-green, #00FF88);
+}
+
+.toggle.active .icon {
+  color: var(--arcade-green, #00FF88);
+}
+
+.toggle.active .label {
+  color: var(--arcade-green, #00FF88);
+}
+
+.toggle.active:hover {
+  background: rgba(0, 255, 136, 0.25);
+}
+
+.toggle.active:hover .icon {
+  color: var(--arcade-green, #00FF88);
+  transform: scale(1.1);
+}
+
+/* Responsive - hide label on small screens */
+@media (max-width: 400px) {
+  .label {
+    display: none;
+  }
+
+  .toggle {
+    padding: var(--space-xs, 4px);
+  }
+}

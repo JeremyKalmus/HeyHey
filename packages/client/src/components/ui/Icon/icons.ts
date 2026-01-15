@@ -96,6 +96,8 @@ export {
   Clock as ClockIcon,
   Timer as TimerIcon,
   Zap as ZapIcon,
+  Lightbulb as LightbulbIcon,
+  LightbulbOff as LightbulbOffIcon,
 } from 'lucide-react';
 
 // Card Piles & Stacks
