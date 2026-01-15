@@ -49,6 +49,37 @@
   50% { opacity: 0.4; }
 }
 
+/* Card receive animation - pulse effect when a card lands */
+@keyframes pileReceive {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(255, 210, 63, 0);
+  }
+  30% {
+    transform: scale(1.08);
+    box-shadow: 0 0 0 6px rgba(255, 210, 63, 0.4);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(255, 210, 63, 0);
+  }
+}
+
+/* Flying card animation - card appears to fly in */
+@keyframes cardFlyIn {
+  0% {
+    transform: translate(var(--fly-from-x, -100px), var(--fly-from-y, -50px)) scale(0.6) rotate(-15deg);
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(0, 0) scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
 /* Error message display */
 .errorMessage {
   font-family: var(--font-family-base, 'Inter', sans-serif);
@@ -188,6 +219,16 @@
   box-shadow: 0 0 0 4px var(--arcade-green, #00FF88),
               0 0 20px rgba(0, 255, 136, 0.5);
   transform: scale(1.05);
+}
+
+/* Animation state - pile just received a card */
+.pileWrapper.receiving {
+  animation: pileReceive 0.35s ease-out forwards;
+}
+
+/* Animation state - card flying in */
+.pile.flying .flyingCard {
+  animation: cardFlyIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
 /* Pile Area - smaller for multi-player layout */

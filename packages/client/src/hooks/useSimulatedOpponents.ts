@@ -34,6 +34,21 @@ export interface PlayerFoundations {
   topRanks: [number, number, number, number];
 }
 
+/** Information about the most recent opponent move */
+export interface SimulatedMove {
+  /** Player who made the move */
+  playerId: string;
+  playerName: string;
+  /** Target foundation pile owner (may differ from playerId) */
+  targetPlayerId: string;
+  /** Suit of the foundation pile */
+  suit: Suit;
+  /** Rank of the card played */
+  rank: number;
+  /** Timestamp for detecting new moves */
+  timestamp: number;
+}
+
 /**
  * Simulation state returned by the hook
  */
@@ -43,13 +58,7 @@ export interface SimulationState {
   /** Opponent states (for OpponentMini display) */
   opponents: SimulatedPlayer[];
   /** Recent move for visual feedback */
-  lastMove: {
-    playerId: string;
-    playerName: string;
-    suit: Suit;
-    rank: number;
-    timestamp: number;
-  } | null;
+  lastMove: SimulatedMove | null;
   /** Whether simulation is running */
   isRunning: boolean;
   /** Total moves made */
@@ -220,6 +229,7 @@ export function useSimulatedOpponents({
     setLastMove({
       playerId: move.playerId,
       playerName: move.playerName,
+      targetPlayerId: move.targetPlayerId,
       suit: move.suit,
       rank: move.rank,
       timestamp: Date.now(),
@@ -350,5 +360,24 @@ export function toPlayerGameState(opponent: SimulatedPlayer): PlayerGameState {
     })),
     wastePile: [],
     workPiles: [[], [], [], []],
+  };
+}
+
+/**
+ * Convert simulation lastMove to OpponentMove format for MultiFoundationArea animations.
+ * The OpponentMove uses targetPlayerId as playerId since animations happen on the pile that received the card.
+ */
+export function toOpponentMove(lastMove: SimulatedMove | null): {
+  playerId: string;
+  suit: Suit;
+  rank: number;
+  timestamp: number;
+} | null {
+  if (!lastMove) return null;
+  return {
+    playerId: lastMove.targetPlayerId,
+    suit: lastMove.suit,
+    rank: lastMove.rank,
+    timestamp: lastMove.timestamp,
   };
 }

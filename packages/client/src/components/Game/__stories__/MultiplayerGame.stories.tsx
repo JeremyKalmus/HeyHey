@@ -12,6 +12,7 @@ import {
   useSimulatedOpponents,
   toPlayerFoundationGroups,
   toPlayerGameState,
+  toOpponentMove,
 } from '../../../hooks/useSimulatedOpponents';
 
 // =============================================================================
@@ -553,6 +554,8 @@ function InteractiveSimulation({ playerCount }: { playerCount: 2 | 4 | 6 | 8 }) 
       <MultiFoundationArea
         playerGroups={playerGroups}
         canPlace={false}
+        lastOpponentMove={toOpponentMove(lastMove)}
+        enableOpponentSounds={true}
       />
 
       {/* Info Panel */}
@@ -585,9 +588,10 @@ export const InteractiveFourPlayer: Story = {
 
 Opponents automatically make valid moves at random intervals (0.8-2.5 seconds).
 Watch as:
-- Cards appear on foundation piles from different players
-- Nertz pile counts decrease as opponents play cards
-- Activity indicators show who just made a move
+- **Card animations**: Piles pulse with a golden glow when receiving cards
+- **Sound effects**: Subtle tick sounds play for each opponent move
+- **Activity indicators**: See who just made a move
+- **Nertz pile counts**: Decrease as opponents play cards
 
 Use the controls to start/stop/reset the simulation.
         `,
@@ -609,8 +613,10 @@ export const InteractiveEightPlayer: Story = {
 **8-player chaos mode!**
 
 With 8 players and 32 foundation piles, the action is non-stop.
-This demonstrates the scalability of the MultiFoundationArea component
-and the simulation hook handling many concurrent moves.
+This demonstrates:
+- **Animation performance**: Smooth pulse animations even with many piles
+- **Sound design**: Subtle audio feedback without overwhelming the player
+- **Scalability**: MultiFoundationArea handles rapid concurrent moves
         `,
       },
     },

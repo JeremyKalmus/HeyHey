@@ -2,7 +2,7 @@
 // Displays N×4 foundation piles for multiplayer games, grouped by owner
 
 import type { Card as CardType } from '@heyhey/shared';
-import type { ComponentType } from 'react';
+import { useState, useEffect, useRef, type ComponentType } from 'react';
 import type { LucideProps } from 'lucide-react';
 import { useDroppable } from '@dnd-kit/core';
 import { Card } from '../Card';
@@ -15,6 +15,7 @@ import {
   SuitSpadeIcon,
 } from '../ui/Icon';
 import { createDropId } from '../../hooks/useDragAndDrop';
+import { soundManager } from '../../audio/SoundManager';
 import type { Suit, CardOwnershipMap, FoundationPile } from './FoundationArea';
 import styles from './MultiFoundationArea.module.css';
 
@@ -41,6 +42,18 @@ export interface PlayerFoundationGroup {
   piles: FoundationPile[];
 }
 
+/** Information about the most recent opponent move for animation */
+export interface OpponentMove {
+  /** Player who made the move */
+  playerId: string;
+  /** Suit of the foundation pile that received the card */
+  suit: Suit;
+  /** Rank of the card that was played */
+  rank: number;
+  /** Timestamp to detect new moves */
+  timestamp: number;
+}
+
 export interface MultiFoundationAreaProps {
   /** Foundation groups organized by player */
   playerGroups: PlayerFoundationGroup[];
@@ -58,6 +71,10 @@ export interface MultiFoundationAreaProps {
   error?: string | null;
   /** Whether to show valid move destination hints (Easy Mode) */
   showMoveHints?: boolean;
+  /** Most recent opponent move (triggers animation) */
+  lastOpponentMove?: OpponentMove | null;
+  /** Whether to play sounds for opponent moves */
+  enableOpponentSounds?: boolean;
 }
 
 function makeCardKey(card: CardType): string {
@@ -73,7 +90,36 @@ export function MultiFoundationArea({
   hasPendingMoves = false,
   error,
   showMoveHints = false,
+  lastOpponentMove,
+  enableOpponentSounds = true,
 }: MultiFoundationAreaProps) {
+  // Track which pile is currently animating
+  const [animatingPile, setAnimatingPile] = useState<string | null>(null);
+  const lastMoveTimestamp = useRef<number>(0);
+
+  // Handle new opponent moves - trigger animation and sound
+  useEffect(() => {
+    if (!lastOpponentMove) return;
+    if (lastOpponentMove.timestamp <= lastMoveTimestamp.current) return;
+
+    // New move detected
+    lastMoveTimestamp.current = lastOpponentMove.timestamp;
+    const pileKey = `${lastOpponentMove.playerId}-${lastOpponentMove.suit}`;
+    setAnimatingPile(pileKey);
+
+    // Play sound
+    if (enableOpponentSounds) {
+      soundManager.play('opponentMove');
+    }
+
+    // Clear animation after it completes
+    const timer = setTimeout(() => {
+      setAnimatingPile(null);
+    }, 350); // Match CSS animation duration
+
+    return () => clearTimeout(timer);
+  }, [lastOpponentMove, enableOpponentSounds]);
+
   // Get owner color for a card
   const getOwnerColor = (card: CardType): PlayerColor | undefined => {
     if (!cardOwnership) return undefined;
@@ -132,6 +178,7 @@ export function MultiFoundationArea({
             getOwnerColor={getOwnerColor}
             getGlobalIndex={getGlobalIndex}
             onPileClick={onPileClick}
+            animatingPile={animatingPile}
           />
         ))}
       </div>
@@ -156,6 +203,7 @@ interface PlayerFoundationRowProps {
   getOwnerColor: (card: CardType) => PlayerColor | undefined;
   getGlobalIndex: (playerIndex: number, suitIndex: number) => number;
   onPileClick?: (playerId: string, suit: Suit, globalIndex: number) => void;
+  animatingPile: string | null;
 }
 
 function PlayerFoundationRow({
@@ -168,6 +216,7 @@ function PlayerFoundationRow({
   getOwnerColor,
   getGlobalIndex,
   onPileClick,
+  animatingPile,
 }: PlayerFoundationRowProps) {
   // Create a map for easy lookup
   const pileMap = new Map(group.piles.map((p) => [p.suit, p]));
@@ -195,10 +244,12 @@ function PlayerFoundationRow({
           const isTarget = pile ? isValidTarget(pile) : false;
           const isHighlighted = showMoveHints && isTarget;
           const isClickable = canPlace && !!selectedCard;
+          const pileKey = `${group.playerId}-${suit}`;
+          const isReceiving = animatingPile === pileKey;
 
           return (
             <DroppableFoundationPile
-              key={`${group.playerId}-${suit}`}
+              key={pileKey}
               suit={suit}
               globalIndex={globalIndex}
               playerId={group.playerId}
@@ -207,6 +258,7 @@ function PlayerFoundationRow({
               isValidTarget={isTarget}
               isHighlighted={isHighlighted}
               isClickable={isClickable}
+              isReceiving={isReceiving}
               getOwnerColor={getOwnerColor}
               onPileClick={onPileClick}
             />
@@ -230,6 +282,7 @@ interface DroppableFoundationPileProps {
   isValidTarget: boolean;
   isHighlighted: boolean;
   isClickable: boolean;
+  isReceiving: boolean;
   getOwnerColor: (card: CardType) => PlayerColor | undefined;
   onPileClick?: (playerId: string, suit: Suit, globalIndex: number) => void;
 }
@@ -243,6 +296,7 @@ function DroppableFoundationPile({
   isValidTarget: _isValidTarget,
   isHighlighted,
   isClickable,
+  isReceiving,
   getOwnerColor,
   onPileClick,
 }: DroppableFoundationPileProps) {
@@ -272,7 +326,7 @@ function DroppableFoundationPile({
       ref={setNodeRef}
       className={`${styles.pileWrapper} ${isClickable ? styles.clickable : ''} ${
         showHighlight ? styles.validTarget : ''
-      } ${isOver ? styles.dragOver : ''}`}
+      } ${isOver ? styles.dragOver : ''} ${isReceiving ? styles.receiving : ''}`}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       role="button"
@@ -281,12 +335,13 @@ function DroppableFoundationPile({
         topCard ? `, top card: ${topCard.rank}` : ''
       }`}
     >
-      <div className={styles.pile}>
+      <div className={`${styles.pile} ${isReceiving ? styles.flying : ''}`}>
         {topCard ? (
           <Card
             card={topCard}
             faceUp={true}
             ownerColor={getOwnerColor(topCard)}
+            className={isReceiving ? styles.flyingCard : undefined}
           />
         ) : (
           <div className={`${styles.emptySlot} ${styles[suit]}`}>
