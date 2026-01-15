@@ -40,7 +40,7 @@ export function GameSettings({
         </p>
         <div className={styles.options}>
           <Button
-            variant={config.nertzPileSize === 10 ? 'primary' : 'secondary'}
+            variant={config.nertzPileSize === 10 ? 'primary' : 'ghost'}
             size="small"
             onClick={() => handleNertzPileSizeChange(10)}
             disabled={!canEdit}
@@ -48,7 +48,7 @@ export function GameSettings({
             10
           </Button>
           <Button
-            variant={config.nertzPileSize === 13 ? 'primary' : 'secondary'}
+            variant={config.nertzPileSize === 13 ? 'primary' : 'ghost'}
             size="small"
             onClick={() => handleNertzPileSizeChange(13)}
             disabled={!canEdit}
@@ -65,7 +65,7 @@ export function GameSettings({
         </p>
         <div className={styles.options}>
           <Button
-            variant={config.drawCount === 1 ? 'primary' : 'secondary'}
+            variant={config.drawCount === 1 ? 'primary' : 'ghost'}
             size="small"
             onClick={() => handleDrawCountChange(1)}
             disabled={!canEdit}
@@ -73,7 +73,7 @@ export function GameSettings({
             1 EASY
           </Button>
           <Button
-            variant={config.drawCount === 3 ? 'primary' : 'secondary'}
+            variant={config.drawCount === 3 ? 'primary' : 'ghost'}
             size="small"
             onClick={() => handleDrawCountChange(3)}
             disabled={!canEdit}
@@ -90,7 +90,7 @@ export function GameSettings({
           {[50, 100, 150, 200].map((score) => (
             <Button
               key={score}
-              variant={config.targetScore === score ? 'primary' : 'secondary'}
+              variant={config.targetScore === score ? 'primary' : 'ghost'}
               size="small"
               onClick={() => handleTargetScoreChange(score)}
               disabled={!canEdit}
