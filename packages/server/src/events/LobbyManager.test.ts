@@ -64,8 +64,8 @@ describe('LobbyManager', () => {
 
     it('fails when room does not exist', () => {
       // Use a validly formatted code that doesn't exist
-      // Room codes are 6-character format
-      const result = manager.joinRoom('socket-1', 'ABCDEF', 'Alice');
+      // Room codes are 6-character format using SAFE_CHARS (no I, L, O, 0, 1)
+      const result = manager.joinRoom('socket-1', 'ZZZZZZ', 'Alice');
 
       expect(result.success).toBe(false);
       if (result.success) return;
