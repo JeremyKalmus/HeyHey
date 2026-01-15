@@ -4,7 +4,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import type { DragStartEvent, DragEndEvent, DragOverEvent } from '@dnd-kit/core';
 import type { Card, MoveSource, MoveDestination, GameState, GameConfig } from '@heyhey/shared';
-import { validateMove } from '@heyhey/shared';
+import { findValidWorkPiles } from '@heyhey/shared';
 
 /* =============================================================================
    TYPES
@@ -170,31 +170,12 @@ export function useDragAndDrop(options: UseDragAndDropOptions): UseDragAndDropRe
     // Get the card being dragged
     const card = dragSource.card;
 
-    // Check each work pile
-    for (let i = 0; i < 4; i++) {
+    // Find valid work pile destinations using the same logic as click selection
+    const validWorkPiles = findValidWorkPiles(playerState, card);
+    for (const pileIndex of validWorkPiles) {
       // Skip if dragging from this work pile
-      if (dragSource.type === 'work' && dragSource.pileIndex === i) continue;
-
-      const moveSource: MoveSource = dragSource.type === 'nertz'
-        ? { type: 'nertz' }
-        : dragSource.type === 'waste'
-          ? { type: 'waste' }
-          : { type: 'work', pileIndex: dragSource.pileIndex!, cardIndex: dragSource.cardIndex };
-
-      const result = validateMove(
-        gameState,
-        {
-          type: 'card',
-          playerId,
-          source: moveSource,
-          destination: { type: 'work', pileIndex: i },
-          cardCount: dragSource.cardCount,
-        }
-      );
-
-      if (result.valid) {
-        targets.push({ type: 'work', index: i });
-      }
+      if (dragSource.type === 'work' && dragSource.pileIndex === pileIndex) continue;
+      targets.push({ type: 'work', index: pileIndex });
     }
 
     // Check foundation piles (only for single card moves)

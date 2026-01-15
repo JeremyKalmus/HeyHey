@@ -218,6 +218,7 @@ export function GameBoard({
               onPileClick={onWorkPileClick}
               disabled={disabled}
               showMoveHints={showMoveHints}
+              isDragging={isDragging}
             />
           </div>
         </div>

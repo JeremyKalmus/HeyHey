@@ -36,6 +36,8 @@ export interface WorkPilesProps {
   disabled?: boolean;
   /** Whether to show valid move destination hints (Easy Mode) */
   showMoveHints?: boolean;
+  /** Whether a drag is currently in progress */
+  isDragging?: boolean;
   /** Optional className for additional styling */
   className?: string;
 }
@@ -50,6 +52,7 @@ export function WorkPiles({
   onPileClick,
   disabled = false,
   showMoveHints = false,
+  isDragging = false,
   className,
 }: WorkPilesProps) {
   const handleCardClick = (card: CardType, pileIndex: number, cardIndex: number) => {
@@ -76,7 +79,9 @@ export function WorkPiles({
 
   // Check if pile is a valid placement target (for functionality)
   const isValidPlacement = (pileIndex: number): boolean => {
-    return selectedCard !== null && selectedCard !== undefined && validDestinations.includes(pileIndex);
+    // Valid if we have a selected card OR we're dragging, and this pile is a valid destination
+    const hasActiveCard = (selectedCard !== null && selectedCard !== undefined) || isDragging;
+    return hasActiveCard && validDestinations.includes(pileIndex);
   };
 
   // Check if pile should be visually highlighted (only when hints enabled)
