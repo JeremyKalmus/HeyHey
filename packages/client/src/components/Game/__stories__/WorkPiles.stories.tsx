@@ -319,3 +319,135 @@ export const LongCascades: Story = {
     backColor: 'blue',
   },
 };
+
+// Create a full K->A sequence (13 cards, alternating colors)
+const createFullKingToAce = (): Card[] => {
+  // K(13) -> A(1), alternating red/black for valid solitaire sequence
+  return Array.from({ length: 13 }, (_, i) => {
+    const rank = 13 - i; // K=13, Q=12, ... A=1
+    // Alternate: hearts(red), spades(black), diamonds(red), clubs(black)...
+    const suit = i % 2 === 0 ? 'hearts' : 'spades';
+    return createCard(suit, rank);
+  });
+};
+
+/**
+ * Full King to Ace sequence (13 cards) - NO compression.
+ * This shows the problem: a full pile extends way beyond reasonable bounds.
+ */
+export const FullKingToAceNoCompression: Story = {
+  args: {
+    piles: [
+      createFullKingToAce(),
+      [createCard('clubs', 10)],
+      [createCard('diamonds', 8)],
+      [],
+    ] as [Card[], Card[], Card[], Card[]],
+    backColor: 'blue',
+    // No maxPileHeight - shows the full uncompressed height
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Full K→A pile WITHOUT compression. Notice how tall it gets (388px).',
+      },
+    },
+  },
+};
+
+/**
+ * Full King to Ace sequence (13 cards) - WITH compression at 280px.
+ * Cards compress to fit within the maxPileHeight.
+ */
+export const FullKingToAceCompressed: Story = {
+  args: {
+    piles: [
+      createFullKingToAce(),
+      [createCard('clubs', 10)],
+      [createCard('diamonds', 8)],
+      [],
+    ] as [Card[], Card[], Card[], Card[]],
+    backColor: 'blue',
+    maxPileHeight: 280,
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Full K→A pile WITH compression (maxPileHeight=280). Cards compress to fit.',
+      },
+    },
+  },
+};
+
+/**
+ * Multiple full piles - stress test for compression.
+ * All 4 piles have 13 cards.
+ */
+export const AllFullPilesCompressed: Story = {
+  args: {
+    piles: [
+      createFullKingToAce(),
+      // Second pile with different suits
+      Array.from({ length: 13 }, (_, i) => createCard(i % 2 === 0 ? 'clubs' : 'diamonds', 13 - i)),
+      // Third pile
+      Array.from({ length: 13 }, (_, i) => createCard(i % 2 === 0 ? 'spades' : 'hearts', 13 - i)),
+      // Fourth pile
+      Array.from({ length: 13 }, (_, i) => createCard(i % 2 === 0 ? 'diamonds' : 'clubs', 13 - i)),
+    ] as [Card[], Card[], Card[], Card[]],
+    backColor: 'blue',
+    maxPileHeight: 280,
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'All 4 piles with 13 cards each, compressed to 280px max height.',
+      },
+    },
+  },
+};
+
+/**
+ * Comparison: side by side with different compression levels.
+ */
+export const CompressionComparison: Story = {
+  render: () => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+      <div>
+        <p style={{ marginBottom: '8px', fontSize: '14px', color: '#FFD23F', fontWeight: 'bold' }}>
+          No Compression (natural height ~388px)
+        </p>
+        <WorkPiles
+          piles={[createFullKingToAce(), [], [], []] as [Card[], Card[], Card[], Card[]]}
+          backColor="blue"
+        />
+      </div>
+      <div>
+        <p style={{ marginBottom: '8px', fontSize: '14px', color: '#00FF88', fontWeight: 'bold' }}>
+          maxPileHeight: 280px
+        </p>
+        <WorkPiles
+          piles={[createFullKingToAce(), [], [], []] as [Card[], Card[], Card[], Card[]]}
+          backColor="green"
+          maxPileHeight={280}
+        />
+      </div>
+      <div>
+        <p style={{ marginBottom: '8px', fontSize: '14px', color: '#00F5FF', fontWeight: 'bold' }}>
+          maxPileHeight: 200px (very compressed)
+        </p>
+        <WorkPiles
+          piles={[createFullKingToAce(), [], [], []] as [Card[], Card[], Card[], Card[]]}
+          backColor="teal"
+          maxPileHeight={200}
+        />
+      </div>
+    </div>
+  ),
+  parameters: {
+    docs: {
+      description: {
+        story: 'Side-by-side comparison of different compression levels for a full 13-card pile.',
+      },
+    },
+  },
+};
