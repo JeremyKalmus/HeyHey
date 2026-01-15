@@ -7,6 +7,8 @@ import { PlayerArea } from '../PlayerArea';
 import type { PlayerGameState, GameState, GameConfig, Card, Move, MoveSource } from '@heyhey/shared';
 import { createShuffledDeck } from '@heyhey/shared';
 import type { PlayerColor } from '../../Card/CardBack';
+import { usePlayerSettings } from '../../../hooks/usePlayerSettings';
+import { SettingsToggle } from '../../ui/SettingsToggle';
 
 // Create initial player state for testing solitaire mechanics
 function createTestPlayerState(deckId: string): PlayerGameState {
@@ -74,6 +76,9 @@ interface InteractivePlayerAreaProps {
 
 function InteractivePlayerArea({ playerColor, playerName }: InteractivePlayerAreaProps) {
   const playerId = `player-${playerColor}`;
+
+  // Player settings (Easy Mode toggle)
+  const { settings, toggleMoveHints } = usePlayerSettings({ playerId });
 
   // Initialize state
   const [playerState, setPlayerState] = useState<PlayerGameState>(() =>
@@ -216,6 +221,7 @@ function InteractivePlayerArea({ playerColor, playerName }: InteractivePlayerAre
         onMove={handleMove}
         onFoundationMove={handleFoundationMove}
         onCallHeyHey={handleHeyHey}
+        showMoveHints={settings.showMoveHints}
       />
 
       {/* Debug Panel */}
@@ -254,6 +260,10 @@ function InteractivePlayerArea({ playerColor, playerName }: InteractivePlayerAre
             ))}
           </div>
         </div>
+        <SettingsToggle
+          showMoveHints={settings.showMoveHints}
+          onToggleHints={toggleMoveHints}
+        />
         <button
           onClick={handleReset}
           style={{
