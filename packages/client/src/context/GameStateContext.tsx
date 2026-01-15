@@ -38,6 +38,9 @@ export interface GameStateContextValue {
   roundResult: RoundResult | null;
   totalScores: { playerId: string; total: number }[];
 
+  // Celebration state
+  nertzCallerId: string | null;
+
   // Actions
   createRoom: (playerName: string) => void;
   joinRoom: (roomCode: string, playerName: string) => void;
@@ -65,6 +68,7 @@ interface GameState {
   opponents: PlayerGameState[];
   roundResult: RoundResult | null;
   totalScores: { playerId: string; total: number }[];
+  nertzCallerId: string | null;
   error: string | null;
   moveSequence: number;
 }
@@ -105,6 +109,7 @@ const initialState: GameState = {
   opponents: [],
   roundResult: null,
   totalScores: [],
+  nertzCallerId: null,
   error: null,
   moveSequence: 0,
 };
@@ -280,8 +285,8 @@ function applyStateUpdate(state: GameState, update: StateUpdate): GameState {
       return { ...state, gamePhase: delta.phase };
 
     case 'nertzCalled':
-      // Someone called nertz, round will end soon
-      return state;
+      // Someone called nertz, show celebration
+      return { ...state, nertzCallerId: delta.playerId };
 
     case 'roundScored':
       return {
@@ -289,6 +294,7 @@ function applyStateUpdate(state: GameState, update: StateUpdate): GameState {
         gamePhase: 'scoring',
         roundResult: delta.roundResult,
         totalScores: delta.totalScores,
+        nertzCallerId: null,
       };
 
     case 'cardMoved':
@@ -571,6 +577,9 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
     // Scoring
     roundResult: state.roundResult,
     totalScores: state.totalScores,
+
+    // Celebration
+    nertzCallerId: state.nertzCallerId,
 
     // Actions
     createRoom,
