@@ -2,13 +2,14 @@
 // Handles local-first updates with server reconciliation and rollback on rejection
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import type {
-  Card,
-  FoundationPile,
-  FoundationMovePayload,
-  FoundationUpdatedPayload,
-  FoundationMoveRejectedPayload,
-  MoveSource,
+import {
+  canPlaceOnFoundation,
+  type Card,
+  type FoundationPile,
+  type FoundationMovePayload,
+  type FoundationUpdatedPayload,
+  type FoundationMoveRejectedPayload,
+  type MoveSource,
 } from '@heyhey/shared';
 import type { Socket } from 'socket.io-client';
 import type { ClientToServerEvents, ServerToClientEvents } from '@heyhey/shared';
@@ -80,24 +81,6 @@ function makeCardKey(card: Card): string {
 
 function createEmptyFoundations(): FoundationPile[] {
   return SUITS.map((suit) => ({ suit, cards: [], ownerId: 'system' }));
-}
-
-/**
- * Validates if a card can be played to a foundation pile
- */
-function isValidFoundationMove(card: Card, pile: FoundationPile): boolean {
-  // Card must match the suit
-  if (card.suit !== pile.suit) return false;
-
-  const topCard = pile.cards[pile.cards.length - 1];
-
-  if (!topCard) {
-    // Empty pile: only Ace (rank 1) can be placed
-    return card.rank === 1;
-  }
-
-  // Must be exactly one rank higher
-  return card.rank === topCard.rank + 1;
 }
 
 export function useFoundationSync(
@@ -226,7 +209,7 @@ export function useFoundationSync(
       if (!pile) return false;
 
       // Validate the move locally first
-      if (!isValidFoundationMove(card, pile)) {
+      if (!canPlaceOnFoundation(card, pile)) {
         return false;
       }
 
