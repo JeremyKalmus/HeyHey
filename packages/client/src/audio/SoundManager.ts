@@ -1,7 +1,7 @@
 // SoundManager - Manages game sound effects using Web Audio API
 // Generates synthetic sounds for card interactions without external audio files
 
-export type SoundType = 'cardSelect' | 'cardPlace' | 'cardFlip' | 'error' | 'heyHey';
+export type SoundType = 'cardSelect' | 'cardPlace' | 'cardFlip' | 'error' | 'heyHey' | 'opponentMove';
 
 interface SoundConfig {
   volume: number;
@@ -94,6 +94,9 @@ class SoundManager {
         break;
       case 'heyHey':
         this.playHeyHey();
+        break;
+      case 'opponentMove':
+        this.playOpponentMove();
         break;
     }
   }
@@ -287,6 +290,41 @@ class SoundManager {
 
     shimmerOsc.start(now + 0.2);
     shimmerOsc.stop(now + 0.5);
+  }
+
+  /**
+   * Opponent move sound - Subtle tap/tick for background multiplayer activity
+   * Quieter than player moves to create audio depth
+   */
+  private playOpponentMove(): void {
+    const ctx = this.audioContext!;
+    const now = ctx.currentTime;
+
+    // Soft tick sound - lower volume and higher pitch than cardPlace
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+
+    // Quick tick with pitch drop
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(600, now);
+    osc.frequency.exponentialRampToValueAtTime(300, now + 0.04);
+
+    // Low-pass for softness
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(800, now);
+
+    // Very quick, subtle envelope (quieter than player sounds)
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(this.config.volume * 0.15, now + 0.005);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+
+    osc.start(now);
+    osc.stop(now + 0.06);
   }
 
   /**

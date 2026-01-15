@@ -10,4 +10,5 @@ export {
   MultiFoundationArea,
   type MultiFoundationAreaProps,
   type PlayerFoundationGroup,
+  type OpponentMove,
 } from './MultiFoundationArea';
