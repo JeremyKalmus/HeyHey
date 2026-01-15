@@ -20,13 +20,13 @@ describe('RoomManager', () => {
       expect(result.room.players.get('host-1')?.name).toBe('HostPlayer');
     });
 
-    it('generates a valid HEYHEY-XXXX format code', () => {
+    it('generates a valid 6-character code', () => {
       const result = manager.createRoom('host-1', 'HostPlayer');
 
       expect(result.success).toBe(true);
       if (!result.success) return;
 
-      expect(result.room.code).toMatch(/^HEYHEY-[A-Z0-9]{4}$/);
+      expect(result.room.code).toMatch(/^[A-Z0-9]{6}$/);
     });
 
     it('generates unique room codes', () => {
@@ -77,7 +77,7 @@ describe('RoomManager', () => {
     });
 
     it('returns error for non-existent room', () => {
-      const result = manager.joinRoom('HEYHEY-ZZZZ', 'player-1', 'Player1');
+      const result = manager.joinRoom('ZZZZZZ', 'player-1', 'Player1');
 
       expect(result.success).toBe(false);
       if (result.success) return;
@@ -147,7 +147,7 @@ describe('RoomManager', () => {
     });
 
     it('returns error for non-existent room', () => {
-      const result = manager.leaveRoom('HEYHEY-ZZZZ', 'player-1');
+      const result = manager.leaveRoom('ZZZZZZ', 'player-1');
 
       expect(result.success).toBe(false);
       if (result.success) return;
@@ -179,7 +179,7 @@ describe('RoomManager', () => {
     });
 
     it('returns null for non-existent room', () => {
-      const room = manager.getRoom('HEYHEY-ZZZZ');
+      const room = manager.getRoom('ZZZZZZ');
       expect(room).toBeNull();
     });
 
@@ -206,7 +206,7 @@ describe('RoomManager', () => {
     });
 
     it('returns empty array for non-existent room', () => {
-      const players = manager.getPlayers('HEYHEY-ZZZZ');
+      const players = manager.getPlayers('ZZZZZZ');
       expect(players).toEqual([]);
     });
   });
@@ -221,7 +221,7 @@ describe('RoomManager', () => {
     });
 
     it('returns false if room does not exist', () => {
-      expect(manager.hasRoom('HEYHEY-ZZZZ')).toBe(false);
+      expect(manager.hasRoom('ZZZZZZ')).toBe(false);
     });
   });
 
@@ -249,7 +249,7 @@ describe('RoomManager', () => {
     });
 
     it('returns false for non-existent room', () => {
-      const closed = manager.closeRoom('HEYHEY-ZZZZ');
+      const closed = manager.closeRoom('ZZZZZZ');
       expect(closed).toBe(false);
     });
   });

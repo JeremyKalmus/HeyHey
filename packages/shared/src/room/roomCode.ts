@@ -1,14 +1,13 @@
 // Room Code Generator for HeyHey!
-// Generates unique room codes in format HEYHEY-XXXX
+// Generates simple 6-character room codes
 
 // Character set excluding ambiguous characters (0/O, 1/I/L)
 const SAFE_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
-const CODE_LENGTH = 4;
-const CODE_PREFIX = 'HEYHEY';
-const CODE_PATTERN = /^HEYHEY-[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{4}$/;
+const CODE_LENGTH = 6;
+const CODE_PATTERN = /^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{6}$/;
 
 /**
- * Generates a random room code in format HEYHEY-XXXX
+ * Generates a random 6-character room code
  * Uses characters that are unambiguous (no 0/O, 1/I/L)
  */
 export function generateRoomCode(): string {
@@ -17,7 +16,7 @@ export function generateRoomCode(): string {
     const randomIndex = Math.floor(Math.random() * SAFE_CHARS.length);
     code += SAFE_CHARS[randomIndex];
   }
-  return `${CODE_PREFIX}-${code}`;
+  return code;
 }
 
 /**
@@ -46,6 +45,5 @@ export function normalizeRoomCode(code: string): string | null {
 }
 
 // Export constants for external use if needed
-export const ROOM_CODE_PREFIX = CODE_PREFIX;
 export const ROOM_CODE_CHARS = SAFE_CHARS;
 export const ROOM_CODE_LENGTH = CODE_LENGTH;
