@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useGameState } from '../context';
 import { SetupArea } from '../components/Setup/SetupArea';
 import { GameBoard } from '../components/Game/GameBoard';
+import { HeyHeyCelebration } from '../components/Game/HeyHeyCelebration';
 import { useSetupController } from '../hooks/useSetupController';
 import { useLocalPlayerState } from '../hooks/useLocalPlayerState';
 import type { PlayerColor } from '../components/Card/CardBack';
@@ -24,6 +25,7 @@ export function GameScreen() {
     gameId,
     gamePhase,
     foundations,
+    nertzCallerId,
     setupComplete,
     makeMove,
     callNertz,
@@ -132,6 +134,11 @@ export function GameScreen() {
     // Can recycle stock when stock is empty and waste has cards
     const canRecycleStock = stockPile.length === 0 && wastePile.length > 0;
 
+    // Get caller name for celebration overlay
+    const nertzCallerName = nertzCallerId
+      ? room.players.find((p) => p.id === nertzCallerId)?.name ?? 'Unknown Player'
+      : null;
+
     return (
       <div style={{ width: '100vw', height: '100vh', background: '#1a1a2e' }}>
         <GameBoard
@@ -171,6 +178,15 @@ export function GameScreen() {
           } : null}
           validWorkDestinations={localPlayerState.validWorkPileDestinations}
         />
+        {nertzCallerName && (
+          <HeyHeyCelebration
+            callerName={nertzCallerName}
+            onComplete={() => {
+              // Server will transition to scoring phase after celebration
+              // This callback allows for any client-side cleanup if needed
+            }}
+          />
+        )}
         {error && (
           <ErrorToast message={error} onClick={clearError} />
         )}
