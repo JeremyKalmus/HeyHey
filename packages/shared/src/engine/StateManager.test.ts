@@ -43,6 +43,8 @@ function createTestGameState(overrides: Partial<GameState> = {}): GameState {
       drawCount: 3,
       targetScore: 100,
     },
+    roundNumber: 1,
+    currentStarterIndex: 0,
     ...overrides,
   };
 }
@@ -356,10 +358,12 @@ describe('createInitialGameState', () => {
     const state = createInitialGameState('game-123', players, config);
 
     expect(state.gameId).toBe('game-123');
-    expect(state.phase).toBe('playing');
+    expect(state.phase).toBe('waiting_for_start');
     expect(state.players).toHaveLength(1);
     expect(state.foundations).toHaveLength(4);
     expect(state.config).toEqual(config);
+    expect(state.roundNumber).toBe(1);
+    expect(state.currentStarterIndex).toBe(0);
   });
 
   it('creates 4 foundation piles for each suit', () => {

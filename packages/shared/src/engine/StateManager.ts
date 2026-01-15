@@ -270,9 +270,11 @@ export function createInitialGameState(
 
   return {
     gameId,
-    phase: 'playing',
+    phase: 'waiting_for_start',
     players: playerStates,
     foundations,
     config,
+    roundNumber: 1,
+    currentStarterIndex: 0, // Host (first player) starts round 1
   };
 }

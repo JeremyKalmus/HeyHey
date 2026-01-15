@@ -18,7 +18,7 @@ export interface GameConfig {
   targetScore: number;
 }
 
-export type GamePhase = 'lobby' | 'setup' | 'playing' | 'scoring' | 'finished';
+export type GamePhase = 'lobby' | 'setup' | 'waiting_for_start' | 'playing' | 'scoring' | 'finished';
 
 // Lobby Types
 export interface LobbyPlayer {
@@ -46,6 +46,7 @@ export interface ClientToServerEvents {
   startGame: () => void;
   setupComplete: () => void;
   foundationMove: (payload: FoundationMovePayload) => void;
+  startRound: () => void; // Only the current starter can call this
 }
 
 // Socket Event Types - Server to Client
@@ -63,6 +64,8 @@ export interface ServerToClientEvents {
   playerSetupComplete: (payload: { playerId: string; playersReady: number; totalPlayers: number }) => void;
   foundationUpdated: (payload: FoundationUpdatedPayload) => void;
   foundationMoveRejected: (payload: FoundationMoveRejectedPayload) => void;
+  roundStarting: (payload: RoundStartingPayload) => void;
+  roundStarted: (payload: RoundStartedPayload) => void;
 }
 
 // Event Payloads - Client to Server
@@ -125,6 +128,18 @@ export interface HostChangedPayload {
   newHostId: string;
 }
 
+// Round Start Payloads
+export interface RoundStartingPayload {
+  starterId: string;
+  starterName: string;
+  roundNumber: number;
+}
+
+export interface RoundStartedPayload {
+  timestamp: number;
+  roundNumber: number;
+}
+
 // Game Event Payloads - Client to Server
 export interface FoundationMovePayload {
   card: Card;
@@ -178,6 +193,8 @@ export interface GameState {
   foundations: FoundationPile[]; // 4 per suit, shared by all players
   config: GameConfig;
   calledBy?: string; // Player who called HeyHey
+  roundNumber: number; // Current round (1-indexed)
+  currentStarterIndex: number; // Index of player who starts this round (rotates each round)
 }
 
 // Move Types

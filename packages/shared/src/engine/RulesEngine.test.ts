@@ -42,6 +42,8 @@ function createTestGameState(overrides: Partial<GameState> = {}): GameState {
       drawCount: 3,
       targetScore: 100,
     },
+    roundNumber: 1,
+    currentStarterIndex: 0,
     ...overrides,
   };
   return defaultState;

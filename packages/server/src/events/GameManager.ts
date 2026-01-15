@@ -42,6 +42,18 @@ export type FoundationMoveResult =
       };
     };
 
+export type StartRoundResult =
+  | {
+      success: true;
+      starterId: string;
+      starterName: string;
+      roundNumber: number;
+    }
+  | {
+      success: false;
+      error: string;
+    };
+
 /**
  * Manages active game sessions and state synchronization
  */
@@ -67,7 +79,7 @@ export class GameManager {
     // Create initial game state
     const initialState: GameState = {
       gameId,
-      phase: 'playing',
+      phase: 'waiting_for_start',
       players: playerIds.map((playerId) => ({
         playerId,
         deckId: playerId,
@@ -83,6 +95,8 @@ export class GameManager {
         { suit: 'spades', cards: [], ownerId: playerIds[0] ?? 'system' },
       ],
       config: { nertzPileSize: 13, drawCount: 3, targetScore: 100 },
+      roundNumber: 1,
+      currentStarterIndex: 0,
     };
 
     const stateManager = new StateManager(initialState);
@@ -271,6 +285,77 @@ export class GameManager {
     this.broadcast(game.roomCode, update);
 
     return { success: true };
+  }
+
+  /**
+   * Process a round start request
+   * Only the current starter can start the round
+   */
+  processStartRound(roomCode: string, playerId: string): StartRoundResult {
+    const game = this.games.get(roomCode);
+    if (!game) {
+      return { success: false, error: 'game_not_found' };
+    }
+
+    const state = game.stateManager.getState();
+
+    // Verify game is in waiting_for_start phase
+    if (state.phase !== 'waiting_for_start') {
+      return { success: false, error: 'not_in_waiting_phase' };
+    }
+
+    // Calculate who should be the starter
+    // Rotation formula: starterIndex = (roundNumber - 1) % players.length
+    const starterIndex = (state.roundNumber - 1) % state.players.length;
+    const starter = state.players[starterIndex];
+
+    if (!starter || starter.playerId !== playerId) {
+      return { success: false, error: 'not_starter' };
+    }
+
+    // Get starter name from playerSockets (in real impl, would come from room state)
+    const starterName = starter.playerId; // Using playerId as name for now
+
+    return {
+      success: true,
+      starterId: starter.playerId,
+      starterName,
+      roundNumber: state.roundNumber,
+    };
+  }
+
+  /**
+   * Transition game from waiting_for_start to playing phase
+   */
+  transitionToPlaying(roomCode: string): boolean {
+    const game = this.games.get(roomCode);
+    if (!game) return false;
+
+    const state = game.stateManager.getState();
+    if (state.phase !== 'waiting_for_start') return false;
+
+    // Update phase directly (StateManager doesn't have a method for this)
+    (state as { phase: string }).phase = 'playing';
+    return true;
+  }
+
+  /**
+   * Get current starter info for a room
+   */
+  getCurrentStarter(roomCode: string): { playerId: string; index: number } | null {
+    const game = this.games.get(roomCode);
+    if (!game) return null;
+
+    const state = game.stateManager.getState();
+    const starterIndex = (state.roundNumber - 1) % state.players.length;
+    const starter = state.players[starterIndex];
+
+    if (!starter) return null;
+
+    return {
+      playerId: starter.playerId,
+      index: starterIndex,
+    };
   }
 
   /**

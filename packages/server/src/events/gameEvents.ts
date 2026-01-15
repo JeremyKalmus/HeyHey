@@ -58,6 +58,46 @@ export function registerGameEvents(io: TypedServer, socket: TypedSocket): void {
       console.log(`Nertz called by socket ${socket.id}`);
     }
   });
+
+  // Start Round (only starter can call this)
+  socket.on('startRound', () => {
+    // Get room code from socket rooms (excluding socket.id room)
+    const rooms = [...socket.rooms].filter(r => r !== socket.id);
+    const roomCode = rooms[0];
+
+    if (!roomCode) {
+      socket.emit('error', { code: 'not_in_room', message: 'Not in a game room' });
+      return;
+    }
+
+    // Get player ID (in our setup, socketId = playerId)
+    const playerId = socket.id;
+
+    const result = manager.processStartRound(roomCode, playerId);
+
+    if (!result.success) {
+      socket.emit('error', { code: result.error, message: `Cannot start round: ${result.error}` });
+      return;
+    }
+
+    // Broadcast roundStarting to all players
+    io.to(roomCode).emit('roundStarting', {
+      starterId: result.starterId,
+      starterName: result.starterName,
+      roundNumber: result.roundNumber,
+    });
+
+    // Transition to playing phase
+    manager.transitionToPlaying(roomCode);
+
+    // Broadcast roundStarted to all players
+    io.to(roomCode).emit('roundStarted', {
+      timestamp: Date.now(),
+      roundNumber: result.roundNumber,
+    });
+
+    console.log(`Round ${result.roundNumber} started by ${result.starterName} in room ${roomCode}`);
+  });
 }
 
 /**
