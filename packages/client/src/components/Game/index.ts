@@ -4,3 +4,4 @@ export { OpponentMini, type OpponentMiniProps } from './OpponentMini';
 export { HeyHeyButton, type HeyHeyButtonProps } from './HeyHeyButton';
 export { GameBoard, type GameBoardProps } from './GameBoard';
 export { PlayerArea, type PlayerAreaProps } from './PlayerArea';
+export { SetupPhase, type SetupPhaseProps, type SetupStep } from './SetupPhase';
