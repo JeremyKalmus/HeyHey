@@ -77,6 +77,9 @@ export interface GameBoardProps {
   /** Whether to show valid move destination hints (Easy Mode) */
   showMoveHints?: boolean;
 
+  /** Hide the foundation area (when using MultiFoundationArea externally) */
+  hideFoundation?: boolean;
+
   // Optional class
   className?: string;
 }
@@ -121,6 +124,7 @@ export function GameBoard({
   validDropTargets = [],
   onBackgroundClick,
   showMoveHints = false,
+  hideFoundation = false,
   className,
 }: GameBoardProps) {
   const isNertzSelected = selectedCard?.sourceType === 'nertz';
@@ -153,18 +157,20 @@ export function GameBoard({
         <ScoreDisplay.Round current={currentRound} total={totalRounds} />
       </div>
 
-      {/* Foundation Area - CENTER FOCUS (the main attention) */}
-      <div className={styles.foundationArea}>
-        <FoundationArea
-          piles={foundationPiles}
-          selectedCard={foundationSelectedCard}
-          onPileClick={onFoundationClick}
-          canPlace={canPlaceOnFoundation || canPlaceOnFoundationDrag}
-          showMoveHints={showMoveHints}
-          isDragging={isDragging}
-          validDragFoundations={dragFoundationTargets}
-        />
-      </div>
+      {/* Foundation Area - CENTER FOCUS (hidden when using MultiFoundationArea externally) */}
+      {!hideFoundation && (
+        <div className={styles.foundationArea}>
+          <FoundationArea
+            piles={foundationPiles}
+            selectedCard={foundationSelectedCard}
+            onPileClick={onFoundationClick}
+            canPlace={canPlaceOnFoundation || canPlaceOnFoundationDrag}
+            showMoveHints={showMoveHints}
+            isDragging={isDragging}
+            validDragFoundations={dragFoundationTargets}
+          />
+        </div>
+      )}
 
       {/* Player Area - Bottom Row: Stock/Waste | Nertz | Work Piles */}
       <div className={styles.playerArea}>
