@@ -41,6 +41,7 @@ export interface GameStateContextValue {
   currentStarterIndex: number;
   gameOver: boolean;
   gameWinner: string | null;
+  playersReadyForNextRound: string[];
 
   // Celebration state
   nertzCallerId: string | null;
@@ -57,6 +58,7 @@ export interface GameStateContextValue {
   makeMove: (move: Move) => void;
   callNertz: () => void;
   foundationMove: (card: PlayerGameState['nertzPile'][0], foundationIndex: number, source: MoveSource) => void;
+  readyForNextRound: () => void;
 
   // Errors
   error: string | null;
@@ -80,6 +82,7 @@ interface GameState {
   currentStarterIndex: number;
   gameOver: boolean;
   gameWinner: string | null;
+  playersReadyForNextRound: string[];
 }
 
 type GameAction =
@@ -98,6 +101,8 @@ type GameAction =
   | { type: 'FOUNDATION_UPDATED'; foundationIndex: number; card: PlayerGameState['nertzPile'][0]; playerId: string }
   | { type: 'FOUNDATION_MOVE_REJECTED'; reason: string }
   | { type: 'ROUND_SCORED'; roundResult: RoundResult; totalScores: { playerId: string; total: number }[]; gameOver: boolean; winner?: string }
+  | { type: 'PLAYER_READY_FOR_NEXT_ROUND'; playerId: string }
+  | { type: 'ALL_READY_FOR_NEXT_ROUND'; nextRoundNumber: number; nextStarterId: string }
   | { type: 'GAME_ENDED'; winner: string }
   | { type: 'ROUND_STARTED'; roundNumber: number }
   | { type: 'SET_ERROR'; error: string }
@@ -126,6 +131,7 @@ const initialState: GameState = {
   currentStarterIndex: 0,
   gameOver: false,
   gameWinner: null,
+  playersReadyForNextRound: [],
 };
 
 function gameReducer(state: GameState, action: GameAction): GameState {
@@ -265,6 +271,28 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         totalScores: action.totalScores,
         gameOver: action.gameOver,
         gameWinner: action.winner ?? null,
+        playersReadyForNextRound: [], // Clear ready state when new scoring starts
+      };
+
+    case 'PLAYER_READY_FOR_NEXT_ROUND':
+      // Add player to ready list if not already there
+      if (state.playersReadyForNextRound.includes(action.playerId)) {
+        return state;
+      }
+      return {
+        ...state,
+        playersReadyForNextRound: [...state.playersReadyForNextRound, action.playerId],
+      };
+
+    case 'ALL_READY_FOR_NEXT_ROUND':
+      return {
+        ...state,
+        gamePhase: 'waiting_for_start',
+        roundNumber: action.nextRoundNumber,
+        currentStarterIndex: (action.nextRoundNumber - 1) % (state.room?.players.length ?? 1),
+        roundResult: null,
+        playersReadyForNextRound: [],
+        nertzCallerId: null,
       };
 
     case 'GAME_ENDED':
@@ -446,6 +474,14 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
       dispatch({ type: 'ROUND_SCORED', roundResult: payload.roundResult, totalScores: payload.totalScores, gameOver: payload.gameOver, winner: payload.winner });
     };
 
+    const onPlayerReadyForNextRound = (payload: { playerId: string }) => {
+      dispatch({ type: 'PLAYER_READY_FOR_NEXT_ROUND', playerId: payload.playerId });
+    };
+
+    const onAllReadyForNextRound = (payload: { nextRoundNumber: number; nextStarterId: string }) => {
+      dispatch({ type: 'ALL_READY_FOR_NEXT_ROUND', nextRoundNumber: payload.nextRoundNumber, nextStarterId: payload.nextStarterId });
+    };
+
     const onGameEnded = (payload: { winner: string }) => {
       dispatch({ type: 'GAME_ENDED', winner: payload.winner });
     };
@@ -469,6 +505,8 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
     socket.on('foundationMoveRejected', onFoundationMoveRejected);
     socket.on('roundScored', onRoundScored);
     socket.on('roundEnded', onRoundEnded);
+    socket.on('playerReadyForNextRound', onPlayerReadyForNextRound);
+    socket.on('allReadyForNextRound', onAllReadyForNextRound);
     socket.on('gameEnded', onGameEnded);
 
     // Cleanup
@@ -491,6 +529,8 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
       socket.off('foundationMoveRejected', onFoundationMoveRejected);
       socket.off('roundScored', onRoundScored);
       socket.off('roundEnded', onRoundEnded);
+      socket.off('playerReadyForNextRound', onPlayerReadyForNextRound);
+      socket.off('allReadyForNextRound', onAllReadyForNextRound);
       socket.off('gameEnded', onGameEnded);
     };
   }, [socket]);
@@ -583,6 +623,13 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
     socket.emit('callNertz');
   }, [socket, isConnected]);
 
+  const readyForNextRound = useCallback(() => {
+    if (!socket || !isConnected) {
+      return;
+    }
+    socket.emit('readyForNextRound');
+  }, [socket, isConnected]);
+
   const foundationMove = useCallback(
     (card: PlayerGameState['nertzPile'][0], foundationIndex: number, source: MoveSource) => {
       if (!socket || !isConnected) {
@@ -621,6 +668,7 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
     totalScores: state.totalScores,
     gameOver: state.gameOver,
     gameWinner: state.gameWinner,
+    playersReadyForNextRound: state.playersReadyForNextRound,
 
     // Celebration
     nertzCallerId: state.nertzCallerId,
@@ -641,6 +689,7 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
     makeMove,
     callNertz,
     foundationMove,
+    readyForNextRound,
 
     // Errors
     error: state.error,

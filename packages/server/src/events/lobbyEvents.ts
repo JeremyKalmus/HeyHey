@@ -361,6 +361,53 @@ export function registerLobbyEvents(io: TypedServer): void {
       );
     });
 
+    // Ready for Next Round
+    socket.on('readyForNextRound', () => {
+      const roomCode = lobbyManager.getRoomCode(socket.id);
+
+      if (!roomCode) {
+        socket.emit('error', {
+          code: 'not_in_room',
+          message: 'You are not in a room.',
+        });
+        return;
+      }
+
+      const manager = getOrCreateGameManager(io);
+      const result = manager.processPlayerReady(roomCode, socket.id);
+
+      if (!result.success) {
+        socket.emit('error', {
+          code: result.error,
+          message: getReadyErrorMessage(result.error),
+        });
+        return;
+      }
+
+      // Broadcast that this player is ready
+      io.to(roomCode).emit('playerReadyForNextRound', {
+        playerId: result.playerId,
+      });
+
+      console.log(`Player ${socket.id} ready for next round in room ${roomCode}`);
+
+      // If all players are ready, transition to next round
+      if (result.allReady && result.nextRoundNumber && result.nextStarterId) {
+        // Prepare the game state for next round
+        manager.prepareNextRound(roomCode);
+
+        // Broadcast all ready event
+        io.to(roomCode).emit('allReadyForNextRound', {
+          nextRoundNumber: result.nextRoundNumber,
+          nextStarterId: result.nextStarterId,
+        });
+
+        console.log(
+          `All players ready in room ${roomCode}. Next round: ${result.nextRoundNumber}, starter: ${result.nextStarterId}`
+        );
+      }
+    });
+
     // Handle disconnect
     socket.on('disconnect', () => {
       // Handle game disconnect
@@ -482,6 +529,17 @@ function getStartRoundErrorMessage(error: string): string {
       return 'Only the designated starter can start this round.';
     default:
       return 'Failed to start round.';
+  }
+}
+
+function getReadyErrorMessage(error: string): string {
+  switch (error) {
+    case 'game_not_found':
+      return 'Game not found.';
+    case 'player_not_in_game':
+      return 'You are not in this game.';
+    default:
+      return 'Failed to mark ready.';
   }
 }
 

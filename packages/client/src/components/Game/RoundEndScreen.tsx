@@ -18,7 +18,11 @@ export interface RoundEndScreenProps {
   winner?: string;
   /** Current player's ID (to highlight their row) */
   currentPlayerId: string;
-  /** Called when ready to proceed (next round or end game) */
+  /** Players who are ready for next round */
+  playersReady?: string[];
+  /** Called when player clicks ready button */
+  onReadyClick?: () => void;
+  /** Called when game is over and returning to lobby */
   onContinue: () => void;
   /** Additional CSS class */
   className?: string;
@@ -31,6 +35,8 @@ export function RoundEndScreen({
   gameOver,
   winner,
   currentPlayerId,
+  playersReady = [],
+  onReadyClick,
   onContinue,
   className,
 }: RoundEndScreenProps) {
@@ -94,24 +100,30 @@ export function RoundEndScreen({
       <div className={styles.section}>
         <h3 className={styles.sectionTitle}>Total Scores</h3>
         <div className={styles.totalsList}>
-          {sortedTotals.map((entry, index) => (
-            <div
-              key={entry.playerId}
-              className={`${styles.totalRow} ${
-                entry.playerId === currentPlayerId ? styles.currentPlayer : ''
-              } ${entry.playerId === winner ? styles.winner : ''}`}
-            >
-              <span className={styles.rank}>#{index + 1}</span>
-              <span className={styles.playerName}>
-                {getPlayerName(entry.playerId)}
-              </span>
-              <span className={styles.totalScore}>{entry.total}</span>
-            </div>
-          ))}
+          {sortedTotals.map((entry, index) => {
+            const isReady = playersReady.includes(entry.playerId);
+            return (
+              <div
+                key={entry.playerId}
+                className={`${styles.totalRow} ${
+                  entry.playerId === currentPlayerId ? styles.currentPlayer : ''
+                } ${entry.playerId === winner ? styles.winner : ''}`}
+              >
+                <span className={styles.rank}>#{index + 1}</span>
+                <span className={styles.playerName}>
+                  {getPlayerName(entry.playerId)}
+                  {!gameOver && isReady && (
+                    <span className={styles.readyBadge}>Ready</span>
+                  )}
+                </span>
+                <span className={styles.totalScore}>{entry.total}</span>
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* Game Over / Continue */}
+      {/* Game Over / Ready for Next Round */}
       {gameOver && winner ? (
         <div className={styles.gameOver}>
           <div className={styles.winnerAnnouncement}>
@@ -123,9 +135,27 @@ export function RoundEndScreen({
         </div>
       ) : (
         <div className={styles.continueSection}>
-          <Button variant="primary" size="large" onClick={onContinue}>
-            Next Round
-          </Button>
+          {onReadyClick ? (
+            <>
+              <Button
+                variant="primary"
+                size="large"
+                onClick={onReadyClick}
+                disabled={playersReady.includes(currentPlayerId)}
+              >
+                {playersReady.includes(currentPlayerId)
+                  ? 'Waiting for others...'
+                  : 'Ready for Next Round'}
+              </Button>
+              <div className={styles.readyCount}>
+                {playersReady.length} / {totalScores.length} ready
+              </div>
+            </>
+          ) : (
+            <Button variant="primary" size="large" onClick={onContinue}>
+              Next Round
+            </Button>
+          )}
         </div>
       )}
     </div>

@@ -47,6 +47,8 @@ export function GameScreenConnected() {
     totalScores,
     gameOver,
     gameWinner,
+    playersReadyForNextRound,
+    readyForNextRound,
   } = useGameState();
   const { socket } = useSocket();
 
@@ -771,6 +773,8 @@ export function GameScreenConnected() {
             gameOver={gameOver}
             winner={gameWinner || undefined}
             currentPlayerId={playerId || ''}
+            playersReady={playersReadyForNextRound}
+            onReadyClick={readyForNextRound}
             onContinue={handleContinue}
           />
         </div>

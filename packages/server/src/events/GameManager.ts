@@ -77,12 +77,26 @@ export type RoundEndResult =
       error: string;
     };
 
+export type PlayerReadyResult =
+  | {
+      success: true;
+      playerId: string;
+      allReady: boolean;
+      nextRoundNumber?: number;
+      nextStarterId?: string;
+    }
+  | {
+      success: false;
+      error: string;
+    };
+
 /**
  * Manages active game sessions and state synchronization
  */
 export class GameManager {
   private games: Map<string, ActiveGame> = new Map(); // roomCode -> ActiveGame
   private socketToRoom: Map<string, string> = new Map(); // socketId -> roomCode
+  private readyForNextRound: Map<string, Set<string>> = new Map(); // roomCode -> Set of ready playerIds
   private broadcast: BroadcastFn;
   private reject: RejectFn;
 
@@ -350,6 +364,107 @@ export class GameManager {
   }
 
   /**
+   * Process a player ready for next round
+   * Returns whether all players are now ready
+   */
+  processPlayerReady(roomCode: string, playerId: string): PlayerReadyResult {
+    const game = this.games.get(roomCode);
+    if (!game) {
+      return { success: false, error: 'game_not_found' };
+    }
+
+    // Verify player is in game
+    if (!game.playerSockets.has(playerId)) {
+      return { success: false, error: 'player_not_in_game' };
+    }
+
+    // Get or create ready set for this room
+    let readySet = this.readyForNextRound.get(roomCode);
+    if (!readySet) {
+      readySet = new Set();
+      this.readyForNextRound.set(roomCode, readySet);
+    }
+
+    // Add player to ready set
+    readySet.add(playerId);
+
+    // Check if all players are ready
+    const allReady = readySet.size >= game.playerSockets.size;
+
+    if (allReady) {
+      // Calculate next round info
+      const state = game.stateManager.getState();
+      const nextRoundNumber = state.roundNumber + 1;
+      const nextStarterIndex = (nextRoundNumber - 1) % state.players.length;
+      const nextStarter = state.players[nextStarterIndex];
+
+      return {
+        success: true,
+        playerId,
+        allReady: true,
+        nextRoundNumber,
+        nextStarterId: nextStarter?.playerId,
+      };
+    }
+
+    return {
+      success: true,
+      playerId,
+      allReady: false,
+    };
+  }
+
+  /**
+   * Clear ready state for a room (call when transitioning to next round)
+   */
+  clearReadyState(roomCode: string): void {
+    this.readyForNextRound.delete(roomCode);
+  }
+
+  /**
+   * Get players who are ready for next round
+   */
+  getReadyPlayers(roomCode: string): string[] {
+    const readySet = this.readyForNextRound.get(roomCode);
+    return readySet ? Array.from(readySet) : [];
+  }
+
+  /**
+   * Prepare for next round - update state and clear ready status
+   */
+  prepareNextRound(roomCode: string): boolean {
+    const game = this.games.get(roomCode);
+    if (!game) return false;
+
+    const state = game.stateManager.getState();
+
+    // Update round number
+    const nextRoundNumber = state.roundNumber + 1;
+    (state as { roundNumber: number }).roundNumber = nextRoundNumber;
+
+    // Update starter index
+    const nextStarterIndex = (nextRoundNumber - 1) % state.players.length;
+    (state as { currentStarterIndex: number }).currentStarterIndex = nextStarterIndex;
+
+    // Clear calledBy for new round
+    delete (state as { calledBy?: string }).calledBy;
+
+    // Transition to waiting_for_start
+    (state as { phase: string }).phase = 'waiting_for_start';
+
+    // Clear foundations for new round
+    const suits = ['hearts', 'diamonds', 'clubs', 'spades'] as const;
+    state.foundations = state.players.flatMap((player) =>
+      suits.map((suit) => ({ suit, cards: [], ownerId: player.playerId }))
+    );
+
+    // Clear ready state
+    this.clearReadyState(roomCode);
+
+    return true;
+  }
+
+  /**
    * Process a round start request
    * Only the current starter can start the round
    */
@@ -499,6 +614,7 @@ export class GameManager {
     }
 
     this.games.delete(roomCode);
+    this.readyForNextRound.delete(roomCode);
   }
 
   /**

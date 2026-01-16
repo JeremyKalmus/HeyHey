@@ -47,6 +47,7 @@ export interface ClientToServerEvents {
   setupComplete: () => void;
   foundationMove: (payload: FoundationMovePayload) => void;
   startRound: () => void; // Only the current starter can call this
+  readyForNextRound: () => void; // Player is ready to proceed to next round
 }
 
 // Socket Event Types - Server to Client
@@ -67,6 +68,8 @@ export interface ServerToClientEvents {
   roundStarting: (payload: RoundStartingPayload) => void;
   roundStarted: (payload: RoundStartedPayload) => void;
   roundEnded: (payload: RoundEndedPayload) => void;
+  playerReadyForNextRound: (payload: PlayerReadyForNextRoundPayload) => void;
+  allReadyForNextRound: (payload: AllReadyForNextRoundPayload) => void;
 }
 
 // Event Payloads - Client to Server
@@ -147,6 +150,16 @@ export interface RoundEndedPayload {
   totalScores: { playerId: string; total: number }[];
   gameOver: boolean;
   winner?: string;
+}
+
+// Ready for Next Round Payloads
+export interface PlayerReadyForNextRoundPayload {
+  playerId: string;
+}
+
+export interface AllReadyForNextRoundPayload {
+  nextRoundNumber: number;
+  nextStarterId: string;
 }
 
 // Game Event Payloads - Client to Server
