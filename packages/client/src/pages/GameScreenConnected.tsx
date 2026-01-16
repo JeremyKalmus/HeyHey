@@ -8,6 +8,7 @@ import { useGameState } from '../context/GameStateContext';
 import { useSocket } from '../context/SocketContext';
 import { WaitingToStart } from '../components/Game/WaitingToStart';
 import { GameBoard } from '../components/Game/GameBoard';
+import { HeyHeyCelebration } from '../components/Game/HeyHeyCelebration';
 import { Card as CardComponent } from '../components/Card';
 import { MultiFoundationArea, type PlayerFoundationGroup } from '../components/Foundation';
 import { Avatar } from '../components/ui/Avatar';
@@ -39,6 +40,8 @@ export function GameScreenConnected() {
     roundNumber,
     currentStarterIndex,
     foundationMove: emitFoundationMove,
+    callNertz,
+    nertzCallerId,
   } = useGameState();
   const { socket } = useSocket();
 
@@ -632,6 +635,7 @@ export function GameScreenConnected() {
                     : undefined
                 }
                 canCallHeyHey={localPlayerState.nertzPile.length === 0}
+                onCallHeyHey={callNertz}
                 canRecycleStock={
                   localPlayerState.stockPile.length === 0 && localPlayerState.wastePile.length > 0
                 }
@@ -701,6 +705,16 @@ export function GameScreenConnected() {
                 maxPileHeight={280}
               />
             </>
+          )}
+
+          {/* HeyHey Celebration Overlay */}
+          {nertzCallerId && (
+            <HeyHeyCelebration
+              callerName={room?.players.find((p) => p.id === nertzCallerId)?.name || 'Player'}
+              onComplete={() => {
+                // Celebration complete - game will transition to scoring phase via server
+              }}
+            />
           )}
         </div>
       );
