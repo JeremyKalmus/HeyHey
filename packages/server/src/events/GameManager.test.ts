@@ -26,15 +26,32 @@ describe('GameManager', () => {
   });
 
   describe('initializeGame', () => {
-    it('creates 4 foundation piles, one per suit', () => {
+    it('creates 4 foundation piles per player (one per suit)', () => {
       gameManager.initializeGame('ROOM1', 'game-123', ['player1', 'player2']);
 
       const foundations = gameManager.getFoundations('ROOM1');
-      expect(foundations).toHaveLength(4);
+      // 2 players × 4 suits = 8 foundations
+      expect(foundations).toHaveLength(8);
+
+      // Player 1's foundations (indices 0-3)
       expect(foundations![0]!.suit).toBe('hearts');
+      expect(foundations![0]!.ownerId).toBe('player1');
       expect(foundations![1]!.suit).toBe('diamonds');
+      expect(foundations![1]!.ownerId).toBe('player1');
       expect(foundations![2]!.suit).toBe('clubs');
+      expect(foundations![2]!.ownerId).toBe('player1');
       expect(foundations![3]!.suit).toBe('spades');
+      expect(foundations![3]!.ownerId).toBe('player1');
+
+      // Player 2's foundations (indices 4-7)
+      expect(foundations![4]!.suit).toBe('hearts');
+      expect(foundations![4]!.ownerId).toBe('player2');
+      expect(foundations![5]!.suit).toBe('diamonds');
+      expect(foundations![5]!.ownerId).toBe('player2');
+      expect(foundations![6]!.suit).toBe('clubs');
+      expect(foundations![6]!.ownerId).toBe('player2');
+      expect(foundations![7]!.suit).toBe('spades');
+      expect(foundations![7]!.ownerId).toBe('player2');
     });
 
     it('initializes foundations as empty', () => {

@@ -77,6 +77,13 @@ export class GameManager {
     playerIds: string[]
   ): void {
     // Create initial game state
+    // Each player gets 4 foundation piles (one per suit)
+    // Foundation index = playerIndex * 4 + suitIndex
+    const suits = ['hearts', 'diamonds', 'clubs', 'spades'] as const;
+    const foundations: FoundationPile[] = playerIds.flatMap((playerId) =>
+      suits.map((suit) => ({ suit, cards: [], ownerId: playerId }))
+    );
+
     const initialState: GameState = {
       gameId,
       phase: 'waiting_for_start',
@@ -88,12 +95,7 @@ export class GameManager {
         stockPile: [],
         wastePile: [],
       })),
-      foundations: [
-        { suit: 'hearts', cards: [], ownerId: playerIds[0] ?? 'system' },
-        { suit: 'diamonds', cards: [], ownerId: playerIds[0] ?? 'system' },
-        { suit: 'clubs', cards: [], ownerId: playerIds[0] ?? 'system' },
-        { suit: 'spades', cards: [], ownerId: playerIds[0] ?? 'system' },
-      ],
+      foundations,
       config: { nertzPileSize: 13, drawCount: 3, targetScore: 100 },
       roundNumber: 1,
       currentStarterIndex: 0,
