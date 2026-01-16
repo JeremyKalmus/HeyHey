@@ -19,6 +19,8 @@ export interface NertzPileProps {
   selected?: boolean;
   /** Whether the pile is disabled (can't be clicked) */
   disabled?: boolean;
+  /** Whether the top card is face up (default true for gameplay, false during setup) */
+  topCardFaceUp?: boolean;
   /** Called when the top card is clicked */
   onTopCardClick?: (card: CardType) => void;
   /** Called when the top card is double-clicked */
@@ -32,6 +34,7 @@ export function NertzPile({
   backColor = 'blue',
   selected = false,
   disabled = false,
+  topCardFaceUp = true,
   onTopCardClick,
   onTopCardDoubleClick,
   className,
@@ -108,7 +111,7 @@ export function NertzPile({
       >
         <Card
           card={topCard!}
-          faceUp={true}
+          faceUp={topCardFaceUp}
           backColor={backColor}
           selected={selected}
           disabled={disabled}

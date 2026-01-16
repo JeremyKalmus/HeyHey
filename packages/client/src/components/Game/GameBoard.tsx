@@ -48,6 +48,9 @@ export interface GameBoardProps {
   canRecycleStock?: boolean;
   disabled?: boolean;
 
+  /** Whether nertz top card is face up (default true, false during setup before flip) */
+  nertzTopCardFaceUp?: boolean;
+
   // Handlers
   onNertzCardClick?: (card: CardType) => void;
   onNertzCardDoubleClick?: (card: CardType) => void;
@@ -112,6 +115,7 @@ export function GameBoard({
   canCallHeyHey = false,
   canRecycleStock = false,
   disabled = false,
+  nertzTopCardFaceUp = true,
   onNertzCardClick,
   onNertzCardDoubleClick,
   onWorkCardClick,
@@ -219,6 +223,7 @@ export function GameBoard({
               backColor={playerColor}
               selected={isNertzSelected}
               disabled={disabled}
+              topCardFaceUp={nertzTopCardFaceUp}
               onTopCardClick={onNertzCardClick}
               onTopCardDoubleClick={onNertzCardDoubleClick}
             />

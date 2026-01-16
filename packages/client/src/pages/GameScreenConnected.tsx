@@ -644,13 +644,14 @@ export function GameScreenConnected() {
                 canCallHeyHey={false}
                 canRecycleStock={false}
                 disabled={false}
+                nertzTopCardFaceUp={nertzFlipped}
                 // Setup handlers
                 onNertzCardClick={setupNertzClickable ? () => handleSetupNertzClick() : undefined}
                 onWorkPileClick={setupWorkClickable ? handleSetupWorkPileClick : undefined}
                 onStockDraw={setupStockClickable ? handleSetupStockClick : undefined}
                 hideFoundation={true}
                 hideTopBar={true}
-                showMoveHints={false}
+                showMoveHints={setupWorkClickable}
                 maxPileHeight={280}
               />
             </>
