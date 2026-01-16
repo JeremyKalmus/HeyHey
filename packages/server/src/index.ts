@@ -6,10 +6,17 @@ import { registerLobbyEvents } from './events/index.js';
 
 const app = express();
 const httpServer = createServer(app);
+
+// Parse allowed origins from env (comma-separated) or use localhost defaults
+const allowedOrigins = process.env.CLIENT_URL
+  ? process.env.CLIENT_URL.split(',').map(url => url.trim())
+  : ['http://localhost:5173', 'http://localhost:4173'];
+
 const io = new Server<AllClientToServerEvents, AllServerToClientEvents>(httpServer, {
   cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: allowedOrigins,
     methods: ['GET', 'POST'],
+    credentials: true,
   },
 });
 
