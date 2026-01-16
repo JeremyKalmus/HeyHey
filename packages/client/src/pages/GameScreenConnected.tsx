@@ -5,6 +5,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { useGameState } from '../context/GameStateContext';
+import { useSocket } from '../context/SocketContext';
 import { WaitingToStart } from '../components/Game/WaitingToStart';
 import { GameBoard } from '../components/Game/GameBoard';
 import { Card as CardComponent } from '../components/Card';
@@ -37,7 +38,9 @@ export function GameScreenConnected() {
     startRound,
     roundNumber,
     currentStarterIndex,
+    foundationMove: emitFoundationMove,
   } = useGameState();
+  const { socket } = useSocket();
 
   // The shuffled deck (created once when round starts)
   const [deck, setDeck] = useState<Card[]>([]);
@@ -123,6 +126,44 @@ export function GameScreenConnected() {
       setupComplete();
     }
   }, [gamePhase, setupComplete]);
+
+  // Listen for foundation updates from other players
+  useEffect(() => {
+    if (!socket || !room) return;
+
+    const handleFoundationUpdated = (payload: {
+      foundationIndex: number;
+      card: Card;
+      playerId: string;
+    }) => {
+      // Calculate which player/suit this foundation belongs to
+      const playerIndex = Math.floor(payload.foundationIndex / 4);
+      const suitIndex = payload.foundationIndex % 4;
+      const players = room.players;
+      const targetPlayerId = players[playerIndex]?.id;
+      if (!targetPlayerId) return;
+
+      // Update the foundation pile
+      setPlayerFoundations((prev) => {
+        const newMap = new Map(prev);
+        const piles = newMap.get(targetPlayerId);
+        if (piles) {
+          const newPiles = [...piles];
+          newPiles[suitIndex] = {
+            ...newPiles[suitIndex]!,
+            cards: [...newPiles[suitIndex]!.cards, payload.card],
+          };
+          newMap.set(targetPlayerId, newPiles);
+        }
+        return newMap;
+      });
+    };
+
+    socket.on('foundationUpdated', handleFoundationUpdated);
+    return () => {
+      socket.off('foundationUpdated', handleFoundationUpdated);
+    };
+  }, [socket, room]);
 
   // Handle stock click during setup - deals cards
   const handleSetupStockClick = useCallback(() => {
@@ -279,6 +320,7 @@ export function GameScreenConnected() {
       const players = room?.players || [];
       const targetPlayerId = players[playerIndex]?.id || playerId;
 
+      // Remove card from local player state (optimistic update)
       setLocalPlayerState((prev) => {
         if (!prev) return prev;
         if (source.type === 'nertz') {
@@ -294,6 +336,7 @@ export function GameScreenConnected() {
         return prev;
       });
 
+      // Update local foundation state (optimistic update)
       setPlayerFoundations((prev) => {
         const newMap = new Map(prev);
         const piles = newMap.get(targetPlayerId);
@@ -307,8 +350,11 @@ export function GameScreenConnected() {
         }
         return newMap;
       });
+
+      // Emit to server for other players
+      emitFoundationMove(card, foundationIndex, source);
     },
-    [playerId, room]
+    [playerId, room, emitFoundationMove]
   );
 
   // Drag-drop setup
