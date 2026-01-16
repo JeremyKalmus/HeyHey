@@ -242,11 +242,37 @@ export function registerLobbyEvents(io: TypedServer): void {
 
     // Call Nertz
     socket.on('callNertz', () => {
+      const roomCode = lobbyManager.getRoomCode(socket.id);
+      if (!roomCode) {
+        socket.emit('error', {
+          code: 'not_in_room',
+          message: 'You are not in a room.',
+        });
+        return;
+      }
+
       const manager = getOrCreateGameManager(io);
       const result = manager.processNertzCall(socket.id);
 
       if (result.success) {
         console.log(`Nertz called by socket ${socket.id}`);
+
+        // Process round end and emit scoring
+        const roundEndResult = manager.processRoundEnd(roomCode);
+
+        if (roundEndResult.success) {
+          io.to(roomCode).emit('roundEnded', {
+            roundResult: roundEndResult.roundResult,
+            totalScores: roundEndResult.totalScores,
+            gameOver: roundEndResult.gameOver,
+            winner: roundEndResult.winner,
+          });
+
+          console.log(
+            `Round ${roundEndResult.roundResult.roundNumber} ended. ` +
+            `Game over: ${roundEndResult.gameOver}${roundEndResult.winner ? `, winner: ${roundEndResult.winner}` : ''}`
+          );
+        }
       }
     });
 

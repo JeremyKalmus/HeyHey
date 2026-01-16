@@ -39,6 +39,8 @@ export interface GameStateContextValue {
   totalScores: { playerId: string; total: number }[];
   roundNumber: number;
   currentStarterIndex: number;
+  gameOver: boolean;
+  gameWinner: string | null;
 
   // Celebration state
   nertzCallerId: string | null;
@@ -76,6 +78,8 @@ interface GameState {
   moveSequence: number;
   roundNumber: number;
   currentStarterIndex: number;
+  gameOver: boolean;
+  gameWinner: string | null;
 }
 
 type GameAction =
@@ -93,7 +97,7 @@ type GameAction =
   | { type: 'MOVE_REJECTED'; rejection: MoveRejection }
   | { type: 'FOUNDATION_UPDATED'; foundationIndex: number; card: PlayerGameState['nertzPile'][0]; playerId: string }
   | { type: 'FOUNDATION_MOVE_REJECTED'; reason: string }
-  | { type: 'ROUND_SCORED'; roundResult: RoundResult; totalScores: { playerId: string; total: number }[] }
+  | { type: 'ROUND_SCORED'; roundResult: RoundResult; totalScores: { playerId: string; total: number }[]; gameOver: boolean; winner?: string }
   | { type: 'GAME_ENDED'; winner: string }
   | { type: 'ROUND_STARTED'; roundNumber: number }
   | { type: 'SET_ERROR'; error: string }
@@ -120,6 +124,8 @@ const initialState: GameState = {
   moveSequence: 0,
   roundNumber: 1,
   currentStarterIndex: 0,
+  gameOver: false,
+  gameWinner: null,
 };
 
 function gameReducer(state: GameState, action: GameAction): GameState {
@@ -257,6 +263,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         gamePhase: 'scoring',
         roundResult: action.roundResult,
         totalScores: action.totalScores,
+        gameOver: action.gameOver,
+        gameWinner: action.winner ?? null,
       };
 
     case 'GAME_ENDED':
@@ -430,8 +438,12 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
       dispatch({ type: 'FOUNDATION_MOVE_REJECTED', reason: payload.reason });
     };
 
-    const onRoundScored = (payload: { roundResult: RoundResult; totalScores: { playerId: string; total: number }[] }) => {
-      dispatch({ type: 'ROUND_SCORED', roundResult: payload.roundResult, totalScores: payload.totalScores });
+    const onRoundScored = (payload: { roundResult: RoundResult; totalScores: { playerId: string; total: number }[]; gameOver: boolean; winner?: string }) => {
+      dispatch({ type: 'ROUND_SCORED', roundResult: payload.roundResult, totalScores: payload.totalScores, gameOver: payload.gameOver, winner: payload.winner });
+    };
+
+    const onRoundEnded = (payload: { roundResult: RoundResult; totalScores: { playerId: string; total: number }[]; gameOver: boolean; winner?: string }) => {
+      dispatch({ type: 'ROUND_SCORED', roundResult: payload.roundResult, totalScores: payload.totalScores, gameOver: payload.gameOver, winner: payload.winner });
     };
 
     const onGameEnded = (payload: { winner: string }) => {
@@ -456,6 +468,7 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
     socket.on('foundationUpdated', onFoundationUpdated);
     socket.on('foundationMoveRejected', onFoundationMoveRejected);
     socket.on('roundScored', onRoundScored);
+    socket.on('roundEnded', onRoundEnded);
     socket.on('gameEnded', onGameEnded);
 
     // Cleanup
@@ -477,6 +490,7 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
       socket.off('foundationUpdated', onFoundationUpdated);
       socket.off('foundationMoveRejected', onFoundationMoveRejected);
       socket.off('roundScored', onRoundScored);
+      socket.off('roundEnded', onRoundEnded);
       socket.off('gameEnded', onGameEnded);
     };
   }, [socket]);
@@ -605,6 +619,8 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
     // Scoring
     roundResult: state.roundResult,
     totalScores: state.totalScores,
+    gameOver: state.gameOver,
+    gameWinner: state.gameWinner,
 
     // Celebration
     nertzCallerId: state.nertzCallerId,

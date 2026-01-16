@@ -66,6 +66,7 @@ export interface ServerToClientEvents {
   foundationMoveRejected: (payload: FoundationMoveRejectedPayload) => void;
   roundStarting: (payload: RoundStartingPayload) => void;
   roundStarted: (payload: RoundStartedPayload) => void;
+  roundEnded: (payload: RoundEndedPayload) => void;
 }
 
 // Event Payloads - Client to Server
@@ -138,6 +139,14 @@ export interface RoundStartingPayload {
 export interface RoundStartedPayload {
   timestamp: number;
   roundNumber: number;
+}
+
+// Round End Payloads
+export interface RoundEndedPayload {
+  roundResult: RoundResult;
+  totalScores: { playerId: string; total: number }[];
+  gameOver: boolean;
+  winner?: string;
 }
 
 // Game Event Payloads - Client to Server

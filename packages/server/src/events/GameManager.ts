@@ -10,8 +10,17 @@ import type {
   StateUpdate,
   FoundationPile,
   FoundationMovePayload,
+  ScoringState,
+  RoundResult,
 } from '@heyhey/shared';
-import { StateManager, getErrorMessage, canPlaceOnFoundation } from '@heyhey/shared';
+import {
+  StateManager,
+  getErrorMessage,
+  canPlaceOnFoundation,
+  calculateRoundResult,
+  applyRoundResult,
+  createScoringState,
+} from '@heyhey/shared';
 
 interface ActiveGame {
   gameId: string;
@@ -19,6 +28,7 @@ interface ActiveGame {
   stateManager: StateManager;
   playerSockets: Map<string, string>; // playerId -> socketId
   sequence: number; // Global sequence number for foundation moves
+  scoringState: ScoringState; // Accumulated scores across rounds
 }
 
 export type BroadcastFn = (roomCode: string, update: StateUpdate) => void;
@@ -48,6 +58,19 @@ export type StartRoundResult =
       starterId: string;
       starterName: string;
       roundNumber: number;
+    }
+  | {
+      success: false;
+      error: string;
+    };
+
+export type RoundEndResult =
+  | {
+      success: true;
+      roundResult: RoundResult;
+      totalScores: { playerId: string; total: number }[];
+      gameOver: boolean;
+      winner?: string;
     }
   | {
       success: false;
@@ -110,12 +133,16 @@ export class GameManager {
       this.socketToRoom.set(playerId, roomCode);
     }
 
+    // Initialize scoring state
+    const scoringState = createScoringState(playerIds, initialState.config.targetScore);
+
     this.games.set(roomCode, {
       gameId,
       roomCode,
       stateManager,
       playerSockets,
       sequence: 0,
+      scoringState,
     });
   }
 
@@ -287,6 +314,39 @@ export class GameManager {
     this.broadcast(game.roomCode, update);
 
     return { success: true };
+  }
+
+  /**
+   * Process round end after Nertz is called
+   * Calculates scores and updates scoring state
+   */
+  processRoundEnd(roomCode: string): RoundEndResult {
+    const game = this.games.get(roomCode);
+    if (!game) {
+      return { success: false, error: 'game_not_found' };
+    }
+
+    const state = game.stateManager.getState();
+
+    // Verify nertz was called (calledBy should be set)
+    if (!state.calledBy) {
+      return { success: false, error: 'nertz_not_called' };
+    }
+
+    // Calculate round result
+    const roundResult = calculateRoundResult(state, state.roundNumber);
+
+    // Apply to scoring state
+    const result = applyRoundResult(game.scoringState, roundResult);
+    game.scoringState = result.scoringState;
+
+    return {
+      success: true,
+      roundResult,
+      totalScores: result.scoringState.totalScores,
+      gameOver: result.gameOver,
+      winner: result.winner,
+    };
   }
 
   /**

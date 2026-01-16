@@ -9,6 +9,7 @@ import { useSocket } from '../context/SocketContext';
 import { WaitingToStart } from '../components/Game/WaitingToStart';
 import { GameBoard } from '../components/Game/GameBoard';
 import { HeyHeyCelebration } from '../components/Game/HeyHeyCelebration';
+import { RoundEndScreen } from '../components/Game/RoundEndScreen';
 import { Card as CardComponent } from '../components/Card';
 import { MultiFoundationArea, type PlayerFoundationGroup } from '../components/Foundation';
 import { Avatar } from '../components/ui/Avatar';
@@ -42,6 +43,10 @@ export function GameScreenConnected() {
     foundationMove: emitFoundationMove,
     callNertz,
     nertzCallerId,
+    roundResult,
+    totalScores,
+    gameOver,
+    gameWinner,
   } = useGameState();
   const { socket } = useSocket();
 
@@ -720,21 +725,57 @@ export function GameScreenConnected() {
       );
     }
 
-    case 'scoring':
+    case 'scoring': {
+      if (!roundResult) {
+        return (
+          <div
+            style={{
+              padding: '2rem',
+              textAlign: 'center',
+              background: '#1a1a2e',
+              minHeight: '100vh',
+              color: '#fff',
+            }}
+          >
+            <p>Calculating scores...</p>
+          </div>
+        );
+      }
+
+      const playerNamesMap = new Map(
+        room?.players.map((p) => [p.id, p.name]) || []
+      );
+
+      const handleContinue = () => {
+        if (gameOver) {
+          navigate('/');
+        } else {
+          startRound();
+        }
+      };
+
       return (
         <div
           style={{
-            padding: '2rem',
-            textAlign: 'center',
-            background: '#1a1a2e',
             minHeight: '100vh',
-            color: '#fff',
+            background: '#1a1a2e',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
-          <h1>Round {roundNumber} Complete</h1>
-          <p style={{ color: '#888', marginTop: '1rem' }}>Scoring phase will be implemented</p>
+          <RoundEndScreen
+            roundResult={roundResult}
+            totalScores={totalScores}
+            playerNames={playerNamesMap}
+            gameOver={gameOver}
+            winner={gameWinner || undefined}
+            currentPlayerId={playerId || ''}
+            onContinue={handleContinue}
+          />
         </div>
       );
+    }
 
     case 'finished':
       return (
