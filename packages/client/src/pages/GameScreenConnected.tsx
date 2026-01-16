@@ -6,7 +6,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { useGameState } from '../context/GameStateContext';
 import { WaitingToStart } from '../components/Game/WaitingToStart';
-import { SetupPhase } from '../components/Game/SetupPhase';
 import { GameBoard } from '../components/Game/GameBoard';
 import { Card as CardComponent } from '../components/Card';
 import { MultiFoundationArea, type PlayerFoundationGroup } from '../components/Foundation';
@@ -23,23 +22,8 @@ import { usePlayerSettings } from '../hooks/usePlayerSettings';
 
 const SUITS = ['hearts', 'diamonds', 'clubs', 'spades'] as const;
 
-// Create initial dealt player state
-function createDealtPlayerState(playerId: string, nertzPileSize: number): PlayerGameState {
-  const deck = createShuffledDeck(playerId);
-  return {
-    playerId,
-    deckId: playerId,
-    nertzPile: deck.slice(0, nertzPileSize),
-    workPiles: [
-      [deck[nertzPileSize]!],
-      [deck[nertzPileSize + 1]!],
-      [deck[nertzPileSize + 2]!],
-      [deck[nertzPileSize + 3]!],
-    ],
-    stockPile: deck.slice(nertzPileSize + 4),
-    wastePile: [],
-  };
-}
+// Setup phases for dealing cards
+type SetupStep = 'dealing_nertz' | 'flip_nertz' | 'dealing_work' | 'complete';
 
 export function GameScreenConnected() {
   const { gameId: routeGameId } = useParams<{ gameId: string }>();
@@ -55,10 +39,16 @@ export function GameScreenConnected() {
     currentStarterIndex,
   } = useGameState();
 
-  // Local setup state - tracks if player has completed their card dealing
-  const [localSetupDone, setLocalSetupDone] = useState(false);
+  // The shuffled deck (created once when round starts)
+  const [deck, setDeck] = useState<Card[]>([]);
 
-  // Local player state (cards dealt when local setup completes)
+  // Setup tracking
+  const [setupStep, setSetupStep] = useState<SetupStep>('dealing_nertz');
+  const [nertzDealt, setNertzDealt] = useState(0);
+  const [nertzFlipped, setNertzFlipped] = useState(false);
+  const [workDealt, setWorkDealt] = useState(0);
+
+  // Local player state (built incrementally during setup)
   const [localPlayerState, setLocalPlayerState] = useState<PlayerGameState | null>(null);
 
   // Foundation piles for all players
@@ -70,10 +60,26 @@ export function GameScreenConnected() {
   // Get current player info
   const currentPlayer = room?.players.find((p) => p.id === playerId);
   const playerColor = (currentPlayer?.color as PlayerColor) || 'blue';
+  const nertzPileSize = room?.settings.nertzPileSize || 13;
 
-  // Initialize foundations when entering playing phase (but NOT cards yet)
+  // Initialize deck and foundations when entering playing phase
   useEffect(() => {
-    if (gamePhase === 'playing' && playerFoundations.size === 0 && room) {
+    if (gamePhase === 'playing' && deck.length === 0 && playerId && room) {
+      // Create the deck that will be used throughout
+      const newDeck = createShuffledDeck(playerId);
+      setDeck(newDeck);
+
+      // Initialize empty player state
+      setLocalPlayerState({
+        playerId,
+        deckId: playerId,
+        nertzPile: [],
+        workPiles: [[], [], [], []],
+        stockPile: newDeck, // All cards start in stock
+        wastePile: [],
+      });
+
+      // Initialize foundations for all players
       const foundations = new Map<string, FoundationPile[]>();
       room.players.forEach((player) => {
         foundations.set(
@@ -82,23 +88,25 @@ export function GameScreenConnected() {
         );
       });
       setPlayerFoundations(foundations);
-    }
-  }, [gamePhase, playerFoundations.size, room]);
 
-  // Handle local setup complete - deal cards
-  const handleLocalSetupComplete = useCallback(() => {
-    if (!playerId || !room) return;
-    const nertzSize = room.settings.nertzPileSize || 13;
-    setLocalPlayerState(createDealtPlayerState(playerId, nertzSize));
-    setLocalSetupDone(true);
-  }, [playerId, room]);
+      // Reset setup state
+      setSetupStep('dealing_nertz');
+      setNertzDealt(0);
+      setNertzFlipped(false);
+      setWorkDealt(0);
+    }
+  }, [gamePhase, deck.length, playerId, room]);
 
   // Reset state when entering waiting phase (new round)
   useEffect(() => {
     if (gamePhase === 'waiting_for_start') {
+      setDeck([]);
       setLocalPlayerState(null);
-      setLocalSetupDone(false);
       setPlayerFoundations(new Map());
+      setSetupStep('dealing_nertz');
+      setNertzDealt(0);
+      setNertzFlipped(false);
+      setWorkDealt(0);
     }
   }, [gamePhase]);
 
@@ -116,9 +124,79 @@ export function GameScreenConnected() {
     }
   }, [gamePhase, setupComplete]);
 
-  // Build game state for hooks
+  // Handle stock click during setup - deals cards
+  const handleSetupStockClick = useCallback(() => {
+    if (!localPlayerState || setupStep !== 'dealing_nertz') return;
+    if (nertzDealt >= nertzPileSize) return;
+
+    // Deal one card from stock to nertz pile
+    const card = deck[nertzDealt];
+    if (!card) return;
+
+    setLocalPlayerState((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        nertzPile: [...prev.nertzPile, card],
+        stockPile: deck.slice(nertzDealt + 1),
+      };
+    });
+
+    const newNertzDealt = nertzDealt + 1;
+    setNertzDealt(newNertzDealt);
+
+    // Check if nertz pile is complete
+    if (newNertzDealt >= nertzPileSize) {
+      setSetupStep('flip_nertz');
+    }
+  }, [localPlayerState, setupStep, nertzDealt, nertzPileSize, deck]);
+
+  // Handle nertz click during setup - flips top card
+  const handleSetupNertzClick = useCallback(() => {
+    if (setupStep !== 'flip_nertz' || nertzFlipped) return;
+
+    setNertzFlipped(true);
+    setSetupStep('dealing_work');
+  }, [setupStep, nertzFlipped]);
+
+  // Handle work pile click during setup - deals card to that pile
+  const handleSetupWorkPileClick = useCallback(
+    (pileIndex: number) => {
+      if (!localPlayerState || setupStep !== 'dealing_work') return;
+      const pile = localPlayerState.workPiles[pileIndex];
+      if (pile && pile.length > 0) return; // Already has card
+
+      const cardIndex = nertzPileSize + workDealt;
+      const card = deck[cardIndex];
+      if (!card) return;
+
+      setLocalPlayerState((prev) => {
+        if (!prev) return prev;
+        const newWorkPiles = [...prev.workPiles] as [Card[], Card[], Card[], Card[]];
+        newWorkPiles[pileIndex] = [card];
+        return {
+          ...prev,
+          workPiles: newWorkPiles,
+          stockPile: deck.slice(cardIndex + 1),
+        };
+      });
+
+      const newWorkDealt = workDealt + 1;
+      setWorkDealt(newWorkDealt);
+
+      // Check if all work piles have cards
+      if (newWorkDealt >= 4) {
+        setSetupStep('complete');
+      }
+    },
+    [localPlayerState, setupStep, workDealt, nertzPileSize, deck]
+  );
+
+  const isSetupComplete = setupStep === 'complete';
+
+  // Build game state for hooks (only when setup complete)
   const gameState: GameState | null = useMemo(() => {
-    if (!localPlayerState || !room) return null;
+    if (!localPlayerState || !room || !isSetupComplete) return null;
     return {
       gameId: gameId || '',
       phase: 'playing',
@@ -128,14 +206,14 @@ export function GameScreenConnected() {
       roundNumber,
       currentStarterIndex,
     };
-  }, [localPlayerState, room, gameId, playerFoundations, roundNumber, currentStarterIndex]);
+  }, [localPlayerState, room, gameId, playerFoundations, roundNumber, currentStarterIndex, isSetupComplete]);
 
   const config: GameConfig = useMemo(
     () => room?.settings || { nertzPileSize: 13, drawCount: 3, targetScore: 100 },
     [room]
   );
 
-  // Handle local player moves
+  // Handle local player moves (after setup)
   const handleMove = useCallback((move: Move) => {
     setLocalPlayerState((prev) => {
       if (!prev) return prev;
@@ -196,13 +274,11 @@ export function GameScreenConnected() {
     (card: Card, foundationIndex: number, source: MoveSource) => {
       if (!playerId) return;
 
-      // Calculate which player/suit this foundation belongs to
       const playerIndex = Math.floor(foundationIndex / 4);
       const suitIndex = foundationIndex % 4;
       const players = room?.players || [];
       const targetPlayerId = players[playerIndex]?.id || playerId;
 
-      // Remove card from source
       setLocalPlayerState((prev) => {
         if (!prev) return prev;
         if (source.type === 'nertz') {
@@ -218,7 +294,6 @@ export function GameScreenConnected() {
         return prev;
       });
 
-      // Add card to foundation
       setPlayerFoundations((prev) => {
         const newMap = new Map(prev);
         const piles = newMap.get(targetPlayerId);
@@ -242,7 +317,7 @@ export function GameScreenConnected() {
   });
   const sensors = useSensors(pointerSensor);
 
-  // Use hooks (only when we have game state)
+  // Use hooks (only when setup complete)
   const localPlayer = useLocalPlayerState({
     serverState: localPlayerState,
     gameState,
@@ -334,6 +409,23 @@ export function GameScreenConnected() {
       );
 
     case 'playing': {
+      if (!localPlayerState) {
+        return (
+          <div
+            style={{
+              minHeight: '100vh',
+              background: '#1a1a2e',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#fff',
+            }}
+          >
+            <p>Loading game...</p>
+          </div>
+        );
+      }
+
       // Convert foundations to PlayerFoundationGroup format
       const playerGroups: PlayerFoundationGroup[] = Array.from(playerFoundations.entries()).map(
         ([pid, piles], index) => {
@@ -346,6 +438,25 @@ export function GameScreenConnected() {
           };
         }
       );
+
+      // During setup: determine what's clickable
+      const setupStockClickable = setupStep === 'dealing_nertz';
+      const setupNertzClickable = setupStep === 'flip_nertz';
+      const setupWorkClickable = setupStep === 'dealing_work';
+
+      // Get setup instruction text
+      const getSetupInstruction = () => {
+        switch (setupStep) {
+          case 'dealing_nertz':
+            return `Click stock to deal Nertz pile (${nertzDealt}/${nertzPileSize})`;
+          case 'flip_nertz':
+            return 'Click Nertz pile to flip top card';
+          case 'dealing_work':
+            return `Click empty work piles to deal (${workDealt}/4)`;
+          default:
+            return '';
+        }
+      };
 
       return (
         <div
@@ -370,11 +481,7 @@ export function GameScreenConnected() {
             {/* Opponents - just avatars */}
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               {opponents.map((opp) => (
-                <div
-                  key={opp.id}
-                  style={{ opacity: 0.7 }}
-                  title={opp.name}
-                >
+                <div key={opp.id} style={{ opacity: 0.7 }} title={opp.name}>
                   <Avatar
                     avatar={(opp.avatar as AvatarString) || 'user:circle'}
                     color={(opp.color as PlayerColor) || 'blue'}
@@ -393,29 +500,25 @@ export function GameScreenConnected() {
             </div>
           </div>
 
-          {/* Show SetupPhase or GameBoard depending on local setup state */}
-          {!localSetupDone ? (
-            <>
-              {/* Shared Foundations (empty during setup) */}
-              <MultiFoundationArea
-                playerGroups={playerGroups}
-                selectedCard={null}
-                onPileClick={() => {}}
-                canPlace={false}
-                showMoveHints={false}
-                isDragging={false}
-                validDragFoundations={[]}
-              />
+          {/* Setup instruction banner */}
+          {!isSetupComplete && (
+            <div
+              style={{
+                background: 'linear-gradient(90deg, #FFD23F 0%, #F7931E 100%)',
+                color: '#000',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                textAlign: 'center',
+                fontWeight: 'bold',
+                fontSize: '0.9rem',
+              }}
+            >
+              {getSetupInstruction()}
+            </div>
+          )}
 
-              {/* Setup Phase in player area */}
-              <SetupPhase
-                playerColor={playerColor}
-                deckId={playerId || 'player-1'}
-                config={{ nertzPileSize: config.nertzPileSize }}
-                onSetupComplete={handleLocalSetupComplete}
-              />
-            </>
-          ) : localPlayerState ? (
+          {isSetupComplete ? (
+            // Full playable game after setup
             <DndContext
               sensors={sensors}
               onDragStart={dragDrop.handleDragStart}
@@ -423,20 +526,23 @@ export function GameScreenConnected() {
               onDragEnd={dragDrop.handleDragEnd}
               onDragCancel={dragDrop.handleDragCancel}
             >
-              {/* Shared Foundations (Multi-player) */}
               <MultiFoundationArea
                 playerGroups={playerGroups}
                 selectedCard={localPlayer.selectedCard?.card ?? null}
                 onPileClick={(_pid: string, _suit: string, globalIndex: number) => {
                   localPlayer.handleFoundationClick(globalIndex);
                 }}
-                canPlace={localPlayer.validFoundationDestinations.length > 0 || dragDrop.validDropTargets.some((t) => t.type === 'foundation')}
+                canPlace={
+                  localPlayer.validFoundationDestinations.length > 0 ||
+                  dragDrop.validDropTargets.some((t) => t.type === 'foundation')
+                }
                 showMoveHints={settings.showMoveHints}
                 isDragging={dragDrop.isDragging}
-                validDragFoundations={dragDrop.validDropTargets.filter((t) => t.type === 'foundation').map((t) => t.index)}
+                validDragFoundations={dragDrop.validDropTargets
+                  .filter((t) => t.type === 'foundation')
+                  .map((t) => t.index)}
               />
 
-              {/* Your Play Area */}
               <GameBoard
                 nertzPile={localPlayerState.nertzPile}
                 workPiles={localPlayerState.workPiles as [Card[], Card[], Card[], Card[]]}
@@ -480,7 +586,9 @@ export function GameScreenConnected() {
                     : undefined
                 }
                 canCallHeyHey={localPlayerState.nertzPile.length === 0}
-                canRecycleStock={localPlayerState.stockPile.length === 0 && localPlayerState.wastePile.length > 0}
+                canRecycleStock={
+                  localPlayerState.stockPile.length === 0 && localPlayerState.wastePile.length > 0
+                }
                 onNertzCardClick={localPlayer.handleNertzClick}
                 onNertzCardDoubleClick={localPlayer.handleNertzDoubleClick}
                 onWorkCardClick={localPlayer.handleWorkPileClick}
@@ -511,17 +619,41 @@ export function GameScreenConnected() {
               </DragOverlay>
             </DndContext>
           ) : (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#fff',
-                flex: 1,
-              }}
-            >
-              <p>Loading game...</p>
-            </div>
+            // Setup phase - same GameBoard but with setup click handlers
+            <>
+              <MultiFoundationArea
+                playerGroups={playerGroups}
+                selectedCard={null}
+                onPileClick={() => {}}
+                canPlace={false}
+                showMoveHints={false}
+                isDragging={false}
+                validDragFoundations={[]}
+              />
+
+              <GameBoard
+                nertzPile={localPlayerState.nertzPile}
+                workPiles={localPlayerState.workPiles as [Card[], Card[], Card[], Card[]]}
+                stockPile={localPlayerState.stockPile}
+                wastePile={localPlayerState.wastePile}
+                foundationPiles={[]}
+                playerColor={playerColor}
+                currentRound={roundNumber}
+                selectedCard={null}
+                validWorkDestinations={setupWorkClickable ? [0, 1, 2, 3].filter(i => localPlayerState.workPiles[i]?.length === 0) : []}
+                canCallHeyHey={false}
+                canRecycleStock={false}
+                disabled={false}
+                // Setup handlers
+                onNertzCardClick={setupNertzClickable ? () => handleSetupNertzClick() : undefined}
+                onWorkPileClick={setupWorkClickable ? handleSetupWorkPileClick : undefined}
+                onStockDraw={setupStockClickable ? handleSetupStockClick : undefined}
+                hideFoundation={true}
+                hideTopBar={true}
+                showMoveHints={false}
+                maxPileHeight={280}
+              />
+            </>
           )}
         </div>
       );
