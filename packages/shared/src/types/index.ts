@@ -202,6 +202,33 @@ export interface PlayerGameState {
   wastePile: Card[]; // Face up, top is last (visible cards)
 }
 
+/**
+ * Lightweight opponent state for real-time visualization
+ * Contains only card counts and visible top cards (not full card data)
+ * Used by OpponentArea component to display opponent progress
+ */
+export interface OpponentPlayerState {
+  playerId: string;
+  deckId: string;
+  /** Number of cards remaining in nertz pile (0 = winner!) */
+  nertzCount: number;
+  /** Top card of nertz pile if face up */
+  nertzTopCard?: Card;
+  /** Number of cards in stock pile */
+  stockCount: number;
+  /** Number of cards in waste pile */
+  wasteCount: number;
+  /** Top card of waste pile if any */
+  wasteTopCard?: Card;
+  /** Card counts and top cards for each work pile */
+  workPiles: {
+    count: number;
+    topCard?: Card;
+  }[];
+  /** Timestamp of last state change (for activity indicator) */
+  lastActivity: number;
+}
+
 export interface FoundationPile {
   suit: Card['suit'];
   cards: Card[]; // Bottom to top, starts with Ace

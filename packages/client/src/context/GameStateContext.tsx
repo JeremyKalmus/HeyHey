@@ -15,6 +15,7 @@ import type {
   StateUpdate,
   MoveRejection,
   RoundResult,
+  OpponentPlayerState,
 } from '@heyhey/shared';
 
 /* =============================================================================
@@ -33,6 +34,8 @@ export interface GameStateContextValue {
   playerState: PlayerGameState | null;
   foundations: FoundationPile[];
   opponents: PlayerGameState[];
+  /** Lightweight opponent states for real-time visualization */
+  opponentStates: Map<string, OpponentPlayerState>;
 
   // Round/Scoring state
   roundResult: RoundResult | null;
@@ -73,6 +76,8 @@ interface GameState {
   playerState: PlayerGameState | null;
   foundations: FoundationPile[];
   opponents: PlayerGameState[];
+  /** Lightweight opponent states for real-time visualization */
+  opponentStates: Map<string, OpponentPlayerState>;
   roundResult: RoundResult | null;
   totalScores: { playerId: string; total: number }[];
   nertzCallerId: string | null;
@@ -122,6 +127,7 @@ const initialState: GameState = {
   playerState: null,
   foundations: [],
   opponents: [],
+  opponentStates: new Map(),
   roundResult: null,
   totalScores: [],
   nertzCallerId: null,
@@ -327,9 +333,107 @@ function gameReducer(state: GameState, action: GameAction): GameState {
   }
 }
 
+/**
+ * Convert a full PlayerGameState to lightweight OpponentPlayerState
+ */
+function toOpponentState(player: PlayerGameState, timestamp: number): OpponentPlayerState {
+  return {
+    playerId: player.playerId,
+    deckId: player.deckId,
+    nertzCount: player.nertzPile.length,
+    nertzTopCard: player.nertzPile.length > 0 ? player.nertzPile[player.nertzPile.length - 1] : undefined,
+    stockCount: player.stockPile.length,
+    wasteCount: player.wastePile.length,
+    wasteTopCard: player.wastePile.length > 0 ? player.wastePile[player.wastePile.length - 1] : undefined,
+    workPiles: player.workPiles.map(pile => ({
+      count: pile.length,
+      topCard: pile.length > 0 ? pile[pile.length - 1] : undefined,
+    })),
+    lastActivity: timestamp,
+  };
+}
+
+/**
+ * Update opponent state based on a state delta
+ * Returns updated opponentStates Map
+ */
+function updateOpponentStateFromDelta(
+  opponentStates: Map<string, OpponentPlayerState>,
+  playerId: string,
+  delta: StateUpdate['delta'],
+  timestamp: number
+): Map<string, OpponentPlayerState> {
+  const existing = opponentStates.get(playerId);
+  if (!existing) return opponentStates;
+
+  const newStates = new Map(opponentStates);
+  let updated = { ...existing, lastActivity: timestamp };
+
+  switch (delta.type) {
+    case 'cardMoved': {
+      // Update counts based on source and destination
+      const { source, destination, cards } = delta;
+      const cardCount = cards.length;
+
+      // Update source pile count
+      if (source.type === 'nertz') {
+        updated.nertzCount = Math.max(0, updated.nertzCount - cardCount);
+        updated.nertzTopCard = undefined; // We don't know the new top card
+      } else if (source.type === 'waste') {
+        updated.wasteCount = Math.max(0, updated.wasteCount - cardCount);
+        updated.wasteTopCard = undefined;
+      } else if (source.type === 'work' && source.pileIndex !== undefined) {
+        const pile = updated.workPiles[source.pileIndex];
+        if (pile) {
+          updated.workPiles = [...updated.workPiles];
+          updated.workPiles[source.pileIndex] = {
+            count: Math.max(0, pile.count - cardCount),
+            topCard: undefined,
+          };
+        }
+      }
+
+      // Update destination pile count
+      if (destination.type === 'work' && destination.pileIndex !== undefined) {
+        const pile = updated.workPiles[destination.pileIndex];
+        if (pile) {
+          updated.workPiles = [...updated.workPiles];
+          updated.workPiles[destination.pileIndex] = {
+            count: pile.count + cardCount,
+            topCard: cards[cards.length - 1], // Last card is top
+          };
+        }
+      }
+      // Foundation destinations don't affect opponent state display
+      break;
+    }
+
+    case 'cardsDrawn': {
+      // Cards moved from stock to waste
+      const cardCount = delta.cards.length;
+      updated.stockCount = Math.max(0, updated.stockCount - cardCount);
+      updated.wasteCount += cardCount;
+      updated.wasteTopCard = delta.cards.length > 0 ? delta.cards[delta.cards.length - 1] : undefined;
+      break;
+    }
+
+    case 'stockFlipped': {
+      // Waste pile moved back to stock
+      const wasteCount = updated.wasteCount;
+      updated.stockCount = wasteCount;
+      updated.wasteCount = 0;
+      updated.wasteTopCard = undefined;
+      break;
+    }
+  }
+
+  newStates.set(playerId, updated);
+  return newStates;
+}
+
 // Apply state delta from server
 function applyStateUpdate(state: GameState, update: StateUpdate): GameState {
-  const { delta } = update;
+  const { delta, timestamp } = update;
 
   switch (delta.type) {
     case 'phaseChanged':
@@ -348,27 +452,73 @@ function applyStateUpdate(state: GameState, update: StateUpdate): GameState {
         nertzCallerId: null,
       };
 
-    case 'cardMoved':
-      // Update player state based on move
-      // For now, just return state - real implementation would update piles
+    case 'cardMoved': {
+      // Update opponent state if this is from another player
+      if (delta.playerId !== state.playerId) {
+        return {
+          ...state,
+          opponentStates: updateOpponentStateFromDelta(
+            state.opponentStates,
+            delta.playerId,
+            delta,
+            timestamp
+          ),
+        };
+      }
       return state;
+    }
 
-    case 'cardsDrawn':
-    case 'stockFlipped':
-      // Update player's stock/waste
+    case 'cardsDrawn': {
+      // Update opponent state if this is from another player
+      if (delta.playerId !== state.playerId) {
+        return {
+          ...state,
+          opponentStates: updateOpponentStateFromDelta(
+            state.opponentStates,
+            delta.playerId,
+            delta,
+            timestamp
+          ),
+        };
+      }
       return state;
+    }
 
-    case 'playerJoinedGame':
+    case 'stockFlipped': {
+      // Update opponent state if this is from another player
+      if (delta.playerId !== state.playerId) {
+        return {
+          ...state,
+          opponentStates: updateOpponentStateFromDelta(
+            state.opponentStates,
+            delta.playerId,
+            delta,
+            timestamp
+          ),
+        };
+      }
+      return state;
+    }
+
+    case 'playerJoinedGame': {
+      const newOpponentStates = new Map(state.opponentStates);
+      newOpponentStates.set(delta.player.playerId, toOpponentState(delta.player, timestamp));
       return {
         ...state,
         opponents: [...state.opponents, delta.player],
+        opponentStates: newOpponentStates,
       };
+    }
 
-    case 'playerLeftGame':
+    case 'playerLeftGame': {
+      const newOpponentStates = new Map(state.opponentStates);
+      newOpponentStates.delete(delta.playerId);
       return {
         ...state,
         opponents: state.opponents.filter((p) => p.playerId !== delta.playerId),
+        opponentStates: newOpponentStates,
       };
+    }
 
     default:
       return state;
@@ -662,6 +812,7 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
     playerState: state.playerState,
     foundations: state.foundations,
     opponents: state.opponents,
+    opponentStates: state.opponentStates,
 
     // Scoring
     roundResult: state.roundResult,
