@@ -1,0 +1,7 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "npm install -g pnpm && pnpm install",
+  "buildCommand": "pnpm run build:shared && cd packages/client && pnpm exec vite build",
+  "outputDirectory": "packages/client/dist",
+  "framework": "vite"
+}
