@@ -11,6 +11,7 @@ import type {
   StateUpdate,
   MoveRejection,
   FoundationMovePayload,
+  OpponentStateUpdatePayload,
 } from '@heyhey/shared';
 import { LobbyManager } from './LobbyManager.js';
 import { SetupManager } from './SetupManager.js';
@@ -42,7 +43,27 @@ function getOrCreateGameManager(io: TypedServer): GameManager {
       }
     };
 
-    gameManager = new GameManager(broadcast, reject);
+    // Broadcast opponent state to all players except the one who made the move (ADR-009)
+    const broadcastOpponentState = (
+      roomCode: string,
+      payload: OpponentStateUpdatePayload,
+      excludePlayerId: string
+    ) => {
+      // Get all sockets in the room and emit to each except the excluded player
+      const room = io.sockets.adapter.rooms.get(roomCode);
+      if (room) {
+        for (const socketId of room) {
+          if (socketId !== excludePlayerId) {
+            const socket = io.sockets.sockets.get(socketId);
+            if (socket) {
+              socket.emit('opponentStateUpdate', payload);
+            }
+          }
+        }
+      }
+    };
+
+    gameManager = new GameManager(broadcast, reject, broadcastOpponentState);
   }
   return gameManager;
 }
@@ -232,11 +253,15 @@ export function registerLobbyEvents(io: TypedServer): void {
 
     // Make Move
     socket.on('makeMove', (payload: MakeMovePayload) => {
+      const roomCode = lobbyManager.getRoomCode(socket.id);
       const manager = getOrCreateGameManager(io);
       const result = manager.processMove(socket.id, payload.move);
 
       if (!result.success) {
         console.log(`Move rejected for socket ${socket.id}`);
+      } else if (roomCode) {
+        // Broadcast opponent state update after successful move (ADR-009)
+        manager.broadcastOpponentState(roomCode, payload.move.playerId);
       }
     });
 
@@ -299,6 +324,9 @@ export function registerLobbyEvents(io: TypedServer): void {
           playerId: result.playerId,
           sequence: result.sequence,
         });
+
+        // Broadcast opponent state update after successful foundation move (ADR-009)
+        manager.broadcastOpponentState(roomCode, socket.id);
 
         console.log(
           `Foundation move: ${result.card.rank} of ${result.card.suit} to pile ${result.foundationIndex} by ${socket.id} (seq: ${result.sequence})`

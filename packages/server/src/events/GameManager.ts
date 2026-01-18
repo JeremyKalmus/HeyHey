@@ -12,6 +12,7 @@ import type {
   FoundationMovePayload,
   ScoringState,
   RoundResult,
+  OpponentStateUpdatePayload,
 } from '@heyhey/shared';
 import {
   StateManager,
@@ -33,6 +34,7 @@ interface ActiveGame {
 
 export type BroadcastFn = (roomCode: string, update: StateUpdate) => void;
 export type RejectFn = (socketId: string, rejection: MoveRejection) => void;
+export type BroadcastOpponentStateFn = (roomCode: string, payload: OpponentStateUpdatePayload, excludePlayerId: string) => void;
 
 export type FoundationMoveResult =
   | {
@@ -99,10 +101,12 @@ export class GameManager {
   private readyForNextRound: Map<string, Set<string>> = new Map(); // roomCode -> Set of ready playerIds
   private broadcast: BroadcastFn;
   private reject: RejectFn;
+  private broadcastOpponentStateFn: BroadcastOpponentStateFn;
 
-  constructor(broadcast?: BroadcastFn, reject?: RejectFn) {
+  constructor(broadcast?: BroadcastFn, reject?: RejectFn, broadcastOpponentState?: BroadcastOpponentStateFn) {
     this.broadcast = broadcast ?? (() => {});
     this.reject = reject ?? (() => {});
+    this.broadcastOpponentStateFn = broadcastOpponentState ?? (() => {});
   }
 
   /**
@@ -622,6 +626,37 @@ export class GameManager {
    */
   getGame(roomCode: string): ActiveGame | undefined {
     return this.games.get(roomCode);
+  }
+
+  /**
+   * Broadcast a player's visible state to all opponents (ADR-009)
+   * Called after moves, draws, and flip stock actions
+   */
+  broadcastOpponentState(roomCode: string, playerId: string): void {
+    const game = this.games.get(roomCode);
+    if (!game) return;
+
+    const state = game.stateManager.getState();
+    const playerState = state.players.find(p => p.playerId === playerId);
+    if (!playerState) return;
+
+    // Build opponent state payload with only visible (face-up) information
+    const payload: OpponentStateUpdatePayload = {
+      playerId,
+      stockCount: playerState.stockPile.length,
+      wasteTopCard: playerState.wastePile.length > 0
+        ? playerState.wastePile[playerState.wastePile.length - 1]
+        : undefined,
+      nertzCount: playerState.nertzPile.length,
+      nertzTopCard: playerState.nertzPile.length > 0
+        ? playerState.nertzPile[playerState.nertzPile.length - 1]
+        : undefined,
+      // Work piles: send all face-up cards (in Nertz, all work pile cards are face-up)
+      workPiles: playerState.workPiles,
+    };
+
+    // Broadcast to all players except the one who made the move
+    this.broadcastOpponentStateFn(roomCode, payload, playerId);
   }
 
   /**

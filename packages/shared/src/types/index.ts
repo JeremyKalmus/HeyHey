@@ -70,6 +70,7 @@ export interface ServerToClientEvents {
   roundEnded: (payload: RoundEndedPayload) => void;
   playerReadyForNextRound: (payload: PlayerReadyForNextRoundPayload) => void;
   allReadyForNextRound: (payload: AllReadyForNextRoundPayload) => void;
+  opponentStateUpdate: (payload: OpponentStateUpdatePayload) => void;
 }
 
 // Event Payloads - Client to Server
@@ -160,6 +161,16 @@ export interface PlayerReadyForNextRoundPayload {
 export interface AllReadyForNextRoundPayload {
   nextRoundNumber: number;
   nextStarterId: string;
+}
+
+// Opponent State Update Payload (ADR-009)
+export interface OpponentStateUpdatePayload {
+  playerId: string;
+  stockCount: number;
+  wasteTopCard?: Card;
+  nertzCount: number;
+  nertzTopCard?: Card;
+  workPiles: Card[][]; // Full face-up cards for each work pile
 }
 
 // Game Event Payloads - Client to Server
