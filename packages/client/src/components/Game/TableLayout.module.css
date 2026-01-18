@@ -1,0 +1,207 @@
+/* TableLayout - Orchestrates opponent positioning around the game table */
+/* Adapts layout based on player count: 2, 3-4, or 5+ players */
+
+/* =============================================================================
+   BASE LAYOUT
+   ============================================================================= */
+
+.tableLayout {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  gap: 8px;
+  box-sizing: border-box;
+}
+
+/* =============================================================================
+   TOP ROW - Opponent(s) at top
+   ============================================================================= */
+
+.topRow {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 8px;
+  flex-shrink: 0;
+  padding: 4px;
+}
+
+/* =============================================================================
+   MIDDLE ROW - [Left] [Center/Foundations] [Right]
+   ============================================================================= */
+
+.middleRow {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  gap: 8px;
+}
+
+.leftColumn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.centerColumn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+}
+
+.rightColumn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* =============================================================================
+   BOTTOM ROW - Local player area
+   ============================================================================= */
+
+.bottomRow {
+  flex-shrink: 0;
+}
+
+/* =============================================================================
+   LAYOUT VARIANTS
+   ============================================================================= */
+
+/* Layout 1: No opponents (single player or solo) */
+.layout1 .topRow {
+  display: none;
+}
+
+.layout1 .leftColumn,
+.layout1 .rightColumn {
+  display: none;
+}
+
+/* Layout 2: 2 players - single opponent centered at top */
+.layout2 .topRow {
+  justify-content: center;
+}
+
+.layout2 .leftColumn,
+.layout2 .rightColumn {
+  display: none;
+}
+
+/* Layout 3-4: 3-4 players - opponents around edges */
+.layout3to4 .topRow {
+  justify-content: center;
+}
+
+.layout3to4 .leftColumn,
+.layout3to4 .rightColumn {
+  width: auto;
+  padding: 4px;
+}
+
+/* Layout 5+: 5+ players - scrollable row at top */
+.layout5plus .topRow {
+  justify-content: flex-start;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 4px 8px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+.layout5plus .topRow::-webkit-scrollbar {
+  height: 6px;
+}
+
+.layout5plus .topRow::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.layout5plus .topRow::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+}
+
+.layout5plus .topRow::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.layout5plus .leftColumn,
+.layout5plus .rightColumn {
+  display: none;
+}
+
+/* =============================================================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================================================= */
+
+@media (max-width: 900px) {
+  .tableLayout {
+    gap: 6px;
+  }
+
+  .topRow {
+    gap: 6px;
+  }
+
+  .middleRow {
+    gap: 6px;
+  }
+
+  /* On tablet, switch 3-4 player layout to top row only */
+  .layout3to4 .leftColumn,
+  .layout3to4 .rightColumn {
+    display: none;
+  }
+
+  .layout3to4 .topRow {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 600px) {
+  .tableLayout {
+    gap: 4px;
+  }
+
+  .topRow {
+    gap: 4px;
+    padding: 2px;
+  }
+
+  .middleRow {
+    gap: 4px;
+  }
+
+  /* Force all opponents to top row on mobile */
+  .leftColumn,
+  .rightColumn {
+    display: none !important;
+  }
+
+  /* Make top row scrollable on mobile for any layout with multiple opponents */
+  .layout3to4 .topRow,
+  .layout5plus .topRow {
+    justify-content: flex-start;
+    overflow-x: auto;
+    overflow-y: hidden;
+    flex-wrap: nowrap;
+  }
+}
+
+/* =============================================================================
+   ANIMATION SUPPORT
+   ============================================================================= */
+
+/* Ensure opponent play areas are positioned for animation calculations */
+.topRow > *,
+.leftColumn > *,
+.rightColumn > * {
+  position: relative;
+}
