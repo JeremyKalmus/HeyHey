@@ -1,6 +1,6 @@
 [build]
 builder = "nixpacks"
-buildCommand = "corepack enable && pnpm install --frozen-lockfile && pnpm run build"
+buildCommand = "npm install -g pnpm && pnpm install --frozen-lockfile && pnpm run build"
 
 [deploy]
 startCommand = "node packages/server/dist/index.js"
