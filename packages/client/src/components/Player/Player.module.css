@@ -145,3 +145,67 @@
     box-shadow: var(--shadow-lg);
   }
 }
+
+/* =============================================================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================================================= */
+
+/* iPad Portrait (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+  .stockEmpty,
+  .wasteEmpty {
+    width: 64px;
+    height: 91px;
+  }
+
+  .wasteArea {
+    min-width: 90px;
+    min-height: 91px;
+  }
+
+  .stockWasteContainer {
+    gap: var(--space-sm);
+  }
+}
+
+/* iPad Landscape (1024px - 1366px) */
+@media (min-width: 1024px) and (max-width: 1366px) and (orientation: landscape) {
+  .stockEmpty,
+  .wasteEmpty {
+    width: 68px;
+    height: 97px;
+  }
+
+  .wasteArea {
+    min-width: 95px;
+    min-height: 97px;
+  }
+}
+
+/* Small screens */
+@media (max-width: 500px) {
+  .stockEmpty,
+  .wasteEmpty {
+    width: 58px;
+    height: 86px;
+  }
+
+  .wasteArea {
+    min-width: 80px;
+    min-height: 86px;
+  }
+
+  .cardCount {
+    font-size: 0.625rem;
+    padding: 2px var(--space-xs);
+    min-width: 20px;
+  }
+
+  .sectionLabel {
+    font-size: 0.625rem;
+  }
+
+  .stockWasteContainer {
+    gap: var(--space-sm);
+  }
+}

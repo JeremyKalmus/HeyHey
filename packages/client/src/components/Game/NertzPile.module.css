@@ -80,3 +80,63 @@
   pointer-events: none;
 }
 
+/* =============================================================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================================================= */
+
+/* iPad Portrait (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+  .nertzPile {
+    min-width: 72px;
+    min-height: 99px;
+  }
+
+  .emptySlot {
+    width: 64px;
+    height: 91px;
+  }
+
+  .countBadge {
+    bottom: -20px;
+    font-size: 0.625rem;
+    padding: 2px var(--space-xs);
+    min-width: 20px;
+  }
+}
+
+/* iPad Landscape (1024px - 1366px) */
+@media (min-width: 1024px) and (max-width: 1366px) and (orientation: landscape) {
+  .nertzPile {
+    min-width: 76px;
+    min-height: 105px;
+  }
+
+  .emptySlot {
+    width: 68px;
+    height: 97px;
+  }
+}
+
+/* Small screens */
+@media (max-width: 500px) {
+  .nertzPile {
+    min-width: 66px;
+    min-height: 94px;
+  }
+
+  .emptySlot {
+    width: 58px;
+    height: 86px;
+  }
+
+  .countBadge {
+    bottom: -18px;
+    font-size: 0.625rem;
+    padding: 2px var(--space-xs);
+    min-width: 18px;
+  }
+
+  .emptyLabel {
+    font-size: 0.625rem;
+  }
+}

@@ -197,7 +197,49 @@
 }
 
 
-/* Responsive adjustments */
+/* =============================================================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================================================= */
+
+/* iPad Portrait (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+  .pilesContainer {
+    gap: var(--space-md, 12px);
+  }
+
+  .pile {
+    min-width: 64px;
+    min-height: 91px;
+  }
+
+  .emptySlot {
+    width: 64px;
+    height: 91px;
+  }
+
+  .foundationArea {
+    padding: var(--space-md, 12px);
+  }
+}
+
+/* iPad Landscape (1024px - 1366px) */
+@media (min-width: 1024px) and (max-width: 1366px) and (orientation: landscape) {
+  .pilesContainer {
+    gap: var(--space-md, 12px);
+  }
+
+  .pile {
+    min-width: 68px;
+    min-height: 97px;
+  }
+
+  .emptySlot {
+    width: 68px;
+    height: 97px;
+  }
+}
+
+/* Small screens */
 @media (max-width: 400px) {
   .pilesContainer {
     gap: var(--space-sm, 8px);

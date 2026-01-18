@@ -2,8 +2,9 @@
 
 /* Base card styles */
 .card {
-  --card-width: 70px;
-  --card-height: 100px;
+  /* Fluid card sizing: 70px default, scales down on smaller screens */
+  --card-width: clamp(54px, 8vw, 70px);
+  --card-height: clamp(77px, 11.4vw, 100px);
   --card-radius: var(--radius-md, 4px);
 
   width: var(--card-width);
@@ -199,11 +200,39 @@
 
 /* Empty slot placeholder - neubrutalist dashed border */
 .emptySlot {
-  width: var(--card-width, 70px);
-  height: var(--card-height, 100px);
+  width: var(--card-width);
+  height: var(--card-height);
   border: var(--border-medium, 3px) dashed rgba(255, 255, 255, 0.4);
   border-radius: var(--card-radius);
   background: rgba(0, 0, 0, 0.2);
+}
+
+/* =============================================================================
+   IPAD RESPONSIVE ADJUSTMENTS
+   ============================================================================= */
+
+/* iPad Portrait (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+  .card {
+    --card-width: 64px;
+    --card-height: 91px;
+  }
+}
+
+/* iPad Landscape (1024px - 1366px) */
+@media (min-width: 1024px) and (max-width: 1366px) and (orientation: landscape) {
+  .card {
+    --card-width: 68px;
+    --card-height: 97px;
+  }
+}
+
+/* iPad Pro 12.9" Landscape - larger cards */
+@media (min-width: 1366px) and (max-width: 1400px) {
+  .card {
+    --card-width: 70px;
+    --card-height: 100px;
+  }
 }
 
 /* Dragging state - elevated with larger shadow */

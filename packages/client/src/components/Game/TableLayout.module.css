@@ -141,6 +141,56 @@
    RESPONSIVE ADJUSTMENTS
    ============================================================================= */
 
+/* iPad Portrait (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+  .tableLayout {
+    gap: 6px;
+  }
+
+  .topRow {
+    gap: 6px;
+    padding: 4px;
+  }
+
+  .middleRow {
+    gap: 6px;
+  }
+
+  /* On iPad portrait, switch 3-4 player layout to top row only */
+  .layout3to4 .leftColumn,
+  .layout3to4 .rightColumn {
+    display: none;
+  }
+
+  .layout3to4 .topRow {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+/* iPad Landscape (1024px - 1366px) */
+@media (min-width: 1024px) and (max-width: 1366px) and (orientation: landscape) {
+  .tableLayout {
+    gap: 8px;
+  }
+
+  .topRow {
+    gap: 8px;
+    padding: 4px 8px;
+  }
+
+  .middleRow {
+    gap: 8px;
+  }
+
+  /* On iPad landscape, keep side columns for 3-4 player layout */
+  .layout3to4 .leftColumn,
+  .layout3to4 .rightColumn {
+    width: auto;
+    padding: 4px;
+  }
+}
+
 @media (max-width: 900px) {
   .tableLayout {
     gap: 6px;

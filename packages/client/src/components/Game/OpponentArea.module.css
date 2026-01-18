@@ -311,3 +311,66 @@
 .dark .pileCount {
   color: var(--color-gray-light);
 }
+
+/* =============================================================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================================================= */
+
+/* iPad Portrait (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+  .opponentArea {
+    padding: var(--space-sm) var(--space-md);
+    min-width: 80px;
+  }
+
+  .name {
+    font-size: 0.625rem;
+    max-width: 60px;
+  }
+
+  .nertzCount {
+    padding: var(--space-xs) var(--space-sm);
+    min-width: 44px;
+  }
+
+  .nertzLabel {
+    font-size: 0.45rem;
+  }
+
+  .nertzNumber {
+    font-size: var(--font-size-lg);
+  }
+
+  .pileCounts {
+    gap: var(--space-sm);
+    font-size: 0.625rem;
+  }
+
+  .activityPulse {
+    width: 8px;
+    height: 8px;
+    top: 5px;
+    right: 5px;
+  }
+}
+
+/* iPad Landscape (1024px - 1366px) */
+@media (min-width: 1024px) and (max-width: 1366px) and (orientation: landscape) {
+  .opponentArea {
+    padding: var(--space-md) var(--space-lg);
+    min-width: 90px;
+  }
+
+  .name {
+    font-size: var(--font-size-xs);
+    max-width: 70px;
+  }
+
+  .nertzCount {
+    min-width: 48px;
+  }
+
+  .nertzNumber {
+    font-size: var(--font-size-xl);
+  }
+}

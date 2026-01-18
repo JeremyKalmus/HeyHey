@@ -195,6 +195,92 @@
    RESPONSIVE ADJUSTMENTS
    ============================================================================= */
 
+/* iPad Portrait (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+  .gameBoard {
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .foundationArea {
+    padding: 12px;
+  }
+
+  .foundationArea :global(.foundationArea) {
+    transform: scale(1.05);
+  }
+
+  .playerArea {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px;
+    max-height: 40vh;
+  }
+
+  .playArea {
+    flex-basis: 100%;
+    order: -1;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  /* Opponent area adjustments for iPad portrait */
+  .opponentArea {
+    max-height: 90px;
+    gap: 6px;
+    padding: 6px;
+  }
+
+  .opponents4to5 .opponentArea,
+  .opponents6plus .opponentArea {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    justify-content: flex-start;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* iPad Landscape (1024px - 1366px) */
+@media (min-width: 1024px) and (max-width: 1366px) and (orientation: landscape) {
+  .gameBoard {
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .foundationArea {
+    padding: 12px;
+  }
+
+  .foundationArea :global(.foundationArea) {
+    transform: scale(1.1);
+  }
+
+  .playerArea {
+    gap: 10px;
+    padding: 8px;
+    max-height: 42vh;
+  }
+
+  /* Opponent area adjustments for iPad landscape */
+  .opponentArea {
+    max-height: 100px;
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .opponents4to5 .opponentArea {
+    justify-content: center;
+  }
+
+  .opponents6plus .opponentArea {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    justify-content: flex-start;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
 @media (max-width: 900px) {
   .foundationArea :global(.foundationArea) {
     transform: scale(1);

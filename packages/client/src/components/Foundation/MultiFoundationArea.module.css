@@ -317,6 +317,71 @@
    RESPONSIVE ADJUSTMENTS
    ============================================================================= */
 
+/* iPad Portrait (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+  .fourPlayers .playersGrid,
+  .sixPlayers .playersGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .eightPlayers .playersGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-sm, 8px);
+  }
+
+  .pile {
+    min-width: 52px;
+    min-height: 74px;
+  }
+
+  .emptySlot {
+    width: 52px;
+    height: 74px;
+  }
+
+  .pilesRow {
+    gap: var(--space-sm, 8px);
+  }
+
+  .playerName {
+    max-width: 90px;
+  }
+
+  .multiFoundationArea {
+    padding: var(--space-sm, 8px);
+  }
+}
+
+/* iPad Landscape (1024px - 1366px) */
+@media (min-width: 1024px) and (max-width: 1366px) and (orientation: landscape) {
+  .fourPlayers .playersGrid,
+  .sixPlayers .playersGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .eightPlayers .playersGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .pile {
+    min-width: 56px;
+    min-height: 80px;
+  }
+
+  .emptySlot {
+    width: 56px;
+    height: 80px;
+  }
+
+  .pilesRow {
+    gap: var(--space-sm, 8px);
+  }
+
+  .playerName {
+    max-width: 100px;
+  }
+}
+
 /* Small screens: stack everything vertically */
 @media (max-width: 600px) {
   .fourPlayers .playersGrid,

@@ -112,7 +112,45 @@
   color: var(--arcade-cyan);
 }
 
-/* Responsive adjustments */
+/* =============================================================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================================================= */
+
+/* iPad Portrait (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+  .workPiles {
+    gap: var(--space-md);
+  }
+
+  .pileContainer {
+    min-width: 72px;
+    min-height: 99px;
+  }
+
+  .emptyPile {
+    width: 64px;
+    height: 91px;
+  }
+}
+
+/* iPad Landscape (1024px - 1366px) */
+@media (min-width: 1024px) and (max-width: 1366px) and (orientation: landscape) {
+  .workPiles {
+    gap: var(--space-lg);
+  }
+
+  .pileContainer {
+    min-width: 76px;
+    min-height: 105px;
+  }
+
+  .emptyPile {
+    width: 68px;
+    height: 97px;
+  }
+}
+
+/* Small screens */
 @media (max-width: 500px) {
   .workPiles {
     gap: var(--space-sm);
