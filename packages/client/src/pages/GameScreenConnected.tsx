@@ -7,7 +7,7 @@ import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from '@
 import { useGameState } from '../context/GameStateContext';
 import { useSocket } from '../context/SocketContext';
 import { WaitingToStart } from '../components/Game/WaitingToStart';
-import { GameBoard, type OpponentDisplayInfo } from '../components/Game/GameBoard';
+import { GameBoard } from '../components/Game/GameBoard';
 import { HeyHeyCelebration } from '../components/Game/HeyHeyCelebration';
 import { RoundEndScreen } from '../components/Game/RoundEndScreen';
 import { Card as CardComponent } from '../components/Card';
@@ -16,7 +16,6 @@ import { TableLayout, useOpponentRefs, type OpponentState } from '../components/
 import { SettingsToggle } from '../components/ui/SettingsToggle';
 import type { FoundationPile } from '@heyhey/shared';
 import type { PlayerColor } from '../components/Card/CardBack';
-import type { AvatarString } from '../components/ui/Avatar';
 import type { Card, PlayerGameState, GameState, GameConfig, Move, MoveSource } from '@heyhey/shared';
 import { createShuffledDeck } from '@heyhey/shared';
 import { useLocalPlayerState } from '../hooks/useLocalPlayerState';
@@ -49,7 +48,6 @@ export function GameScreenConnected() {
     gameWinner,
     playersReadyForNextRound,
     readyForNextRound,
-    opponentStates,
     opponentFullStates,
   } = useGameState();
   const { socket } = useSocket();
@@ -421,19 +419,6 @@ export function GameScreenConnected() {
     return null;
   }
 
-  // Get other players for opponent display with state
-  const opponentDisplayInfo: OpponentDisplayInfo[] = useMemo(() => {
-    const otherPlayers = room?.players.filter((p) => p.id !== playerId) || [];
-    return otherPlayers.map((p) => ({
-      playerId: p.id,
-      name: p.name,
-      avatar: p.avatar as AvatarString | undefined,
-      color: (p.color as PlayerColor) || 'blue',
-      state: opponentStates.get(p.id),
-      isActive: false, // TODO: track recent activity
-    }));
-  }, [room?.players, playerId, opponentStates]);
-
   // Convert opponentFullStates to OpponentState[] for TableLayout (ADR-009)
   const opponentStatesForLayout: OpponentState[] = useMemo(() => {
     const otherPlayers = room?.players.filter((p) => p.id !== playerId) || [];
@@ -635,7 +620,6 @@ export function GameScreenConnected() {
                 wastePile={localPlayerState.wastePile}
                 foundationPiles={[]}
                 playerColor={playerColor}
-                opponents={opponentDisplayInfo}
                 currentRound={roundNumber}
                 selectedCard={
                   localPlayer.selectedCard
@@ -732,7 +716,6 @@ export function GameScreenConnected() {
                   wastePile={localPlayerState.wastePile}
                   foundationPiles={[]}
                   playerColor={playerColor}
-                  opponents={opponentDisplayInfo}
                   currentRound={roundNumber}
                   selectedCard={null}
                   validWorkDestinations={setupWorkClickable ? [0, 1, 2, 3].filter(i => localPlayerState.workPiles[i]?.length === 0) : []}
