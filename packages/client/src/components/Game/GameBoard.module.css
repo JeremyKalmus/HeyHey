@@ -26,6 +26,8 @@
   gap: 12px;
   box-sizing: border-box;
   overflow: hidden;
+  /* Prevent touch scroll from blocking drag-and-drop on mobile/tablet */
+  touch-action: none;
 }
 
 /* =============================================================================

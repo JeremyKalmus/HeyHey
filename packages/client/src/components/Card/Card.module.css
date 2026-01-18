@@ -13,6 +13,8 @@
   cursor: pointer;
   transition: transform var(--transition-fast, 0.1s), box-shadow var(--transition-fast, 0.1s);
   user-select: none;
+  /* Prevent touch scroll from blocking drag-and-drop on mobile/tablet */
+  touch-action: none;
 }
 
 .card:hover {
