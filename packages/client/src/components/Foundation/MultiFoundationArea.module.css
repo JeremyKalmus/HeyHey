@@ -109,32 +109,39 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-md, 12px);
+  align-items: center;
+  width: 100%;
 }
 
-/* 2 players: vertical stack */
+/* 2 players: horizontal centered */
 .twoPlayers .playersGrid {
-  flex-direction: column;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
-/* 4 players: 2x2 grid */
+/* 4 players: 2x2 grid centered */
 .fourPlayers .playersGrid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, auto);
   gap: var(--space-md, 12px);
+  justify-content: center;
 }
 
-/* 6 players: 2x3 grid */
+/* 6 players: 2x3 grid centered */
 .sixPlayers .playersGrid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, auto);
   gap: var(--space-md, 12px);
+  justify-content: center;
 }
 
-/* 8 players: 2x4 grid */
+/* 8 players: 2x4 grid centered */
 .eightPlayers .playersGrid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, auto);
   gap: var(--space-sm, 8px);
+  justify-content: center;
 }
 
 /* =============================================================================
@@ -184,7 +191,8 @@
 .pilesRow {
   display: flex;
   gap: var(--space-sm, 8px);
-  justify-content: flex-start;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 /* =============================================================================
@@ -454,13 +462,21 @@
 
 /* Large screens: more spacious layout */
 @media (min-width: 1200px) {
-  .fourPlayers .playersGrid,
+  /* Keep 4 players at 2x2 for balanced layout */
+  .fourPlayers .playersGrid {
+    grid-template-columns: repeat(2, auto);
+    justify-content: center;
+  }
+
+  /* 6 players can go 3 columns on large screens */
   .sixPlayers .playersGrid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, auto);
+    justify-content: center;
   }
 
   .eightPlayers .playersGrid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, auto);
+    justify-content: center;
   }
 
   .pile {

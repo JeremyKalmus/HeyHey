@@ -123,7 +123,7 @@ export const TableLayout = memo(function TableLayout({
 
       {/* Middle section: [Left opponent] [Center] [Right opponent] */}
       <div className={styles.middleRow}>
-        {/* Left opponent (3-4 players) */}
+        {/* Left opponent (3-4 players) - uses xs scale for compact side fit */}
         {leftOpponent && (
           <div className={styles.leftColumn}>
             <OpponentPlayArea
@@ -137,7 +137,7 @@ export const TableLayout = memo(function TableLayout({
               nertzCount={leftOpponent.nertzCount}
               nertzTopCard={leftOpponent.nertzTopCard}
               workPiles={leftOpponent.workPiles}
-              scale={scale}
+              scale="xs"
               position="left"
               isActive={leftOpponent.isActive}
             />
@@ -147,7 +147,7 @@ export const TableLayout = memo(function TableLayout({
         {/* Center content (foundations) */}
         <div className={styles.centerColumn}>{centerContent}</div>
 
-        {/* Right opponent (3-4 players) */}
+        {/* Right opponent (3-4 players) - uses xs scale for compact side fit */}
         {rightOpponent && (
           <div className={styles.rightColumn}>
             <OpponentPlayArea
@@ -161,7 +161,7 @@ export const TableLayout = memo(function TableLayout({
               nertzCount={rightOpponent.nertzCount}
               nertzTopCard={rightOpponent.nertzTopCard}
               workPiles={rightOpponent.workPiles}
-              scale={scale}
+              scale="xs"
               position="right"
               isActive={rightOpponent.isActive}
             />
@@ -191,7 +191,8 @@ function getLayoutVariant(opponentCount: number): LayoutVariant {
 function getOpponentScale(opponentCount: number): OpponentPlayAreaScale {
   if (opponentCount <= 1) return 'md';
   if (opponentCount <= 3) return 'sm';
-  return 'xs';
+  if (opponentCount <= 4) return 'xs';
+  return 'xxs'; // 5+ opponents get extra small scale
 }
 
 interface DistributedOpponents {
@@ -202,43 +203,10 @@ interface DistributedOpponents {
 
 function distributeOpponents(
   opponents: OpponentState[],
-  layout: LayoutVariant
+  _layout: LayoutVariant
 ): DistributedOpponents {
-  if (layout === 'layout2') {
-    // 2 players: single opponent at top
-    return {
-      topOpponents: opponents,
-      leftOpponent: null,
-      rightOpponent: null,
-    };
-  }
-
-  if (layout === 'layout3to4') {
-    // 3-4 players: distribute around edges
-    // Order: left, top, right (for 3 players: left, top center, right)
-    const opp0 = opponents[0];
-    const opp1 = opponents[1];
-    const opp2 = opponents[2];
-
-    if (opponents.length === 2 && opp0 && opp1) {
-      // 3 total players (2 opponents): one top, one left or right
-      return {
-        topOpponents: [opp0],
-        leftOpponent: opp1,
-        rightOpponent: null,
-      };
-    }
-    if (opponents.length === 3 && opp0 && opp1 && opp2) {
-      // 4 total players (3 opponents): one left, one top, one right
-      return {
-        topOpponents: [opp1],
-        leftOpponent: opp0,
-        rightOpponent: opp2,
-      };
-    }
-  }
-
-  // 5+ players or default: all in top row (scrollable)
+  // All layouts: put all opponents in top row for clean, responsive layout
+  // Side positioning causes overflow issues on most screen sizes
   return {
     topOpponents: opponents,
     leftOpponent: null,

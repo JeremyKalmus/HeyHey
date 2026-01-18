@@ -1,6 +1,6 @@
 // OpponentPlayArea - Miniaturized view of opponent's play area with actual cards
-// Shows stock (back+count), waste (top card), nertz (top card+count), work piles (stacked cards)
-// Scaled to 50-60% for opponent visualization
+// Shows stock (back), waste (top card), nertz (top card), work piles (stacked cards)
+// Single row layout mirroring the player's area
 // Uses React.memo for performance
 
 import { memo, forwardRef } from 'react';
@@ -10,7 +10,7 @@ import type { PlayerColor } from '../Card/CardBack';
 import { Avatar, type AvatarString, DEFAULT_AVATAR } from '../ui/Avatar';
 import styles from './OpponentPlayArea.module.css';
 
-export type OpponentPlayAreaScale = 'xs' | 'sm' | 'md';
+export type OpponentPlayAreaScale = 'xxs' | 'xs' | 'sm' | 'md';
 export type OpponentPlayAreaPosition = 'top' | 'left' | 'right';
 
 export interface OpponentPlayAreaProps {
@@ -89,105 +89,87 @@ export const OpponentPlayArea = memo(forwardRef<HTMLDivElement, OpponentPlayArea
           ${isActive ? styles.active : ''}
           ${className ?? ''}
         `}
-        aria-label={`${playerName}'s play area - ${nertzCount} cards in Nertz pile`}
+        aria-label={`${playerName}'s play area`}
       >
         {/* Activity indicator pulse */}
         {isActive && <div className={styles.activityPulse} />}
 
-        {/* Player identity badge */}
+        {/* Player identity badge - inline */}
         <div className={styles.identity}>
           <Avatar avatar={playerAvatar} color={playerColor} size={avatarSize} />
           <span className={styles.name}>{playerName}</span>
         </div>
 
-        {/* Mini play area with actual cards */}
-        <div className={styles.playArea}>
-          {/* Stock and Waste section */}
-          <div className={styles.stockWasteSection}>
-            {/* Stock pile - card back with count */}
-            <div className={styles.pileContainer}>
-              {stockCount > 0 ? (
-                <div className={styles.stockPile}>
-                  <Card
-                    card={{ suit: 'spades', rank: 1, deckId: 'opponent' }}
-                    faceUp={false}
-                    backColor={playerColor}
-                    disabled
-                  />
-                  <div className={styles.countBadge}>{stockCount}</div>
-                </div>
-              ) : (
-                <div className={styles.emptySlot} />
-              )}
-            </div>
-
-            {/* Waste pile - top card only */}
-            <div className={styles.pileContainer}>
-              {wasteTopCard ? (
-                <Card
-                  card={wasteTopCard}
-                  faceUp={true}
-                  backColor={playerColor}
-                  disabled
-                />
-              ) : (
-                <div className={styles.emptySlot} />
-              )}
-            </div>
-          </div>
-
-          {/* Nertz pile - with danger/empty state */}
-          <div className={styles.nertzSection}>
-            <div
-              className={`
-                ${styles.pileContainer}
-                ${styles.nertzPile}
-                ${nertzDanger ? styles.danger : ''}
-                ${nertzEmpty ? styles.nertzEmpty : ''}
-              `}
-            >
-              {nertzTopCard ? (
-                <>
-                  <Card
-                    card={nertzTopCard}
-                    faceUp={true}
-                    backColor={playerColor}
-                    disabled
-                  />
-                  <div className={`${styles.countBadge} ${styles.nertzBadge}`}>
-                    {nertzCount}
-                  </div>
-                </>
-              ) : nertzEmpty ? (
-                <div className={styles.nertzEmptySlot}>
-                  <span className={styles.nertzLabel}>NERTZ!</span>
-                </div>
-              ) : (
-                <div className={styles.emptySlot} />
-              )}
-            </div>
-          </div>
-
-          {/* Work piles - full stacked cards */}
-          <div className={styles.workPilesSection}>
-            {workPiles.map((pile, pileIndex) => (
-              <div key={pileIndex} className={styles.pileContainer}>
-                {pile.length > 0 ? (
-                  <CardStack
-                    cards={pile}
-                    direction="vertical"
-                    offset={workPileOffset}
-                    faceUp={true}
-                    backColor={playerColor}
-                    maxVisible={6}
-                  />
-                ) : (
-                  <div className={styles.emptySlot} />
-                )}
-              </div>
-            ))}
-          </div>
+        {/* Stock pile - card back only, no count */}
+        <div className={styles.pileContainer}>
+          {stockCount > 0 ? (
+            <Card
+              card={{ suit: 'spades', rank: 1, deckId: 'opponent' }}
+              faceUp={false}
+              backColor={playerColor}
+              disabled
+            />
+          ) : (
+            <div className={styles.emptySlot} />
+          )}
         </div>
+
+        {/* Waste pile - top card only */}
+        <div className={styles.pileContainer}>
+          {wasteTopCard ? (
+            <Card
+              card={wasteTopCard}
+              faceUp={true}
+              backColor={playerColor}
+              disabled
+            />
+          ) : (
+            <div className={styles.emptySlot} />
+          )}
+        </div>
+
+        {/* Nertz pile - no count badge, just danger/empty state */}
+        <div
+          className={`
+            ${styles.pileContainer}
+            ${styles.nertzPile}
+            ${nertzDanger ? styles.danger : ''}
+            ${nertzEmpty ? styles.nertzEmpty : ''}
+          `}
+        >
+          {nertzTopCard ? (
+            <Card
+              card={nertzTopCard}
+              faceUp={true}
+              backColor={playerColor}
+              disabled
+            />
+          ) : nertzEmpty ? (
+            <div className={styles.nertzEmptySlot}>
+              <span className={styles.nertzLabel}>NERTZ!</span>
+            </div>
+          ) : (
+            <div className={styles.emptySlot} />
+          )}
+        </div>
+
+        {/* Work piles - stacked cards */}
+        {workPiles.map((pile, pileIndex) => (
+          <div key={pileIndex} className={styles.pileContainer}>
+            {pile.length > 0 ? (
+              <CardStack
+                cards={pile}
+                direction="vertical"
+                offset={workPileOffset}
+                faceUp={true}
+                backColor={playerColor}
+                maxVisible={6}
+              />
+            ) : (
+              <div className={styles.emptySlot} />
+            )}
+          </div>
+        ))}
       </div>
     );
   }

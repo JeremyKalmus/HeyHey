@@ -7,17 +7,20 @@
 
 .opponentPlayArea {
   --scale-factor: 0.5;
-  --card-width: calc(70px * var(--scale-factor));
-  --card-height: calc(100px * var(--scale-factor));
+  --base-card-width: 70px;
+  --base-card-height: 100px;
+  --card-width: calc(var(--base-card-width) * var(--scale-factor));
+  --card-height: calc(var(--base-card-height) * var(--scale-factor));
   --gap: 4px;
   --border-color: #000;
   --bg-surface: rgba(0, 0, 0, 0.3);
 
   position: relative;
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 8px;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: var(--gap);
+  padding: 6px 10px;
   background: var(--bg-surface);
   border: 3px solid var(--border-color);
   box-shadow: 3px 3px 0 var(--border-color);
@@ -28,6 +31,25 @@
 /* =============================================================================
    SCALE VARIANTS
    ============================================================================= */
+
+.scale-xxs {
+  --scale-factor: 0.2;
+  --gap: 1px;
+  padding: 2px 3px;
+  border-width: 2px;
+  box-shadow: 2px 2px 0 var(--border-color);
+}
+
+.scale-xxs .name {
+  font-size: 7px;
+  max-width: 35px;
+}
+
+.scale-xxs .identity {
+  padding-right: 3px;
+  margin-right: 2px;
+  gap: 1px;
+}
 
 .scale-xs {
   --scale-factor: 0.4;
@@ -56,11 +78,19 @@
 }
 
 .position-left {
-  /* Could add rotation or different layout for side position */
+  /* Rotated 90° clockwise - player sitting on left side of table */
+  transform: rotate(90deg);
+  transform-origin: center center;
+  /* Limit width when rotated (becomes height) to fit in column */
+  max-width: 300px;
 }
 
 .position-right {
-  /* Could add rotation or different layout for side position */
+  /* Rotated 90° counter-clockwise - player sitting on right side of table */
+  transform: rotate(-90deg);
+  transform-origin: center center;
+  /* Limit width when rotated (becomes height) to fit in column */
+  max-width: 300px;
 }
 
 /* =============================================================================
@@ -153,10 +183,14 @@
 
 .identity {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding-bottom: 4px;
-  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+  justify-content: center;
+  gap: 2px;
+  min-height: var(--card-height);
+  padding-right: 6px;
+  margin-right: 4px;
+  border-right: 2px solid rgba(255, 255, 255, 0.15);
 }
 
 .name {
@@ -182,34 +216,8 @@
 }
 
 /* =============================================================================
-   PLAY AREA LAYOUT
+   PLAY AREA LAYOUT - All elements in single row
    ============================================================================= */
-
-.playArea {
-  display: flex;
-  gap: var(--gap);
-  align-items: flex-start;
-}
-
-/* Stock and Waste side by side */
-.stockWasteSection {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap);
-}
-
-/* Nertz pile - separate section with emphasis */
-.nertzSection {
-  display: flex;
-  align-items: flex-start;
-}
-
-/* Work piles in a row */
-.workPilesSection {
-  display: flex;
-  gap: var(--gap);
-  align-items: flex-start;
-}
 
 /* =============================================================================
    PILE CONTAINERS
@@ -217,65 +225,19 @@
 
 .pileContainer {
   position: relative;
-  min-width: var(--card-width);
-  min-height: var(--card-height);
+  /* Container sized to scaled dimensions */
+  width: var(--card-width);
+  height: var(--card-height);
+  /* Content will overflow but container clips visual space */
+  overflow: visible;
 }
 
-/* Scale down the cards inside pile containers */
-.pileContainer :global(.card) {
+/* Scale the actual card/cardStack content */
+.pileContainer > * {
   transform: scale(var(--scale-factor));
   transform-origin: top left;
 }
 
-.pileContainer :global(.cardStack) {
-  transform: scale(var(--scale-factor));
-  transform-origin: top left;
-}
-
-/* =============================================================================
-   STOCK PILE
-   ============================================================================= */
-
-.stockPile {
-  position: relative;
-}
-
-/* =============================================================================
-   COUNT BADGES
-   ============================================================================= */
-
-.countBadge {
-  position: absolute;
-  bottom: -4px;
-  right: -4px;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
-  background: rgba(0, 0, 0, 0.8);
-  border: 2px solid #fff;
-  border-radius: 8px;
-  font-size: 10px;
-  font-weight: 700;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10;
-}
-
-.scale-xs .countBadge {
-  min-width: 14px;
-  height: 14px;
-  font-size: 9px;
-  bottom: -3px;
-  right: -3px;
-}
-
-.scale-md .countBadge {
-  min-width: 18px;
-  height: 18px;
-  font-size: 11px;
-}
 
 /* =============================================================================
    NERTZ PILE - Special styling

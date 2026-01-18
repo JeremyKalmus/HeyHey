@@ -43,6 +43,10 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  /* Width for rotated xs-scale opponent (~300px tall after rotate becomes width) */
+  width: 70px;
+  padding: 4px 0;
+  overflow: visible;
 }
 
 .centerColumn {
@@ -52,6 +56,7 @@
   justify-content: center;
   min-width: 0;
   min-height: 0;
+  overflow: auto;
 }
 
 .rightColumn {
@@ -59,6 +64,10 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  /* Width for rotated xs-scale opponent (~300px tall after rotate becomes width) */
+  width: 70px;
+  padding: 4px 0;
+  overflow: visible;
 }
 
 /* =============================================================================
@@ -93,43 +102,24 @@
   display: none;
 }
 
-/* Layout 3-4: 3-4 players - opponents around edges */
+/* Layout 3-4: 3-4 players - all opponents in top row */
 .layout3to4 .topRow {
   justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .layout3to4 .leftColumn,
 .layout3to4 .rightColumn {
-  width: auto;
-  padding: 4px;
+  display: none;
 }
 
-/* Layout 5+: 5+ players - scrollable row at top */
+/* Layout 5+: 5+ players - wrapped row at top */
 .layout5plus .topRow {
-  justify-content: flex-start;
-  overflow-x: auto;
-  overflow-y: hidden;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
   padding: 4px 8px;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
-}
-
-.layout5plus .topRow::-webkit-scrollbar {
-  height: 6px;
-}
-
-.layout5plus .topRow::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.layout5plus .topRow::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 3px;
-}
-
-.layout5plus .topRow::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.5);
 }
 
 .layout5plus .leftColumn,
