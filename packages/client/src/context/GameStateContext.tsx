@@ -16,11 +16,25 @@ import type {
   MoveRejection,
   RoundResult,
   OpponentPlayerState,
+  OpponentStateUpdatePayload,
+  Card,
 } from '@heyhey/shared';
 
 /* =============================================================================
    TYPES
    ============================================================================= */
+
+/** Full opponent state from server opponentStateUpdate events (ADR-009) */
+export interface OpponentFullState {
+  playerId: string;
+  stockCount: number;
+  wasteTopCard: Card | null;
+  nertzCount: number;
+  nertzTopCard: Card | null;
+  workPiles: Card[][];
+  /** Timestamp of last update */
+  lastUpdate: number;
+}
 
 export interface GameStateContextValue {
   // Room state
@@ -36,6 +50,8 @@ export interface GameStateContextValue {
   opponents: PlayerGameState[];
   /** Lightweight opponent states for real-time visualization */
   opponentStates: Map<string, OpponentPlayerState>;
+  /** Full opponent states from server updates (ADR-009) */
+  opponentFullStates: Map<string, OpponentFullState>;
 
   // Round/Scoring state
   roundResult: RoundResult | null;
@@ -78,6 +94,8 @@ interface GameState {
   opponents: PlayerGameState[];
   /** Lightweight opponent states for real-time visualization */
   opponentStates: Map<string, OpponentPlayerState>;
+  /** Full opponent states from server updates (ADR-009) */
+  opponentFullStates: Map<string, OpponentFullState>;
   roundResult: RoundResult | null;
   totalScores: { playerId: string; total: number }[];
   nertzCallerId: string | null;
@@ -113,7 +131,8 @@ type GameAction =
   | { type: 'SET_ERROR'; error: string }
   | { type: 'CLEAR_ERROR' }
   | { type: 'LEAVE_ROOM' }
-  | { type: 'INCREMENT_SEQUENCE' };
+  | { type: 'INCREMENT_SEQUENCE' }
+  | { type: 'OPPONENT_STATE_UPDATE'; payload: OpponentStateUpdatePayload };
 
 /* =============================================================================
    REDUCER
@@ -128,6 +147,7 @@ const initialState: GameState = {
   foundations: [],
   opponents: [],
   opponentStates: new Map(),
+  opponentFullStates: new Map(),
   roundResult: null,
   totalScores: [],
   nertzCallerId: null,
@@ -327,6 +347,25 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         ...state,
         moveSequence: state.moveSequence + 1,
       };
+
+    case 'OPPONENT_STATE_UPDATE': {
+      // Update full opponent state from server (ADR-009)
+      const { payload } = action;
+      const newFullStates = new Map(state.opponentFullStates);
+      newFullStates.set(payload.playerId, {
+        playerId: payload.playerId,
+        stockCount: payload.stockCount,
+        wasteTopCard: payload.wasteTopCard ?? null,
+        nertzCount: payload.nertzCount,
+        nertzTopCard: payload.nertzTopCard ?? null,
+        workPiles: payload.workPiles,
+        lastUpdate: Date.now(),
+      });
+      return {
+        ...state,
+        opponentFullStates: newFullStates,
+      };
+    }
 
     default:
       return state;
@@ -636,6 +675,11 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
       dispatch({ type: 'GAME_ENDED', winner: payload.winner });
     };
 
+    // Opponent state update (ADR-009)
+    const onOpponentStateUpdate = (payload: OpponentStateUpdatePayload) => {
+      dispatch({ type: 'OPPONENT_STATE_UPDATE', payload });
+    };
+
     // Attach listeners
     socket.on('roomCreated', onRoomCreated);
     socket.on('roomJoined', onRoomJoined);
@@ -658,6 +702,7 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
     socket.on('playerReadyForNextRound', onPlayerReadyForNextRound);
     socket.on('allReadyForNextRound', onAllReadyForNextRound);
     socket.on('gameEnded', onGameEnded);
+    socket.on('opponentStateUpdate', onOpponentStateUpdate);
 
     // Cleanup
     return () => {
@@ -682,6 +727,7 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
       socket.off('playerReadyForNextRound', onPlayerReadyForNextRound);
       socket.off('allReadyForNextRound', onAllReadyForNextRound);
       socket.off('gameEnded', onGameEnded);
+      socket.off('opponentStateUpdate', onOpponentStateUpdate);
     };
   }, [socket]);
 
@@ -813,6 +859,7 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
     foundations: state.foundations,
     opponents: state.opponents,
     opponentStates: state.opponentStates,
+    opponentFullStates: state.opponentFullStates,
 
     // Scoring
     roundResult: state.roundResult,

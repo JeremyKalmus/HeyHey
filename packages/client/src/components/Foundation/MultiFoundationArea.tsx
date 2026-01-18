@@ -96,6 +96,10 @@ export interface MultiFoundationAreaProps {
   isDragging?: boolean;
   /** Foundation indices that are valid drag targets (global indices across all players) */
   validDragFoundations?: number[];
+  /** Map of opponent refs for dynamic animation positioning (ADR-009) */
+  opponentRefs?: Map<string, HTMLDivElement>;
+  /** Ref to the foundation area element for position calculation */
+  foundationRef?: React.RefObject<HTMLDivElement>;
 }
 
 function makeCardKey(card: CardType): string {
@@ -103,23 +107,43 @@ function makeCardKey(card: CardType): string {
 }
 
 /**
- * Calculate fly-from coordinates based on opponent position
+ * Calculate fly-from coordinates based on opponent position (ADR-009)
+ * Uses actual DOM positions when opponentRefs are available, falls back to calculated positions
  * Returns CSS pixel values for --fly-from-x and --fly-from-y
  */
 function calculateFlyFromPosition(
   opponentIndex: number = 0,
-  totalOpponents: number = 1
+  totalOpponents: number = 1,
+  playerId?: string,
+  opponentRefs?: Map<string, HTMLDivElement>,
+  foundationEl?: HTMLDivElement | null
 ): { x: number; y: number } {
-  // Opponents are laid out horizontally at the top of the screen
-  // Calculate position as percentage of viewport width, then convert to pixel offset
-  // The card should appear to fly from the opponent's area toward the foundation
+  // Try to get actual DOM position if refs are available
+  if (playerId && opponentRefs && foundationEl) {
+    const opponentEl = opponentRefs.get(playerId);
+    if (opponentEl) {
+      const opponentRect = opponentEl.getBoundingClientRect();
+      const foundationRect = foundationEl.getBoundingClientRect();
 
-  // Distribute opponents evenly across the top
+      // Calculate offset from foundation center to opponent center
+      const opponentCenterX = opponentRect.left + opponentRect.width / 2;
+      const opponentCenterY = opponentRect.top + opponentRect.height / 2;
+      const foundationCenterX = foundationRect.left + foundationRect.width / 2;
+      const foundationCenterY = foundationRect.top + foundationRect.height / 2;
+
+      return {
+        x: opponentCenterX - foundationCenterX,
+        y: opponentCenterY - foundationCenterY,
+      };
+    }
+  }
+
+  // Fallback to calculated position when DOM refs not available
+  // Opponents are laid out horizontally at the top of the screen
   const segmentWidth = 100 / Math.max(totalOpponents, 1);
   const centerX = segmentWidth * opponentIndex + segmentWidth / 2;
 
   // Convert to offset from center (foundation is roughly in center)
-  // Negative X = from left, positive X = from right
   const xOffset = (centerX - 50) * 3; // Scale factor for visible motion
 
   // Y is always negative (coming from top)
@@ -141,12 +165,17 @@ export function MultiFoundationArea({
   enableOpponentSounds = true,
   isDragging = false,
   validDragFoundations = [],
+  opponentRefs,
+  foundationRef,
 }: MultiFoundationAreaProps) {
   // Track which pile is currently animating
   const [animatingPile, setAnimatingPile] = useState<string | null>(null);
   // Track flying cards for animation
   const [flyingCard, setFlyingCard] = useState<FlyingCardState | null>(null);
   const lastMoveTimestamp = useRef<number>(0);
+  // Internal ref for foundation area (used if external ref not provided)
+  const internalFoundationRef = useRef<HTMLDivElement>(null);
+  const actualFoundationRef = foundationRef?.current ?? internalFoundationRef.current;
 
   // Handle new opponent moves - trigger animation and sound
   useEffect(() => {
@@ -158,10 +187,13 @@ export function MultiFoundationArea({
     const pileKey = `${lastOpponentMove.playerId}-${lastOpponentMove.suit}`;
     setAnimatingPile(pileKey);
 
-    // Calculate fly-from position based on opponent index
+    // Calculate fly-from position (ADR-009: use actual DOM positions when available)
     const { x, y } = calculateFlyFromPosition(
       lastOpponentMove.opponentIndex,
-      lastOpponentMove.totalOpponents
+      lastOpponentMove.totalOpponents,
+      lastOpponentMove.playerId,
+      opponentRefs,
+      actualFoundationRef
     );
 
     // Set flying card state
@@ -185,7 +217,7 @@ export function MultiFoundationArea({
     }, 350);
 
     return () => clearTimeout(timer);
-  }, [lastOpponentMove, enableOpponentSounds]);
+  }, [lastOpponentMove, enableOpponentSounds, opponentRefs, actualFoundationRef]);
 
   // Get owner color for a card
   const getOwnerColor = (card: CardType): PlayerColor | undefined => {
@@ -235,7 +267,10 @@ export function MultiFoundationArea({
                       styles.eightPlayers;
 
   return (
-    <div className={`${styles.multiFoundationArea} ${layoutClass} ${hasPendingMoves ? styles.pending : ''}`}>
+    <div
+      ref={internalFoundationRef}
+      className={`${styles.multiFoundationArea} ${layoutClass} ${hasPendingMoves ? styles.pending : ''}`}
+    >
       {hasPendingMoves && <div className={styles.header}><span className={styles.syncIndicator}>Syncing...</span></div>}
       {error && <div className={styles.errorMessage}>{error}</div>}
 

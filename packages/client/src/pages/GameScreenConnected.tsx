@@ -12,7 +12,7 @@ import { HeyHeyCelebration } from '../components/Game/HeyHeyCelebration';
 import { RoundEndScreen } from '../components/Game/RoundEndScreen';
 import { Card as CardComponent } from '../components/Card';
 import { MultiFoundationArea, type PlayerFoundationGroup } from '../components/Foundation';
-import { Avatar } from '../components/ui/Avatar';
+import { TableLayout, useOpponentRefs, type OpponentState } from '../components/Game/TableLayout';
 import { SettingsToggle } from '../components/ui/SettingsToggle';
 import type { FoundationPile } from '@heyhey/shared';
 import type { PlayerColor } from '../components/Card/CardBack';
@@ -50,8 +50,12 @@ export function GameScreenConnected() {
     playersReadyForNextRound,
     readyForNextRound,
     opponentStates,
+    opponentFullStates,
   } = useGameState();
   const { socket } = useSocket();
+
+  // Opponent refs for flying card animation (ADR-009)
+  const { refs: opponentRefs, setRefs: setOpponentRefs } = useOpponentRefs();
 
   // The shuffled deck (created once when round starts)
   const [deck, setDeck] = useState<Card[]>([]);
@@ -430,6 +434,24 @@ export function GameScreenConnected() {
     }));
   }, [room?.players, playerId, opponentStates]);
 
+  // Convert opponentFullStates to OpponentState[] for TableLayout (ADR-009)
+  const opponentStatesForLayout: OpponentState[] = useMemo(() => {
+    const otherPlayers = room?.players.filter((p) => p.id !== playerId) || [];
+    return otherPlayers.map((p) => {
+      const fullState = opponentFullStates.get(p.id);
+      return {
+        playerId: p.id,
+        playerName: p.name,
+        playerColor: (p.color as PlayerColor) || 'blue',
+        stockCount: fullState?.stockCount ?? 0,
+        wasteTopCard: fullState?.wasteTopCard ?? null,
+        nertzCount: fullState?.nertzCount ?? 0,
+        nertzTopCard: fullState?.nertzTopCard ?? null,
+        workPiles: fullState?.workPiles ?? [[], [], [], []],
+      };
+    });
+  }, [room?.players, playerId, opponentFullStates]);
+
   // Get starter info for WaitingToStart
   const players = room?.players || [];
   const starterPlayer = players[currentStarterIndex];
@@ -539,28 +561,15 @@ export function GameScreenConnected() {
             boxSizing: 'border-box',
           }}
         >
-          {/* Header bar with opponents and settings */}
+          {/* Header bar with settings */}
           <div
             style={{
               display: 'flex',
-              justifyContent: 'space-between',
+              justifyContent: 'flex-end',
               alignItems: 'center',
               padding: '4px 8px',
             }}
           >
-            {/* Opponents - just avatars in header */}
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              {opponentDisplayInfo.map((opp) => (
-                <div key={opp.playerId} style={{ opacity: 0.7 }} title={opp.name}>
-                  <Avatar
-                    avatar={opp.avatar || 'user:circle'}
-                    color={opp.color}
-                    size="sm"
-                  />
-                </div>
-              ))}
-            </div>
-
             {/* Controls */}
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <SettingsToggle
@@ -569,6 +578,14 @@ export function GameScreenConnected() {
               />
             </div>
           </div>
+
+          {/* Opponent play areas (ADR-009) */}
+          {opponentStatesForLayout.length > 0 && (
+            <TableLayout
+              opponents={opponentStatesForLayout}
+              onOpponentRefsReady={setOpponentRefs}
+            />
+          )}
 
           {/* Setup instruction banner */}
           {!isSetupComplete && (
@@ -611,6 +628,7 @@ export function GameScreenConnected() {
                 validDragFoundations={dragDrop.validDropTargets
                   .filter((t) => t.type === 'foundation')
                   .map((t) => t.index)}
+                opponentRefs={opponentRefs.current}
               />
 
               <GameBoard
@@ -701,6 +719,7 @@ export function GameScreenConnected() {
                 showMoveHints={false}
                 isDragging={false}
                 validDragFoundations={[]}
+                opponentRefs={opponentRefs.current}
               />
 
               <GameBoard
