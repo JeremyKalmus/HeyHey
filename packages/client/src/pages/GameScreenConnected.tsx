@@ -579,14 +579,6 @@ export function GameScreenConnected() {
             </div>
           </div>
 
-          {/* Opponent play areas (ADR-009) */}
-          {opponentStatesForLayout.length > 0 && (
-            <TableLayout
-              opponents={opponentStatesForLayout}
-              onOpponentRefsReady={setOpponentRefs}
-            />
-          )}
-
           {/* Setup instruction banner */}
           {!isSetupComplete && (
             <div
@@ -613,25 +605,30 @@ export function GameScreenConnected() {
               onDragEnd={dragDrop.handleDragEnd}
               onDragCancel={dragDrop.handleDragCancel}
             >
-              <MultiFoundationArea
-                playerGroups={playerGroups}
-                selectedCard={localPlayer.selectedCard?.card ?? null}
-                onPileClick={(_pid: string, _suit: string, globalIndex: number) => {
-                  localPlayer.handleFoundationClick(globalIndex);
-                }}
-                canPlace={
-                  localPlayer.validFoundationDestinations.length > 0 ||
-                  dragDrop.validDropTargets.some((t) => t.type === 'foundation')
+              <TableLayout
+                opponents={opponentStatesForLayout}
+                onOpponentRefsReady={setOpponentRefs}
+                centerContent={
+                  <MultiFoundationArea
+                    playerGroups={playerGroups}
+                    selectedCard={localPlayer.selectedCard?.card ?? null}
+                    onPileClick={(_pid: string, _suit: string, globalIndex: number) => {
+                      localPlayer.handleFoundationClick(globalIndex);
+                    }}
+                    canPlace={
+                      localPlayer.validFoundationDestinations.length > 0 ||
+                      dragDrop.validDropTargets.some((t) => t.type === 'foundation')
+                    }
+                    showMoveHints={settings.showMoveHints}
+                    isDragging={dragDrop.isDragging}
+                    validDragFoundations={dragDrop.validDropTargets
+                      .filter((t) => t.type === 'foundation')
+                      .map((t) => t.index)}
+                    opponentRefs={opponentRefs.current}
+                  />
                 }
-                showMoveHints={settings.showMoveHints}
-                isDragging={dragDrop.isDragging}
-                validDragFoundations={dragDrop.validDropTargets
-                  .filter((t) => t.type === 'foundation')
-                  .map((t) => t.index)}
-                opponentRefs={opponentRefs.current}
-              />
-
-              <GameBoard
+                bottomContent={
+                  <GameBoard
                 nertzPile={localPlayerState.nertzPile}
                 workPiles={localPlayerState.workPiles as [Card[], Card[], Card[], Card[]]}
                 stockPile={localPlayerState.stockPile}
@@ -696,6 +693,8 @@ export function GameScreenConnected() {
                 dragSource={dragDrop.dragSource}
                 validDropTargets={dragDrop.validDropTargets}
                 maxPileHeight={280}
+                  />
+                }
               />
 
               <DragOverlay>
@@ -710,43 +709,48 @@ export function GameScreenConnected() {
             </DndContext>
           ) : (
             // Setup phase - same GameBoard but with setup click handlers
-            <>
-              <MultiFoundationArea
-                playerGroups={playerGroups}
-                selectedCard={null}
-                onPileClick={() => {}}
-                canPlace={false}
-                showMoveHints={false}
-                isDragging={false}
-                validDragFoundations={[]}
-                opponentRefs={opponentRefs.current}
-              />
-
-              <GameBoard
-                nertzPile={localPlayerState.nertzPile}
-                workPiles={localPlayerState.workPiles as [Card[], Card[], Card[], Card[]]}
-                stockPile={localPlayerState.stockPile}
-                wastePile={localPlayerState.wastePile}
-                foundationPiles={[]}
-                playerColor={playerColor}
-                opponents={opponentDisplayInfo}
-                currentRound={roundNumber}
-                selectedCard={null}
-                validWorkDestinations={setupWorkClickable ? [0, 1, 2, 3].filter(i => localPlayerState.workPiles[i]?.length === 0) : []}
-                canCallHeyHey={false}
-                canRecycleStock={false}
-                disabled={false}
-                nertzTopCardFaceUp={nertzFlipped}
-                // Setup handlers
-                onNertzCardClick={setupNertzClickable ? () => handleSetupNertzClick() : undefined}
-                onWorkPileClick={setupWorkClickable ? handleSetupWorkPileClick : undefined}
-                onStockDraw={setupStockClickable ? handleSetupStockClick : undefined}
-                hideFoundation={true}
-                hideTopBar={true}
-                showMoveHints={setupWorkClickable}
-                maxPileHeight={280}
-              />
-            </>
+            <TableLayout
+              opponents={opponentStatesForLayout}
+              onOpponentRefsReady={setOpponentRefs}
+              centerContent={
+                <MultiFoundationArea
+                  playerGroups={playerGroups}
+                  selectedCard={null}
+                  onPileClick={() => {}}
+                  canPlace={false}
+                  showMoveHints={false}
+                  isDragging={false}
+                  validDragFoundations={[]}
+                  opponentRefs={opponentRefs.current}
+                />
+              }
+              bottomContent={
+                <GameBoard
+                  nertzPile={localPlayerState.nertzPile}
+                  workPiles={localPlayerState.workPiles as [Card[], Card[], Card[], Card[]]}
+                  stockPile={localPlayerState.stockPile}
+                  wastePile={localPlayerState.wastePile}
+                  foundationPiles={[]}
+                  playerColor={playerColor}
+                  opponents={opponentDisplayInfo}
+                  currentRound={roundNumber}
+                  selectedCard={null}
+                  validWorkDestinations={setupWorkClickable ? [0, 1, 2, 3].filter(i => localPlayerState.workPiles[i]?.length === 0) : []}
+                  canCallHeyHey={false}
+                  canRecycleStock={false}
+                  disabled={false}
+                  nertzTopCardFaceUp={nertzFlipped}
+                  // Setup handlers
+                  onNertzCardClick={setupNertzClickable ? () => handleSetupNertzClick() : undefined}
+                  onWorkPileClick={setupWorkClickable ? handleSetupWorkPileClick : undefined}
+                  onStockDraw={setupStockClickable ? handleSetupStockClick : undefined}
+                  hideFoundation={true}
+                  hideTopBar={true}
+                  showMoveHints={setupWorkClickable}
+                  maxPileHeight={280}
+                />
+              }
+            />
           )}
 
           {/* HeyHey Celebration Overlay */}
