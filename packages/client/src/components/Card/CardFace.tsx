@@ -1,4 +1,12 @@
 import type { Card } from '@heyhey/shared';
+import type { ComponentType } from 'react';
+import type { LucideProps } from 'lucide-react';
+import {
+  SuitHeartIcon,
+  SuitDiamondIcon,
+  SuitClubIcon,
+  SuitSpadeIcon,
+} from '../ui/Icon';
 import styles from './Card.module.css';
 
 export interface CardFaceProps {
@@ -6,11 +14,11 @@ export interface CardFaceProps {
   className?: string;
 }
 
-const SUIT_SYMBOLS: Record<Card['suit'], string> = {
-  hearts: '\u2665',
-  diamonds: '\u2666',
-  clubs: '\u2663',
-  spades: '\u2660',
+const SUIT_ICONS: Record<Card['suit'], ComponentType<LucideProps>> = {
+  hearts: SuitHeartIcon,
+  diamonds: SuitDiamondIcon,
+  clubs: SuitClubIcon,
+  spades: SuitSpadeIcon,
 };
 
 const RANK_LABELS: Record<number, string> = {
@@ -29,7 +37,7 @@ function isRedSuit(suit: Card['suit']): boolean {
 }
 
 export function CardFace({ card, className }: CardFaceProps) {
-  const suitSymbol = SUIT_SYMBOLS[card.suit];
+  const SuitIcon = SUIT_ICONS[card.suit];
   const rankLabel = getRankLabel(card.rank);
   const colorClass = isRedSuit(card.suit) ? styles.red : styles.black;
 
@@ -38,16 +46,20 @@ export function CardFace({ card, className }: CardFaceProps) {
       <div className={styles.cardFaceContent}>
         <div className={`${styles.cornerLabel} ${styles.cornerLabelTop} ${colorClass}`}>
           <span className={styles.rank}>{rankLabel}</span>
-          <span className={styles.suitSmall}>{suitSymbol}</span>
+          <span className={styles.suitSmall}>
+            <SuitIcon size={10} strokeWidth={2.5} fill="currentColor" />
+          </span>
         </div>
 
         <div className={`${styles.centerSuit} ${colorClass}`}>
-          {suitSymbol}
+          <SuitIcon size={28} strokeWidth={2} fill="currentColor" />
         </div>
 
         <div className={`${styles.cornerLabel} ${styles.cornerLabelBottom} ${colorClass}`}>
           <span className={styles.rank}>{rankLabel}</span>
-          <span className={styles.suitSmall}>{suitSymbol}</span>
+          <span className={styles.suitSmall}>
+            <SuitIcon size={10} strokeWidth={2.5} fill="currentColor" />
+          </span>
         </div>
       </div>
     </div>
