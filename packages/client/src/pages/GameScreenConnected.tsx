@@ -521,8 +521,11 @@ export function GameScreenConnected() {
             flexDirection: 'column',
             gap: '8px',
             padding: '8px',
-            minHeight: '100vh',
+            height: '100vh',
+            maxHeight: '100vh',
+            overflow: 'hidden',
             background: '#0a0a12',
+            boxSizing: 'border-box',
           }}
         >
           {/* Header bar with opponents and settings */}
