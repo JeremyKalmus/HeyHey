@@ -42,6 +42,54 @@
 }
 
 /* =============================================================================
+   OPPONENT AREA - Responsive layout for 2, 3-4, 5+ players
+   ============================================================================= */
+
+.opponentArea {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 3px solid var(--border-color);
+  box-shadow: 3px 3px 0 var(--border-color);
+  flex-shrink: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-height: 120px;
+}
+
+/* 1 opponent: centered, medium size */
+.opponents1 .opponentArea {
+  justify-content: center;
+  max-height: 100px;
+}
+
+/* 2-3 opponents: row layout, small size */
+.opponents2to3 .opponentArea {
+  justify-content: center;
+  gap: 12px;
+  max-height: 90px;
+}
+
+/* 4-5 opponents: compact row, may wrap on small screens */
+.opponents4to5 .opponentArea {
+  justify-content: center;
+  gap: 8px;
+  max-height: 80px;
+}
+
+/* 6+ opponents: compact, scrollable if needed */
+.opponents6plus .opponentArea {
+  justify-content: flex-start;
+  gap: 6px;
+  max-height: 70px;
+  overflow-x: auto;
+}
+
+/* =============================================================================
    FOUNDATION AREA - Center Stage (THE MAIN FOCUS)
    ============================================================================= */
 
@@ -160,6 +208,20 @@
     order: -1;
     justify-content: center;
   }
+
+  /* Opponent area adjustments for tablet */
+  .opponentArea {
+    max-height: 100px;
+    gap: 6px;
+    padding: 6px;
+  }
+
+  .opponents4to5 .opponentArea,
+  .opponents6plus .opponentArea {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    justify-content: flex-start;
+  }
 }
 
 @media (max-width: 600px) {
@@ -196,5 +258,15 @@
 
   .workArea {
     padding: 8px;
+  }
+
+  /* Opponent area adjustments for mobile */
+  .opponentArea {
+    max-height: 80px;
+    gap: 4px;
+    padding: 4px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    justify-content: flex-start;
   }
 }

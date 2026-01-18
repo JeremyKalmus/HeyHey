@@ -52,6 +52,23 @@ export interface OpponentMove {
   rank: number;
   /** Timestamp to detect new moves */
   timestamp: number;
+  /** Index of the opponent in the layout (for fly-from position calculation) */
+  opponentIndex?: number;
+  /** Total number of opponents (for fly-from position calculation) */
+  totalOpponents?: number;
+}
+
+/** Flying card state for animation tracking */
+interface FlyingCardState {
+  /** Unique key for the flying card */
+  key: string;
+  /** Target pile key (playerId-suit) */
+  targetPile: string;
+  /** CSS custom properties for animation */
+  flyFromX: number;
+  flyFromY: number;
+  /** Timestamp when animation started */
+  startTime: number;
 }
 
 export interface MultiFoundationAreaProps {
@@ -85,6 +102,32 @@ function makeCardKey(card: CardType): string {
   return `${card.suit}-${card.rank}`;
 }
 
+/**
+ * Calculate fly-from coordinates based on opponent position
+ * Returns CSS pixel values for --fly-from-x and --fly-from-y
+ */
+function calculateFlyFromPosition(
+  opponentIndex: number = 0,
+  totalOpponents: number = 1
+): { x: number; y: number } {
+  // Opponents are laid out horizontally at the top of the screen
+  // Calculate position as percentage of viewport width, then convert to pixel offset
+  // The card should appear to fly from the opponent's area toward the foundation
+
+  // Distribute opponents evenly across the top
+  const segmentWidth = 100 / Math.max(totalOpponents, 1);
+  const centerX = segmentWidth * opponentIndex + segmentWidth / 2;
+
+  // Convert to offset from center (foundation is roughly in center)
+  // Negative X = from left, positive X = from right
+  const xOffset = (centerX - 50) * 3; // Scale factor for visible motion
+
+  // Y is always negative (coming from top)
+  const yOffset = -100 - Math.random() * 50; // Randomize slightly for visual variety
+
+  return { x: xOffset, y: yOffset };
+}
+
 export function MultiFoundationArea({
   playerGroups,
   selectedCard,
@@ -101,6 +144,8 @@ export function MultiFoundationArea({
 }: MultiFoundationAreaProps) {
   // Track which pile is currently animating
   const [animatingPile, setAnimatingPile] = useState<string | null>(null);
+  // Track flying cards for animation
+  const [flyingCard, setFlyingCard] = useState<FlyingCardState | null>(null);
   const lastMoveTimestamp = useRef<number>(0);
 
   // Handle new opponent moves - trigger animation and sound
@@ -113,15 +158,31 @@ export function MultiFoundationArea({
     const pileKey = `${lastOpponentMove.playerId}-${lastOpponentMove.suit}`;
     setAnimatingPile(pileKey);
 
+    // Calculate fly-from position based on opponent index
+    const { x, y } = calculateFlyFromPosition(
+      lastOpponentMove.opponentIndex,
+      lastOpponentMove.totalOpponents
+    );
+
+    // Set flying card state
+    setFlyingCard({
+      key: `${pileKey}-${lastOpponentMove.timestamp}`,
+      targetPile: pileKey,
+      flyFromX: x,
+      flyFromY: y,
+      startTime: lastOpponentMove.timestamp,
+    });
+
     // Play sound
     if (enableOpponentSounds) {
       soundManager.play('opponentMove');
     }
 
-    // Clear animation after it completes
+    // Clear animation after it completes (300ms animation + buffer)
     const timer = setTimeout(() => {
       setAnimatingPile(null);
-    }, 350); // Match CSS animation duration
+      setFlyingCard(null);
+    }, 350);
 
     return () => clearTimeout(timer);
   }, [lastOpponentMove, enableOpponentSounds]);
@@ -192,6 +253,7 @@ export function MultiFoundationArea({
             getGlobalIndex={getGlobalIndex}
             onPileClick={onPileClick}
             animatingPile={animatingPile}
+            flyingCard={flyingCard}
           />
         ))}
       </div>
@@ -217,6 +279,7 @@ interface PlayerFoundationRowProps {
   getGlobalIndex: (playerIndex: number, suitIndex: number) => number;
   onPileClick?: (playerId: string, suit: Suit, globalIndex: number) => void;
   animatingPile: string | null;
+  flyingCard: FlyingCardState | null;
 }
 
 function PlayerFoundationRow({
@@ -230,6 +293,7 @@ function PlayerFoundationRow({
   getGlobalIndex,
   onPileClick,
   animatingPile,
+  flyingCard,
 }: PlayerFoundationRowProps) {
   // Create a map for easy lookup
   const pileMap = new Map(group.piles.map((p) => [p.suit, p]));
@@ -260,6 +324,10 @@ function PlayerFoundationRow({
           const pileKey = `${group.playerId}-${suit}`;
           const isReceiving = animatingPile === pileKey;
 
+          // Get fly-from position if this pile is receiving
+          const flyFromX = flyingCard?.targetPile === pileKey ? flyingCard.flyFromX : 0;
+          const flyFromY = flyingCard?.targetPile === pileKey ? flyingCard.flyFromY : 0;
+
           return (
             <DroppableFoundationPile
               key={pileKey}
@@ -272,6 +340,8 @@ function PlayerFoundationRow({
               isHighlighted={isHighlighted}
               isClickable={isClickable}
               isReceiving={isReceiving}
+              flyFromX={flyFromX}
+              flyFromY={flyFromY}
               getOwnerColor={getOwnerColor}
               onPileClick={onPileClick}
             />
@@ -296,6 +366,10 @@ interface DroppableFoundationPileProps {
   isHighlighted: boolean;
   isClickable: boolean;
   isReceiving: boolean;
+  /** CSS custom property for fly-from X position (px) */
+  flyFromX: number;
+  /** CSS custom property for fly-from Y position (px) */
+  flyFromY: number;
   getOwnerColor: (card: CardType) => PlayerColor | undefined;
   onPileClick?: (playerId: string, suit: Suit, globalIndex: number) => void;
 }
@@ -310,6 +384,8 @@ function DroppableFoundationPile({
   isHighlighted,
   isClickable,
   isReceiving,
+  flyFromX,
+  flyFromY,
   getOwnerColor,
   onPileClick,
 }: DroppableFoundationPileProps) {
@@ -348,7 +424,13 @@ function DroppableFoundationPile({
         topCard ? `, top card: ${topCard.rank}` : ''
       }`}
     >
-      <div className={`${styles.pile} ${isReceiving ? styles.flying : ''}`}>
+      <div
+        className={`${styles.pile} ${isReceiving ? styles.flying : ''}`}
+        style={isReceiving ? {
+          '--fly-from-x': `${flyFromX}px`,
+          '--fly-from-y': `${flyFromY}px`,
+        } as React.CSSProperties : undefined}
+      >
         {topCard ? (
           <Card
             card={topCard}
