@@ -7,7 +7,7 @@ import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from '@
 import { useGameState } from '../context/GameStateContext';
 import { useSocket } from '../context/SocketContext';
 import { WaitingToStart } from '../components/Game/WaitingToStart';
-import { GameBoard } from '../components/Game/GameBoard';
+import { GameBoard, type OpponentDisplayInfo } from '../components/Game/GameBoard';
 import { HeyHeyCelebration } from '../components/Game/HeyHeyCelebration';
 import { RoundEndScreen } from '../components/Game/RoundEndScreen';
 import { Card as CardComponent } from '../components/Card';
@@ -49,6 +49,7 @@ export function GameScreenConnected() {
     gameWinner,
     playersReadyForNextRound,
     readyForNextRound,
+    opponentStates,
   } = useGameState();
   const { socket } = useSocket();
 
@@ -416,8 +417,18 @@ export function GameScreenConnected() {
     return null;
   }
 
-  // Get other players for opponent display
-  const opponents = room?.players.filter((p) => p.id !== playerId) || [];
+  // Get other players for opponent display with state
+  const opponentDisplayInfo: OpponentDisplayInfo[] = useMemo(() => {
+    const otherPlayers = room?.players.filter((p) => p.id !== playerId) || [];
+    return otherPlayers.map((p) => ({
+      playerId: p.id,
+      name: p.name,
+      avatar: p.avatar as AvatarString | undefined,
+      color: (p.color as PlayerColor) || 'blue',
+      state: opponentStates.get(p.id),
+      isActive: false, // TODO: track recent activity
+    }));
+  }, [room?.players, playerId, opponentStates]);
 
   // Get starter info for WaitingToStart
   const players = room?.players || [];
@@ -537,13 +548,13 @@ export function GameScreenConnected() {
               padding: '4px 8px',
             }}
           >
-            {/* Opponents - just avatars */}
+            {/* Opponents - just avatars in header */}
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              {opponents.map((opp) => (
-                <div key={opp.id} style={{ opacity: 0.7 }} title={opp.name}>
+              {opponentDisplayInfo.map((opp) => (
+                <div key={opp.playerId} style={{ opacity: 0.7 }} title={opp.name}>
                   <Avatar
-                    avatar={(opp.avatar as AvatarString) || 'user:circle'}
-                    color={(opp.color as PlayerColor) || 'blue'}
+                    avatar={opp.avatar || 'user:circle'}
+                    color={opp.color}
                     size="sm"
                   />
                 </div>
@@ -609,6 +620,7 @@ export function GameScreenConnected() {
                 wastePile={localPlayerState.wastePile}
                 foundationPiles={[]}
                 playerColor={playerColor}
+                opponents={opponentDisplayInfo}
                 currentRound={roundNumber}
                 selectedCard={
                   localPlayer.selectedCard
@@ -698,6 +710,7 @@ export function GameScreenConnected() {
                 wastePile={localPlayerState.wastePile}
                 foundationPiles={[]}
                 playerColor={playerColor}
+                opponents={opponentDisplayInfo}
                 currentRound={roundNumber}
                 selectedCard={null}
                 validWorkDestinations={setupWorkClickable ? [0, 1, 2, 3].filter(i => localPlayerState.workPiles[i]?.length === 0) : []}
