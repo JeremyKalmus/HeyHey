@@ -242,10 +242,14 @@
 }
 
 /* Pile Area - smaller for multi-player layout */
+/* Card dimensions set here are inherited by Card component to prevent layout shift */
 .pile {
   position: relative;
   min-width: 56px;
   min-height: 80px;
+  /* Override card dimensions - Card component inherits these CSS variables */
+  --card-width: 56px;
+  --card-height: 80px;
 }
 
 /* Empty Slot - Neubrutalist dashed */
@@ -340,6 +344,8 @@
   .pile {
     min-width: 52px;
     min-height: 74px;
+    --card-width: 52px;
+    --card-height: 74px;
   }
 
   .emptySlot {
@@ -374,6 +380,8 @@
   .pile {
     min-width: 56px;
     min-height: 80px;
+    --card-width: 56px;
+    --card-height: 80px;
   }
 
   .emptySlot {
@@ -401,6 +409,8 @@
   .pile {
     min-width: 48px;
     min-height: 68px;
+    --card-width: 48px;
+    --card-height: 68px;
   }
 
   .emptySlot {
@@ -426,6 +436,8 @@
   .pile {
     min-width: 42px;
     min-height: 60px;
+    --card-width: 42px;
+    --card-height: 60px;
   }
 
   .emptySlot {
@@ -482,6 +494,8 @@
   .pile {
     min-width: 64px;
     min-height: 92px;
+    --card-width: 64px;
+    --card-height: 92px;
   }
 
   .emptySlot {

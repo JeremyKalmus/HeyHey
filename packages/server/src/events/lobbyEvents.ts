@@ -384,6 +384,9 @@ export function registerLobbyEvents(io: TypedServer): void {
         roundNumber: result.roundNumber,
       });
 
+      // Broadcast initial opponent states so all players can see each other's cards (ADR-009)
+      manager.broadcastAllOpponentStates(roomCode);
+
       console.log(
         `Round ${result.roundNumber} started by ${result.starterName} in room ${roomCode}`
       );

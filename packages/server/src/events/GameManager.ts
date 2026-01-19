@@ -660,6 +660,22 @@ export class GameManager {
   }
 
   /**
+   * Broadcast all players' visible states to all opponents (ADR-009)
+   * Called when a round starts so everyone can see initial opponent states
+   */
+  broadcastAllOpponentStates(roomCode: string): void {
+    const game = this.games.get(roomCode);
+    if (!game) return;
+
+    const state = game.stateManager.getState();
+
+    // For each player, broadcast their state to all other players
+    for (const playerState of state.players) {
+      this.broadcastOpponentState(roomCode, playerState.playerId);
+    }
+  }
+
+  /**
    * Get the top card rank of a foundation (for rejection messages)
    */
   private getFoundationTopRank(game: ActiveGame, foundationIndex: number): number | null {
