@@ -324,9 +324,9 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         };
       }
 
-      // Track opponent moves for flying card animation (skip our own moves)
-      const isOpponentMove = action.playerId !== state.playerId;
-      const opponentMove: OpponentMove | null = isOpponentMove && foundation ? {
+      // Track ALL foundation moves for flying card animation (both own and opponent moves)
+      // This lets all players see who played what card where
+      const foundationMove: OpponentMove | null = foundation ? {
         playerId: action.playerId,
         foundationIndex: action.foundationIndex,
         suit: foundation.suit as 'hearts' | 'diamonds' | 'clubs' | 'spades',
@@ -338,7 +338,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       return {
         ...state,
         foundations: newFoundations,
-        lastOpponentFoundationMove: opponentMove ?? state.lastOpponentFoundationMove,
+        lastOpponentFoundationMove: foundationMove ?? state.lastOpponentFoundationMove,
       };
     }
 
