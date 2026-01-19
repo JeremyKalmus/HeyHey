@@ -53,6 +53,7 @@ export function GameScreenConnected() {
     readyForNextRound,
     opponentFullStates,
     isReconnecting,
+    reportState,
   } = useGameState();
   const { socket } = useSocket();
 
@@ -257,6 +258,29 @@ export function GameScreenConnected() {
   );
 
   const isSetupComplete = setupStep === 'complete';
+
+  // Helper to report current state to server for opponent visibility
+  const reportCurrentState = useCallback(() => {
+    if (!localPlayerState) return;
+    reportState({
+      stockCount: localPlayerState.stockPile.length,
+      wasteTopCard: localPlayerState.wastePile.length > 0
+        ? localPlayerState.wastePile[localPlayerState.wastePile.length - 1]
+        : undefined,
+      nertzCount: localPlayerState.nertzPile.length,
+      nertzTopCard: localPlayerState.nertzPile.length > 0
+        ? localPlayerState.nertzPile[localPlayerState.nertzPile.length - 1]
+        : undefined,
+      workPiles: localPlayerState.workPiles,
+    });
+  }, [localPlayerState, reportState]);
+
+  // Report state to server when setup completes and after each state change during play
+  useEffect(() => {
+    if (isSetupComplete && localPlayerState && gamePhase === 'playing') {
+      reportCurrentState();
+    }
+  }, [isSetupComplete, localPlayerState, reportCurrentState, gamePhase]);
 
   // Build game state for hooks (only when setup complete)
   const gameState: GameState | null = useMemo(() => {

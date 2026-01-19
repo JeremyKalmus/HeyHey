@@ -24,6 +24,7 @@ import type {
   PlayerDisconnectedPayload,
   InactivityStatus,
   PlayerInactivityUpdatePayload,
+  ReportStatePayload,
 } from '@heyhey/shared';
 import { saveSession, loadSession, clearSession } from '../utils/sessionStorage';
 
@@ -100,6 +101,7 @@ export interface GameStateContextValue {
   callNertz: () => void;
   foundationMove: (card: PlayerGameState['nertzPile'][0], foundationIndex: number, source: MoveSource) => void;
   readyForNextRound: () => void;
+  reportState: (state: ReportStatePayload) => void;
 
   // Errors
   error: string | null;
@@ -997,6 +999,16 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
     socket.emit('readyForNextRound');
   }, [socket, isConnected]);
 
+  const reportState = useCallback(
+    (statePayload: ReportStatePayload) => {
+      if (!socket || !isConnected) {
+        return;
+      }
+      socket.emit('reportState', statePayload);
+    },
+    [socket, isConnected]
+  );
+
   const foundationMove = useCallback(
     (card: PlayerGameState['nertzPile'][0], foundationIndex: number, source: MoveSource) => {
       if (!socket || !isConnected) {
@@ -1066,6 +1078,7 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
     callNertz,
     foundationMove,
     readyForNextRound,
+    reportState,
 
     // Errors
     error: state.error,

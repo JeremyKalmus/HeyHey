@@ -13,6 +13,7 @@ import type {
   FoundationMovePayload,
   OpponentStateUpdatePayload,
   RejoinGamePayload,
+  ReportStatePayload,
 } from '@heyhey/shared';
 import { LobbyManager } from './LobbyManager.js';
 import { SetupManager } from './SetupManager.js';
@@ -353,6 +354,28 @@ export function registerLobbyEvents(io: TypedServer): void {
           `Foundation move rejected for ${socket.id}: ${result.error}`
         );
       }
+    });
+
+    // Report State - client reports its visible state for relay to opponents
+    socket.on('reportState', (payload: ReportStatePayload) => {
+      const roomCode = lobbyManager.getRoomCode(socket.id);
+
+      if (!roomCode) {
+        return; // Silently ignore if not in a room
+      }
+
+      // Build opponent state update payload
+      const opponentPayload: OpponentStateUpdatePayload = {
+        playerId: socket.id,
+        stockCount: payload.stockCount,
+        wasteTopCard: payload.wasteTopCard,
+        nertzCount: payload.nertzCount,
+        nertzTopCard: payload.nertzTopCard,
+        workPiles: payload.workPiles,
+      };
+
+      // Broadcast to all other players in the room (not to self)
+      socket.to(roomCode).emit('opponentStateUpdate', opponentPayload);
     });
 
     // Start Round (only the designated starter can call this)

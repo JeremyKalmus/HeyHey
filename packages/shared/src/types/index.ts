@@ -49,6 +49,7 @@ export interface ClientToServerEvents {
   startRound: () => void; // Only the current starter can call this
   readyForNextRound: () => void; // Player is ready to proceed to next round
   rejoinGame: (payload: RejoinGamePayload) => void; // Reconnect to active game
+  reportState: (payload: ReportStatePayload) => void; // Client reports its visible state to server for relay
 }
 
 // Socket Event Types - Server to Client
@@ -183,6 +184,15 @@ export interface OpponentStateUpdatePayload {
   nertzCount: number;
   nertzTopCard?: Card;
   workPiles: Card[][]; // Full face-up cards for each work pile
+}
+
+// Client State Report Payload - client reports its visible state to server for relay to opponents
+export interface ReportStatePayload {
+  stockCount: number;
+  wasteTopCard?: Card;
+  nertzCount: number;
+  nertzTopCard?: Card;
+  workPiles: Card[][]; // All face-up work pile cards
 }
 
 // Session Reconnection Payloads
