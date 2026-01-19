@@ -538,14 +538,18 @@ export function registerLobbyEvents(io: TypedServer): void {
       const disconnectResult = manager.handleDisconnect(socket.id);
 
       // If player was in an active game, notify others they disconnected but can reconnect
+      // DON'T remove them from lobby - they need to be able to rejoin
       if (disconnectResult.inActiveGame && roomCode && playerInfo) {
         io.to(roomCode).emit('playerDisconnected', {
           playerId: socket.id,
           playerName: playerInfo.playerName,
           canReconnect: true,
         });
+        console.log(`Client disconnected from active game: ${socket.id} (can reconnect)`);
+        return; // Don't call handleLeaveRoom - player can rejoin
       }
 
+      // Only remove from lobby if NOT in an active game
       handleLeaveRoom(io, socket);
       console.log(`Client disconnected: ${socket.id}`);
     });
