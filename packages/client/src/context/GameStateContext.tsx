@@ -328,6 +328,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       const isOpponentMove = action.playerId !== state.playerId;
       const opponentMove: OpponentMove | null = isOpponentMove && foundation ? {
         playerId: action.playerId,
+        foundationIndex: action.foundationIndex,
         suit: foundation.suit as 'hearts' | 'diamonds' | 'clubs' | 'spades',
         rank: action.card.rank,
         timestamp: Date.now(),

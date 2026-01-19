@@ -46,6 +46,8 @@ export interface PlayerFoundationGroup {
 export interface OpponentMove {
   /** Player who made the move */
   playerId: string;
+  /** Index of the foundation pile that received the card */
+  foundationIndex: number;
   /** Suit of the foundation pile that received the card */
   suit: Suit;
   /** Rank of the card that was played */
@@ -184,7 +186,8 @@ export function MultiFoundationArea({
 
     // New move detected
     lastMoveTimestamp.current = lastOpponentMove.timestamp;
-    const pileKey = `${lastOpponentMove.playerId}-${lastOpponentMove.suit}`;
+    // Use foundationIndex as the pile key for animation targeting
+    const pileKey = `foundation-${lastOpponentMove.foundationIndex}`;
     setAnimatingPile(pileKey);
 
     // Calculate fly-from position (ADR-009: use actual DOM positions when available)
@@ -335,17 +338,7 @@ function PlayerFoundationRow({
 
   return (
     <div className={styles.playerRow}>
-      {/* Player indicator */}
-      <div className={styles.playerIndicator}>
-        <div
-          className={styles.colorBadge}
-          style={{ backgroundColor: getPlayerColorHex(group.playerColor) }}
-          title={group.playerName}
-        />
-        <span className={styles.playerName}>{group.playerName}</span>
-      </div>
-
-      {/* Foundation piles */}
+      {/* Foundation piles - shared by all players, not owned */}
       <div className={styles.pilesRow}>
         {SUITS.map((suit, suitIndex) => {
           const pile = pileMap.get(suit);
@@ -356,7 +349,8 @@ function PlayerFoundationRow({
           const isTarget = pile ? isValidTarget(pile, globalIndex) : false;
           const isHighlighted = showMoveHints && isTarget;
           const isClickable = canPlace && !!selectedCard;
-          const pileKey = `${group.playerId}-${suit}`;
+          // Use foundation index for animation targeting (matches reducer)
+          const pileKey = `foundation-${globalIndex}`;
           const isReceiving = animatingPile === pileKey;
 
           // Get fly-from position and animation key if this pile is receiving
@@ -496,23 +490,3 @@ function DroppableFoundationPile({
   );
 }
 
-/* =============================================================================
-   HELPER FUNCTIONS
-   ============================================================================= */
-
-/**
- * Convert PlayerColor to hex color for CSS
- */
-function getPlayerColorHex(color: PlayerColor): string {
-  const colorMap: Record<PlayerColor, string> = {
-    red: '#FF1744',
-    blue: '#2979FF',
-    green: '#00E676',
-    yellow: '#FFD23F',
-    purple: '#D500F9',
-    orange: '#FF9100',
-    pink: '#FF4081',
-    teal: '#00E5FF',
-  };
-  return colorMap[color];
-}
