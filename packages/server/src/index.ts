@@ -2,7 +2,7 @@ import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import type { AllClientToServerEvents, AllServerToClientEvents } from '@heyhey/shared';
-import { registerLobbyEvents } from './events/index.js';
+import { registerLobbyEvents, startCleanupInterval } from './events/index.js';
 
 const app = express();
 const httpServer = createServer(app);
@@ -28,6 +28,9 @@ app.get('/health', (_req, res) => {
 
 // Register lobby socket events (also handles game events)
 registerLobbyEvents(io);
+
+// Start periodic cleanup for rooms and games
+startCleanupInterval(io);
 
 httpServer.listen(PORT, () => {
   console.log(`HeyHey! server running on port ${PORT}`);

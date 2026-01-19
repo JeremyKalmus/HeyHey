@@ -7,6 +7,18 @@ export interface LobbyRoom {
   settings: GameConfig;
 }
 
+/** Room activity tracking for garbage collection */
+interface RoomActivity {
+  createdAt: number;
+  lastActivityAt: number;
+  hasActiveGame: boolean;
+}
+
+/** Room inactivity timeout: 30 minutes */
+const ROOM_INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000;
+/** Empty room timeout: 5 minutes */
+const EMPTY_ROOM_TIMEOUT_MS = 5 * 60 * 1000;
+
 const DEFAULT_SETTINGS: GameConfig = {
   nertzPileSize: 13,
   drawCount: 3,
@@ -21,6 +33,7 @@ export class LobbyManager {
     new Map();
   private playerCustomization: Map<string, { color?: string; avatar?: string }> =
     new Map();
+  private roomActivity: Map<string, RoomActivity> = new Map();
 
   createRoom(
     socketId: string,
@@ -33,9 +46,15 @@ export class LobbyManager {
     }
 
     const settings = { ...DEFAULT_SETTINGS };
+    const now = Date.now();
     this.roomSettings.set(result.room.code, settings);
     this.socketToRoom.set(socketId, result.room.code);
     this.socketToPlayer.set(socketId, { playerId: socketId, playerName });
+    this.roomActivity.set(result.room.code, {
+      createdAt: now,
+      lastActivityAt: now,
+      hasActiveGame: false,
+    });
 
     return {
       success: true,
@@ -59,6 +78,7 @@ export class LobbyManager {
 
     this.socketToRoom.set(socketId, result.room.code);
     this.socketToPlayer.set(socketId, { playerId: socketId, playerName });
+    this.updateRoomActivity(result.room.code);
 
     const settings = this.roomSettings.get(result.room.code) ?? DEFAULT_SETTINGS;
     const newPlayer: LobbyPlayer = {
@@ -98,6 +118,10 @@ export class LobbyManager {
 
     if (result.roomClosed) {
       this.roomSettings.delete(roomCode);
+      this.roomActivity.delete(roomCode);
+    } else {
+      // Room still has players, update activity
+      this.updateRoomActivity(roomCode);
     }
 
     return {
@@ -276,6 +300,166 @@ export class LobbyManager {
       players,
       settings,
       hostId: room.hostId,
+    };
+  }
+
+  /**
+   * Update room activity timestamp (call on any room activity)
+   */
+  updateRoomActivity(roomCode: string): void {
+    const activity = this.roomActivity.get(roomCode);
+    if (activity) {
+      activity.lastActivityAt = Date.now();
+    }
+  }
+
+  /**
+   * Mark a room as having an active game (prevents inactivity cleanup)
+   */
+  markRoomHasGame(roomCode: string, hasGame: boolean): void {
+    const activity = this.roomActivity.get(roomCode);
+    if (activity) {
+      activity.hasActiveGame = hasGame;
+      activity.lastActivityAt = Date.now();
+    }
+  }
+
+  /**
+   * Get all room codes managed by this instance
+   */
+  getAllRoomCodes(): string[] {
+    return Array.from(this.roomActivity.keys());
+  }
+
+  /**
+   * Check if a room has an active game
+   */
+  roomHasActiveGame(roomCode: string): boolean {
+    return this.roomActivity.get(roomCode)?.hasActiveGame ?? false;
+  }
+
+  /**
+   * Clean up expired rooms based on inactivity or empty status
+   * Returns list of cleaned up room codes with their reasons
+   */
+  cleanupExpiredRooms(): Array<{
+    roomCode: string;
+    reason: 'inactivity' | 'empty';
+    socketIds: string[];
+  }> {
+    const now = Date.now();
+    const expiredRooms: Array<{
+      roomCode: string;
+      reason: 'inactivity' | 'empty';
+      socketIds: string[];
+    }> = [];
+
+    for (const [roomCode, activity] of this.roomActivity.entries()) {
+      const room = this.roomManager.getRoom(roomCode);
+      if (!room) {
+        // Room doesn't exist in RoomManager, clean up our tracking
+        this.roomSettings.delete(roomCode);
+        this.roomActivity.delete(roomCode);
+        continue;
+      }
+
+      const timeSinceActivity = now - activity.lastActivityAt;
+      const playerCount = room.players.size;
+
+      // Don't clean up rooms with active games (those are managed by GameManager)
+      if (activity.hasActiveGame) {
+        continue;
+      }
+
+      // Empty room timeout (5 minutes)
+      if (playerCount === 0 && timeSinceActivity >= EMPTY_ROOM_TIMEOUT_MS) {
+        const socketIds = this.getSocketsInRoom(roomCode);
+        expiredRooms.push({ roomCode, reason: 'empty', socketIds });
+        this.forceCleanupRoom(roomCode);
+        continue;
+      }
+
+      // Inactivity timeout (30 minutes) - only for rooms without active games
+      if (timeSinceActivity >= ROOM_INACTIVITY_TIMEOUT_MS) {
+        const socketIds = this.getSocketsInRoom(roomCode);
+        expiredRooms.push({ roomCode, reason: 'inactivity', socketIds });
+        this.forceCleanupRoom(roomCode);
+      }
+    }
+
+    if (expiredRooms.length > 0) {
+      console.log(`[LobbyManager] Cleaned up ${expiredRooms.length} expired room(s):`,
+        expiredRooms.map(r => `${r.roomCode} (${r.reason})`).join(', '));
+    }
+
+    return expiredRooms;
+  }
+
+  /**
+   * Force cleanup a room (used by cleanup sweep or when game is abandoned)
+   */
+  forceCleanupRoom(roomCode: string): string[] {
+    const room = this.roomManager.getRoom(roomCode);
+    const socketIds: string[] = [];
+
+    if (room) {
+      // Collect all socket IDs for notification
+      for (const playerId of room.players.keys()) {
+        socketIds.push(playerId);
+        this.socketToRoom.delete(playerId);
+        this.socketToPlayer.delete(playerId);
+        this.playerCustomization.delete(playerId);
+      }
+
+      // Force delete from RoomManager by leaving all players
+      for (const playerId of room.players.keys()) {
+        this.roomManager.leaveRoom(roomCode, playerId);
+      }
+    }
+
+    // Clean up our tracking
+    this.roomSettings.delete(roomCode);
+    this.roomActivity.delete(roomCode);
+
+    return socketIds;
+  }
+
+  /**
+   * Get room statistics for monitoring
+   */
+  getRoomStats(): {
+    totalRooms: number;
+    roomsWithGames: number;
+    emptyRooms: number;
+    oldestInactiveMs: number;
+  } {
+    const now = Date.now();
+    let roomsWithGames = 0;
+    let emptyRooms = 0;
+    let oldestInactiveMs = 0;
+
+    for (const [roomCode, activity] of this.roomActivity.entries()) {
+      const room = this.roomManager.getRoom(roomCode);
+      if (!room) continue;
+
+      if (activity.hasActiveGame) {
+        roomsWithGames++;
+      }
+      if (room.players.size === 0) {
+        emptyRooms++;
+      }
+
+      const inactiveMs = now - activity.lastActivityAt;
+      if (inactiveMs > oldestInactiveMs) {
+        oldestInactiveMs = inactiveMs;
+      }
+    }
+
+    return {
+      totalRooms: this.roomActivity.size,
+      roomsWithGames,
+      emptyRooms,
+      oldestInactiveMs,
     };
   }
 }

@@ -148,6 +148,9 @@ export function registerLobbyEvents(io: TypedServer): void {
         return;
       }
 
+      // Update room activity
+      lobbyManager.updateRoomActivity(result.roomCode);
+
       // Broadcast to all players in room (including sender)
       io.to(result.roomCode).emit('settingsUpdated', {
         settings: result.settings,
@@ -167,6 +170,9 @@ export function registerLobbyEvents(io: TypedServer): void {
         });
         return;
       }
+
+      // Update room activity
+      lobbyManager.updateRoomActivity(result.roomCode);
 
       // Broadcast to all players in room (including sender)
       io.to(result.roomCode).emit('playerUpdated', {
@@ -193,6 +199,9 @@ export function registerLobbyEvents(io: TypedServer): void {
       // Initialize setup tracking for this room
       const playerIds = lobbyManager.getSocketsInRoom(result.roomCode);
       setupManager.initializeRoom(result.roomCode, gameId, playerIds);
+
+      // Mark room as having an active game (prevents lobby cleanup)
+      lobbyManager.markRoomHasGame(result.roomCode, true);
 
       // Broadcast game start to all players
       io.to(result.roomCode).emit('gameStarted', { gameId });
@@ -647,6 +656,62 @@ function getRejoinErrorMessage(reason: string): string {
     default:
       return 'Failed to rejoin game.';
   }
+}
+
+/** Cleanup interval in milliseconds (5 minutes) */
+const CLEANUP_INTERVAL_MS = 5 * 60 * 1000;
+
+/**
+ * Start periodic cleanup for rooms and games
+ * Should be called once after server starts
+ */
+export function startCleanupInterval(io: TypedServer): NodeJS.Timeout {
+  console.log('[Cleanup] Starting periodic cleanup interval (every 5 minutes)');
+
+  return setInterval(() => {
+    console.log('[Cleanup] Running periodic cleanup sweep...');
+
+    // Clean up expired lobby rooms
+    const expiredRooms = lobbyManager.cleanupExpiredRooms();
+
+    // Notify players in expired rooms
+    for (const expired of expiredRooms) {
+      for (const socketId of expired.socketIds) {
+        const socket = io.sockets.sockets.get(socketId);
+        if (socket) {
+          socket.emit('roomExpired', {
+            roomCode: expired.roomCode,
+            reason: expired.reason,
+          });
+          socket.leave(expired.roomCode);
+        }
+      }
+    }
+
+    // Clean up abandoned games
+    if (gameManager) {
+      const abandonedGames = gameManager.cleanupAbandonedGames();
+
+      // Mark rooms as no longer having active games and notify players
+      for (const abandoned of abandonedGames) {
+        // Mark room as no longer having a game
+        lobbyManager.markRoomHasGame(abandoned.roomCode, false);
+
+        // Notify any connected sockets in the room
+        io.to(abandoned.roomCode).emit('roomExpired', {
+          roomCode: abandoned.roomCode,
+          reason: 'game_abandoned',
+        });
+      }
+    }
+
+    // Log stats for monitoring
+    const roomStats = lobbyManager.getRoomStats();
+    const gameStats = gameManager?.getGameStats();
+
+    console.log(`[Cleanup] Stats - Rooms: ${roomStats.totalRooms} (${roomStats.roomsWithGames} with games, ${roomStats.emptyRooms} empty)` +
+      (gameStats ? `, Games: ${gameStats.totalGames} (${gameStats.totalConnectedPlayers} connected, ${gameStats.totalDisconnectedPlayers} disconnected)` : ''));
+  }, CLEANUP_INTERVAL_MS);
 }
 
 // Export managers for testing
