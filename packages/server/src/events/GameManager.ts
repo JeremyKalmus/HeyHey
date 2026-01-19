@@ -47,12 +47,16 @@ interface ActiveGame {
   disconnectedPlayers: Map<string, DisconnectedPlayer>; // playerId -> DisconnectedPlayer
   sequence: number; // Global sequence number for foundation moves
   scoringState: ScoringState; // Accumulated scores across rounds
-  playerActivity: Map<string, PlayerActivityState>; // playerId -> activity state
+playerActivity: Map<string, PlayerActivityState>; // playerId -> activity state
   inactivityConfig: InactivityConfig; // Configurable thresholds
+  createdAt: number; // When the game was created
+  lastActivityAt: number; // Last move or action timestamp
 }
 
 /** Reconnection timeout in milliseconds (5 minutes) */
 const RECONNECT_TIMEOUT_MS = 5 * 60 * 1000;
+/** Game inactivity timeout: 30 minutes */
+const GAME_INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000;
 
 /** Inactivity check interval in milliseconds (5 seconds) */
 const INACTIVITY_CHECK_INTERVAL_MS = 5_000;
@@ -296,7 +300,7 @@ export class GameManager {
     // Initialize scoring state
     const scoringState = createScoringState(playerIds, initialState.config.targetScore);
 
-    // Initialize player activity tracking
+// Initialize player activity tracking
     const playerActivity = new Map<string, PlayerActivityState>();
     const now = Date.now();
     for (const playerId of playerIds) {
@@ -306,7 +310,6 @@ export class GameManager {
         playerName: playerId, // Using playerId as name for now
       });
     }
-
     this.games.set(roomCode, {
       gameId,
       roomCode,
@@ -315,8 +318,10 @@ export class GameManager {
       disconnectedPlayers: new Map(),
       sequence: 0,
       scoringState,
-      playerActivity,
+playerActivity,
       inactivityConfig: { ...DEFAULT_INACTIVITY_CONFIG },
+      createdAt: now,
+      lastActivityAt: now,
     });
   }
 
@@ -362,6 +367,9 @@ export class GameManager {
       });
       return { success: false };
     }
+
+    // Update activity timestamp
+    game.lastActivityAt = Date.now();
 
     // Create sequenced update and broadcast to all players
     const update = game.stateManager.createUpdate(result.delta);
@@ -442,6 +450,7 @@ export class GameManager {
     // Move is valid - apply it (first-received-wins)
     foundation.cards.push(move.card);
     game.sequence++;
+    game.lastActivityAt = Date.now();
 
     // Update player activity
     this.updatePlayerActivity(roomCode, playerId);
@@ -1001,5 +1010,160 @@ export class GameManager {
       return null;
     }
     return foundation.cards[foundation.cards.length - 1]!.rank;
+  }
+
+  /**
+   * Update activity timestamp for a game (call on any game action)
+   */
+  updateGameActivity(roomCode: string): void {
+    const game = this.games.get(roomCode);
+    if (game) {
+      game.lastActivityAt = Date.now();
+    }
+  }
+
+  /**
+   * Get all room codes with active games
+   */
+  getAllGameRoomCodes(): string[] {
+    return Array.from(this.games.keys());
+  }
+
+  /**
+   * Clean up abandoned games (all players disconnected or inactive for 30 minutes)
+   * Returns list of cleaned up game info
+   */
+  cleanupAbandonedGames(): Array<{
+    roomCode: string;
+    gameId: string;
+    reason: 'all_disconnected' | 'inactivity';
+  }> {
+    const now = Date.now();
+    const abandonedGames: Array<{
+      roomCode: string;
+      gameId: string;
+      reason: 'all_disconnected' | 'inactivity';
+    }> = [];
+
+    for (const [roomCode, game] of this.games.entries()) {
+      const connectedPlayers = game.playerSockets.size;
+      const disconnectedPlayers = game.disconnectedPlayers.size;
+      const timeSinceActivity = now - game.lastActivityAt;
+
+      // All players disconnected and past reconnect timeout
+      if (connectedPlayers === 0 && disconnectedPlayers > 0) {
+        // Check if all disconnected players are past timeout
+        let allPastTimeout = true;
+        for (const disconnected of game.disconnectedPlayers.values()) {
+          if (now - disconnected.disconnectedAt < RECONNECT_TIMEOUT_MS) {
+            allPastTimeout = false;
+            break;
+          }
+        }
+
+        if (allPastTimeout) {
+          abandonedGames.push({
+            roomCode,
+            gameId: game.gameId,
+            reason: 'all_disconnected',
+          });
+          this.cleanupGame(roomCode);
+          continue;
+        }
+      }
+
+      // No connected players and no disconnected players (shouldn't happen but clean up anyway)
+      if (connectedPlayers === 0 && disconnectedPlayers === 0) {
+        abandonedGames.push({
+          roomCode,
+          gameId: game.gameId,
+          reason: 'all_disconnected',
+        });
+        this.cleanupGame(roomCode);
+        continue;
+      }
+
+      // Inactivity timeout (30 minutes with no moves)
+      if (timeSinceActivity >= GAME_INACTIVITY_TIMEOUT_MS) {
+        abandonedGames.push({
+          roomCode,
+          gameId: game.gameId,
+          reason: 'inactivity',
+        });
+        this.cleanupGame(roomCode);
+      }
+    }
+
+    if (abandonedGames.length > 0) {
+      console.log(`[GameManager] Cleaned up ${abandonedGames.length} abandoned game(s):`,
+        abandonedGames.map(g => `${g.roomCode} (${g.reason})`).join(', '));
+    }
+
+    return abandonedGames;
+  }
+
+  /**
+   * Check if a game is abandoned (for external checks)
+   */
+  isGameAbandoned(roomCode: string): boolean {
+    const game = this.games.get(roomCode);
+    if (!game) return false;
+
+    const now = Date.now();
+    const connectedPlayers = game.playerSockets.size;
+    const timeSinceActivity = now - game.lastActivityAt;
+
+    // No connected players
+    if (connectedPlayers === 0) {
+      // Check if all disconnected past timeout
+      for (const disconnected of game.disconnectedPlayers.values()) {
+        if (now - disconnected.disconnectedAt < RECONNECT_TIMEOUT_MS) {
+          return false; // Still within reconnect window
+        }
+      }
+      return true;
+    }
+
+    // Inactive for 30 minutes
+    return timeSinceActivity >= GAME_INACTIVITY_TIMEOUT_MS;
+  }
+
+  /**
+   * Get game statistics for monitoring
+   */
+  getGameStats(): {
+    totalGames: number;
+    gamesWithDisconnectedPlayers: number;
+    oldestInactiveMs: number;
+    totalConnectedPlayers: number;
+    totalDisconnectedPlayers: number;
+  } {
+    const now = Date.now();
+    let gamesWithDisconnectedPlayers = 0;
+    let oldestInactiveMs = 0;
+    let totalConnectedPlayers = 0;
+    let totalDisconnectedPlayers = 0;
+
+    for (const game of this.games.values()) {
+      totalConnectedPlayers += game.playerSockets.size;
+      totalDisconnectedPlayers += game.disconnectedPlayers.size;
+
+      if (game.disconnectedPlayers.size > 0) {
+        gamesWithDisconnectedPlayers++;
+      }
+
+      const inactiveMs = now - game.lastActivityAt;
+      if (inactiveMs > oldestInactiveMs) {
+        oldestInactiveMs = inactiveMs;
+      }
+    }
+
+    return {
+      totalGames: this.games.size,
+      gamesWithDisconnectedPlayers,
+      oldestInactiveMs,
+      totalConnectedPlayers,
+      totalDisconnectedPlayers,
+    };
   }
 }

@@ -62,6 +62,7 @@ export interface ServerToClientEvents {
   gameStarted: (payload: GameStartedPayload) => void;
   error: (payload: ErrorPayload) => void;
   hostChanged: (payload: HostChangedPayload) => void;
+  roomExpired: (payload: RoomExpiredPayload) => void;
   allPlayersReady: (payload: { gameId: string }) => void;
   playerSetupComplete: (payload: { playerId: string; playersReady: number; totalPlayers: number }) => void;
   foundationUpdated: (payload: FoundationUpdatedPayload) => void;
@@ -137,6 +138,11 @@ export interface ErrorPayload {
 
 export interface HostChangedPayload {
   newHostId: string;
+}
+
+export interface RoomExpiredPayload {
+  roomCode: string;
+  reason: 'inactivity' | 'empty' | 'game_abandoned';
 }
 
 // Round Start Payloads
