@@ -483,11 +483,8 @@ export function GameScreenConnected() {
     onFoundationMove: handleFoundationMove,
   });
 
-  if (!gameId) {
-    return null;
-  }
-
   // Convert opponentFullStates to OpponentState[] for TableLayout (ADR-009)
+  // NOTE: This useMemo MUST be before any early returns to satisfy React's Rules of Hooks
   const opponentStatesForLayout: OpponentState[] = useMemo(() => {
     const otherPlayers = room?.players.filter((p) => p.id !== playerId) || [];
     return otherPlayers.map((p) => {
@@ -504,6 +501,11 @@ export function GameScreenConnected() {
       };
     });
   }, [room?.players, playerId, opponentFullStates]);
+
+  // Early return if no game (must be after all hooks)
+  if (!gameId) {
+    return null;
+  }
 
   // Get starter info for WaitingToStart
   const players = room?.players || [];
