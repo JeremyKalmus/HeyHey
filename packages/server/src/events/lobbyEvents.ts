@@ -369,10 +369,14 @@ export function registerLobbyEvents(io: TypedServer): void {
       // Get the original playerId for this socket (handles reconnection case)
       const manager = getOrCreateGameManager(io);
       const originalPlayerId = manager.getPlayerIdForSocket(roomCode, socket.id);
+      const playerId = originalPlayerId || socket.id;
+
+      // Store the nertz count for scoring (cards are dealt client-side)
+      manager.updatePlayerNertzCount(roomCode, playerId, payload.nertzCount);
 
       // Build opponent state update payload
       const opponentPayload: OpponentStateUpdatePayload = {
-        playerId: originalPlayerId || socket.id, // Use original playerId if found, else socket.id
+        playerId, // Use original playerId if found, else socket.id
         stockCount: payload.stockCount,
         wasteTopCard: payload.wasteTopCard,
         nertzCount: payload.nertzCount,

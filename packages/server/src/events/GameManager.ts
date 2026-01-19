@@ -47,7 +47,8 @@ interface ActiveGame {
   disconnectedPlayers: Map<string, DisconnectedPlayer>; // playerId -> DisconnectedPlayer
   sequence: number; // Global sequence number for foundation moves
   scoringState: ScoringState; // Accumulated scores across rounds
-playerActivity: Map<string, PlayerActivityState>; // playerId -> activity state
+  playerActivity: Map<string, PlayerActivityState>; // playerId -> activity state
+  playerNertzCounts: Map<string, number>; // playerId -> last reported nertz pile count (for scoring)
   inactivityConfig: InactivityConfig; // Configurable thresholds
   createdAt: number; // When the game was created
   lastActivityAt: number; // Last move or action timestamp
@@ -236,6 +237,34 @@ export class GameManager {
   }
 
   /**
+   * Update player's nertz pile count (reported by client)
+   * This is used for scoring since cards are dealt client-side
+   */
+  updatePlayerNertzCount(roomCode: string, playerId: string, nertzCount: number): void {
+    const game = this.games.get(roomCode);
+    if (!game) return;
+    game.playerNertzCounts.set(playerId, nertzCount);
+  }
+
+  /**
+   * Get player's last reported nertz count
+   */
+  getPlayerNertzCount(roomCode: string, playerId: string): number {
+    const game = this.games.get(roomCode);
+    if (!game) return 0;
+    return game.playerNertzCounts.get(playerId) ?? 0;
+  }
+
+  /**
+   * Get all player nertz counts for a room
+   */
+  getAllPlayerNertzCounts(roomCode: string): Map<string, number> | null {
+    const game = this.games.get(roomCode);
+    if (!game) return null;
+    return game.playerNertzCounts;
+  }
+
+  /**
    * Get inactivity status for a player
    */
   getPlayerInactivityStatus(roomCode: string, playerId: string): InactivityStatus | null {
@@ -318,7 +347,8 @@ export class GameManager {
       disconnectedPlayers: new Map(),
       sequence: 0,
       scoringState,
-playerActivity,
+      playerActivity,
+      playerNertzCounts: new Map(), // Tracks client-reported nertz counts for scoring
       inactivityConfig: { ...DEFAULT_INACTIVITY_CONFIG },
       createdAt: now,
       lastActivityAt: now,
@@ -525,6 +555,19 @@ playerActivity,
       return { success: false, error: 'nertz_not_called' };
     }
 
+    // Inject client-reported nertz counts into state for scoring
+    // Cards are dealt client-side, so the server's nertzPile arrays are empty
+    // We populate them with placeholder cards so calculateRoundResult can count penalties
+    for (const playerState of state.players) {
+      const reportedCount = game.playerNertzCounts.get(playerState.playerId) ?? 0;
+      // Create placeholder cards for counting (only the count matters for scoring)
+      playerState.nertzPile = Array.from({ length: reportedCount }, () => ({
+        suit: 'hearts' as const,
+        rank: 1,
+        deckId: playerState.deckId,
+      }));
+    }
+
     // Calculate round result
     const roundResult = calculateRoundResult(state, state.roundNumber);
 
@@ -636,8 +679,9 @@ playerActivity,
       suits.map((suit) => ({ suit, cards: [], ownerId: player.playerId }))
     );
 
-    // Clear ready state
+    // Clear ready state and nertz counts for new round
     this.clearReadyState(roomCode);
+    game.playerNertzCounts.clear();
 
     return true;
   }
