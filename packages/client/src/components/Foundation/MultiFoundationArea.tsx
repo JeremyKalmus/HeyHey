@@ -60,19 +60,6 @@ export interface OpponentMove {
   totalOpponents?: number;
 }
 
-/** Flying card state for animation tracking */
-interface FlyingCardState {
-  /** Unique key for the flying card */
-  key: string;
-  /** Target pile key (playerId-suit) */
-  targetPile: string;
-  /** CSS custom properties for animation */
-  flyFromX: number;
-  flyFromY: number;
-  /** Timestamp when animation started */
-  startTime: number;
-}
-
 export interface MultiFoundationAreaProps {
   /** Foundation groups organized by player */
   playerGroups: PlayerFoundationGroup[];
@@ -108,52 +95,6 @@ function makeCardKey(card: CardType): string {
   return `${card.suit}-${card.rank}`;
 }
 
-/**
- * Calculate fly-from coordinates based on opponent position (ADR-009)
- * Uses actual DOM positions when opponentRefs are available, falls back to calculated positions
- * Returns CSS pixel values for --fly-from-x and --fly-from-y
- */
-function calculateFlyFromPosition(
-  opponentIndex: number = 0,
-  totalOpponents: number = 1,
-  playerId?: string,
-  opponentRefs?: Map<string, HTMLDivElement>,
-  foundationEl?: HTMLDivElement | null
-): { x: number; y: number } {
-  // Try to get actual DOM position if refs are available
-  if (playerId && opponentRefs && foundationEl) {
-    const opponentEl = opponentRefs.get(playerId);
-    if (opponentEl) {
-      const opponentRect = opponentEl.getBoundingClientRect();
-      const foundationRect = foundationEl.getBoundingClientRect();
-
-      // Calculate offset from foundation center to opponent center
-      const opponentCenterX = opponentRect.left + opponentRect.width / 2;
-      const opponentCenterY = opponentRect.top + opponentRect.height / 2;
-      const foundationCenterX = foundationRect.left + foundationRect.width / 2;
-      const foundationCenterY = foundationRect.top + foundationRect.height / 2;
-
-      return {
-        x: opponentCenterX - foundationCenterX,
-        y: opponentCenterY - foundationCenterY,
-      };
-    }
-  }
-
-  // Fallback to calculated position when DOM refs not available
-  // Opponents are laid out horizontally at the top of the screen
-  const segmentWidth = 100 / Math.max(totalOpponents, 1);
-  const centerX = segmentWidth * opponentIndex + segmentWidth / 2;
-
-  // Convert to offset from center (foundation is roughly in center)
-  const xOffset = (centerX - 50) * 4; // Scale factor for visible motion
-
-  // Y is always negative (coming from top) - larger values for more dramatic fly-in
-  const yOffset = -200 - Math.random() * 100; // Randomize slightly for visual variety
-
-  return { x: xOffset, y: yOffset };
-}
-
 export function MultiFoundationArea({
   playerGroups,
   selectedCard,
@@ -167,60 +108,39 @@ export function MultiFoundationArea({
   enableOpponentSounds = true,
   isDragging = false,
   validDragFoundations = [],
-  opponentRefs,
-  foundationRef,
+  opponentRefs: _opponentRefs,
+  foundationRef: _foundationRef,
 }: MultiFoundationAreaProps) {
-  // Track which pile is currently animating
-  const [animatingPile, setAnimatingPile] = useState<string | null>(null);
-  // Track flying cards for animation
-  const [flyingCard, setFlyingCard] = useState<FlyingCardState | null>(null);
+  // Track which foundation index is animating and when
+  const [animatingIndex, setAnimatingIndex] = useState<number | null>(null);
+  const [animationTimestamp, setAnimationTimestamp] = useState<number>(0);
   const lastMoveTimestamp = useRef<number>(0);
-  // Internal ref for foundation area (used if external ref not provided)
+  // Internal ref for foundation area
   const internalFoundationRef = useRef<HTMLDivElement>(null);
-  const actualFoundationRef = foundationRef?.current ?? internalFoundationRef.current;
 
-  // Handle new opponent moves - trigger animation and sound
+  // Handle new opponent moves - trigger simple animation
   useEffect(() => {
     if (!lastOpponentMove) return;
     if (lastOpponentMove.timestamp <= lastMoveTimestamp.current) return;
 
     // New move detected
+    console.log('Opponent move detected:', lastOpponentMove.foundationIndex, lastOpponentMove);
     lastMoveTimestamp.current = lastOpponentMove.timestamp;
-    // Use foundationIndex as the pile key for animation targeting
-    const pileKey = `foundation-${lastOpponentMove.foundationIndex}`;
-    setAnimatingPile(pileKey);
-
-    // Calculate fly-from position (ADR-009: use actual DOM positions when available)
-    const { x, y } = calculateFlyFromPosition(
-      lastOpponentMove.opponentIndex,
-      lastOpponentMove.totalOpponents,
-      lastOpponentMove.playerId,
-      opponentRefs,
-      actualFoundationRef
-    );
-
-    // Set flying card state
-    setFlyingCard({
-      key: `${pileKey}-${lastOpponentMove.timestamp}`,
-      targetPile: pileKey,
-      flyFromX: x,
-      flyFromY: y,
-      startTime: lastOpponentMove.timestamp,
-    });
+    setAnimatingIndex(lastOpponentMove.foundationIndex);
+    setAnimationTimestamp(lastOpponentMove.timestamp);
 
     // Play sound
     if (enableOpponentSounds) {
       soundManager.play('opponentMove');
     }
 
-    // Clear animation after it completes (600ms animation + buffer)
+    // Clear animation after it completes
     const timer = setTimeout(() => {
-      setAnimatingPile(null);
-      setFlyingCard(null);
-    }, 700);
+      setAnimatingIndex(null);
+    }, 800);
 
     return () => clearTimeout(timer);
-  }, [lastOpponentMove, enableOpponentSounds, opponentRefs, actualFoundationRef]);
+  }, [lastOpponentMove, enableOpponentSounds]);
 
   // Get owner color for a card
   const getOwnerColor = (card: CardType): PlayerColor | undefined => {
@@ -290,8 +210,8 @@ export function MultiFoundationArea({
             getOwnerColor={getOwnerColor}
             getGlobalIndex={getGlobalIndex}
             onPileClick={onPileClick}
-            animatingPile={animatingPile}
-            flyingCard={flyingCard}
+            animatingIndex={animatingIndex}
+            animationTimestamp={animationTimestamp}
           />
         ))}
       </div>
@@ -316,8 +236,8 @@ interface PlayerFoundationRowProps {
   getOwnerColor: (card: CardType) => PlayerColor | undefined;
   getGlobalIndex: (playerIndex: number, suitIndex: number) => number;
   onPileClick?: (playerId: string, suit: Suit, globalIndex: number) => void;
-  animatingPile: string | null;
-  flyingCard: FlyingCardState | null;
+  animatingIndex: number | null;
+  animationTimestamp: number;
 }
 
 function PlayerFoundationRow({
@@ -330,8 +250,8 @@ function PlayerFoundationRow({
   getOwnerColor,
   getGlobalIndex,
   onPileClick,
-  animatingPile,
-  flyingCard,
+  animatingIndex,
+  animationTimestamp,
 }: PlayerFoundationRowProps) {
   // Create a map for easy lookup
   const pileMap = new Map(group.piles.map((p) => [p.suit, p]));
@@ -349,20 +269,14 @@ function PlayerFoundationRow({
           const isTarget = pile ? isValidTarget(pile, globalIndex) : false;
           const isHighlighted = showMoveHints && isTarget;
           const isClickable = canPlace && !!selectedCard;
-          // Use foundation index for animation targeting (matches reducer)
-          const pileKey = `foundation-${globalIndex}`;
-          const isReceiving = animatingPile === pileKey;
-
-          // Get fly-from position and animation key if this pile is receiving
-          const isTargetPile = flyingCard?.targetPile === pileKey;
-          const flyFromX = isTargetPile ? flyingCard.flyFromX : 0;
-          const flyFromY = isTargetPile ? flyingCard.flyFromY : 0;
-          // Animation key forces Card remount to trigger CSS animation
-          const animationKey = isTargetPile ? flyingCard.key : undefined;
+          // Simple animation: is this the pile that's animating?
+          const isReceiving = animatingIndex === globalIndex;
+          // Use timestamp as key to force remount and trigger animation
+          const animationKey = isReceiving ? `anim-${animationTimestamp}` : undefined;
 
           return (
             <DroppableFoundationPile
-              key={pileKey}
+              key={`foundation-${globalIndex}`}
               suit={suit}
               globalIndex={globalIndex}
               playerId={group.playerId}
@@ -372,8 +286,6 @@ function PlayerFoundationRow({
               isHighlighted={isHighlighted}
               isClickable={isClickable}
               isReceiving={isReceiving}
-              flyFromX={flyFromX}
-              flyFromY={flyFromY}
               animationKey={animationKey}
               getOwnerColor={getOwnerColor}
               onPileClick={onPileClick}
@@ -399,10 +311,6 @@ interface DroppableFoundationPileProps {
   isHighlighted: boolean;
   isClickable: boolean;
   isReceiving: boolean;
-  /** CSS custom property for fly-from X position (px) */
-  flyFromX: number;
-  /** CSS custom property for fly-from Y position (px) */
-  flyFromY: number;
   /** Unique key that changes on animation to force Card remount */
   animationKey?: string;
   getOwnerColor: (card: CardType) => PlayerColor | undefined;
@@ -419,8 +327,6 @@ function DroppableFoundationPile({
   isHighlighted,
   isClickable,
   isReceiving,
-  flyFromX,
-  flyFromY,
   animationKey,
   getOwnerColor,
   onPileClick,
@@ -462,10 +368,6 @@ function DroppableFoundationPile({
     >
       <div
         className={`${styles.pile} ${isReceiving ? styles.flying : ''}`}
-        style={isReceiving ? {
-          '--fly-from-x': `${flyFromX}px`,
-          '--fly-from-y': `${flyFromY}px`,
-        } as React.CSSProperties : undefined}
       >
         {topCard ? (
           <Card
