@@ -38,7 +38,7 @@ export function ConnectionStatus({
     }
     return (
       <div className={`${styles.connectedIndicator} ${className ?? ''}`}>
-        <Icon icon={WifiIcon} size="xs" />
+        <Icon icon={WifiIcon} size={12} />
       </div>
     );
   }
