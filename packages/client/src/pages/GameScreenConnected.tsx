@@ -569,13 +569,15 @@ export function GameScreenConnected() {
       }
 
       // Convert foundations to PlayerFoundationGroup format
-      const playerGroups: PlayerFoundationGroup[] = Array.from(playerFoundations.entries()).map(
-        ([pid, piles], index) => {
-          const player = room?.players.find((p) => p.id === pid);
+      // IMPORTANT: Must iterate in room.players order to match server's foundation indexing
+      // Server sends foundationIndex as: playerIndex * 4 + suitIndex
+      const playerGroups: PlayerFoundationGroup[] = (room?.players || []).map(
+        (player, index) => {
+          const piles = playerFoundations.get(player.id) || [];
           return {
-            playerId: pid,
-            playerName: player?.name || `Player ${index + 1}`,
-            playerColor: (player?.color as PlayerColor) || 'blue',
+            playerId: player.id,
+            playerName: player.name || `Player ${index + 1}`,
+            playerColor: (player.color as PlayerColor) || 'blue',
             piles,
           };
         }
