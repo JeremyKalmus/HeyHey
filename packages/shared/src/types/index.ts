@@ -48,6 +48,7 @@ export interface ClientToServerEvents {
   foundationMove: (payload: FoundationMovePayload) => void;
   startRound: () => void; // Only the current starter can call this
   readyForNextRound: () => void; // Player is ready to proceed to next round
+  rejoinGame: (payload: RejoinGamePayload) => void; // Reconnect to active game
 }
 
 // Socket Event Types - Server to Client
@@ -71,6 +72,10 @@ export interface ServerToClientEvents {
   playerReadyForNextRound: (payload: PlayerReadyForNextRoundPayload) => void;
   allReadyForNextRound: (payload: AllReadyForNextRoundPayload) => void;
   opponentStateUpdate: (payload: OpponentStateUpdatePayload) => void;
+  rejoinGameSuccess: (payload: RejoinGameSuccessPayload) => void;
+  rejoinGameFailed: (payload: RejoinGameFailedPayload) => void;
+  playerReconnected: (payload: PlayerReconnectedPayload) => void;
+  playerDisconnected: (payload: PlayerDisconnectedPayload) => void;
 }
 
 // Event Payloads - Client to Server
@@ -171,6 +176,39 @@ export interface OpponentStateUpdatePayload {
   nertzCount: number;
   nertzTopCard?: Card;
   workPiles: Card[][]; // Full face-up cards for each work pile
+}
+
+// Session Reconnection Payloads
+export interface RejoinGamePayload {
+  gameId: string;
+  playerId: string;
+  roomCode: string;
+}
+
+export interface RejoinGameSuccessPayload {
+  room: RoomState;
+  playerId: string;
+  gamePhase: GamePhase;
+  roundNumber: number;
+  currentStarterIndex: number;
+  foundations: FoundationPile[];
+}
+
+export interface RejoinGameFailedPayload {
+  reason: 'game_not_found' | 'player_not_found' | 'game_ended' | 'invalid_credentials';
+  message: string;
+}
+
+export interface PlayerReconnectedPayload {
+  playerId: string;
+  playerName: string;
+}
+
+export interface PlayerDisconnectedPayload {
+  playerId: string;
+  playerName: string;
+  /** Whether the player can still reconnect (within timeout) */
+  canReconnect: boolean;
 }
 
 // Game Event Payloads - Client to Server

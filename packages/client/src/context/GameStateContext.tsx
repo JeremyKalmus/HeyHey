@@ -18,7 +18,12 @@ import type {
   OpponentPlayerState,
   OpponentStateUpdatePayload,
   Card,
+  RejoinGameSuccessPayload,
+  RejoinGameFailedPayload,
+  PlayerReconnectedPayload,
+  PlayerDisconnectedPayload,
 } from '@heyhey/shared';
+import { saveSession, loadSession, clearSession } from '../utils/sessionStorage';
 
 /* =============================================================================
    TYPES
@@ -65,6 +70,10 @@ export interface GameStateContextValue {
   // Celebration state
   nertzCallerId: string | null;
 
+  // Connection state
+  isReconnecting: boolean;
+  disconnectedPlayers: string[];
+
   // Actions
   createRoom: (playerName: string) => void;
   joinRoom: (roomCode: string, playerName: string) => void;
@@ -106,6 +115,8 @@ interface GameState {
   gameOver: boolean;
   gameWinner: string | null;
   playersReadyForNextRound: string[];
+  isReconnecting: boolean;
+  disconnectedPlayers: string[];
 }
 
 type GameAction =
@@ -132,7 +143,12 @@ type GameAction =
   | { type: 'CLEAR_ERROR' }
   | { type: 'LEAVE_ROOM' }
   | { type: 'INCREMENT_SEQUENCE' }
-  | { type: 'OPPONENT_STATE_UPDATE'; payload: OpponentStateUpdatePayload };
+  | { type: 'OPPONENT_STATE_UPDATE'; payload: OpponentStateUpdatePayload }
+  | { type: 'SET_RECONNECTING'; isReconnecting: boolean }
+  | { type: 'REJOIN_SUCCESS'; payload: RejoinGameSuccessPayload }
+  | { type: 'REJOIN_FAILED'; reason: string }
+  | { type: 'PLAYER_RECONNECTED'; playerId: string }
+  | { type: 'PLAYER_DISCONNECTED'; playerId: string; canReconnect: boolean };
 
 /* =============================================================================
    REDUCER
@@ -158,6 +174,8 @@ const initialState: GameState = {
   gameOver: false,
   gameWinner: null,
   playersReadyForNextRound: [],
+  isReconnecting: false,
+  disconnectedPlayers: [],
 };
 
 function gameReducer(state: GameState, action: GameAction): GameState {
@@ -366,6 +384,51 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         opponentFullStates: newFullStates,
       };
     }
+
+    case 'SET_RECONNECTING':
+      return {
+        ...state,
+        isReconnecting: action.isReconnecting,
+      };
+
+    case 'REJOIN_SUCCESS':
+      return {
+        ...state,
+        room: action.payload.room,
+        playerId: action.payload.playerId,
+        gamePhase: action.payload.gamePhase,
+        roundNumber: action.payload.roundNumber,
+        currentStarterIndex: action.payload.currentStarterIndex,
+        foundations: action.payload.foundations,
+        isReconnecting: false,
+        error: null,
+      };
+
+    case 'REJOIN_FAILED':
+      // Clear the stored session since rejoin failed
+      clearSession();
+      return {
+        ...state,
+        isReconnecting: false,
+        error: action.reason === 'game_ended' ? null : `Reconnection failed: ${action.reason}`,
+      };
+
+    case 'PLAYER_RECONNECTED':
+      // Remove player from disconnected list
+      return {
+        ...state,
+        disconnectedPlayers: state.disconnectedPlayers.filter(id => id !== action.playerId),
+      };
+
+    case 'PLAYER_DISCONNECTED':
+      // Add player to disconnected list if they can reconnect
+      if (action.canReconnect && !state.disconnectedPlayers.includes(action.playerId)) {
+        return {
+          ...state,
+          disconnectedPlayers: [...state.disconnectedPlayers, action.playerId],
+        };
+      }
+      return state;
 
     default:
       return state;
@@ -680,6 +743,27 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
       dispatch({ type: 'OPPONENT_STATE_UPDATE', payload });
     };
 
+    // Reconnection events
+    const onRejoinGameSuccess = (payload: RejoinGameSuccessPayload) => {
+      dispatch({ type: 'REJOIN_SUCCESS', payload });
+      console.log('[GameState] Successfully rejoined game');
+    };
+
+    const onRejoinGameFailed = (payload: RejoinGameFailedPayload) => {
+      dispatch({ type: 'REJOIN_FAILED', reason: payload.reason });
+      console.log('[GameState] Failed to rejoin game:', payload.reason);
+    };
+
+    const onPlayerReconnected = (payload: PlayerReconnectedPayload) => {
+      dispatch({ type: 'PLAYER_RECONNECTED', playerId: payload.playerId });
+      console.log('[GameState] Player reconnected:', payload.playerName);
+    };
+
+    const onPlayerDisconnected = (payload: PlayerDisconnectedPayload) => {
+      dispatch({ type: 'PLAYER_DISCONNECTED', playerId: payload.playerId, canReconnect: payload.canReconnect });
+      console.log('[GameState] Player disconnected:', payload.playerName, payload.canReconnect ? '(can reconnect)' : '(cannot reconnect)');
+    };
+
     // Attach listeners
     socket.on('roomCreated', onRoomCreated);
     socket.on('roomJoined', onRoomJoined);
@@ -703,6 +787,10 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
     socket.on('allReadyForNextRound', onAllReadyForNextRound);
     socket.on('gameEnded', onGameEnded);
     socket.on('opponentStateUpdate', onOpponentStateUpdate);
+    socket.on('rejoinGameSuccess', onRejoinGameSuccess);
+    socket.on('rejoinGameFailed', onRejoinGameFailed);
+    socket.on('playerReconnected', onPlayerReconnected);
+    socket.on('playerDisconnected', onPlayerDisconnected);
 
     // Cleanup
     return () => {
@@ -728,8 +816,49 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
       socket.off('allReadyForNextRound', onAllReadyForNextRound);
       socket.off('gameEnded', onGameEnded);
       socket.off('opponentStateUpdate', onOpponentStateUpdate);
+      socket.off('rejoinGameSuccess', onRejoinGameSuccess);
+      socket.off('rejoinGameFailed', onRejoinGameFailed);
+      socket.off('playerReconnected', onPlayerReconnected);
+      socket.off('playerDisconnected', onPlayerDisconnected);
     };
   }, [socket]);
+
+  // Attempt to rejoin game on socket connect if session exists
+  useEffect(() => {
+    if (!socket || !isConnected) return;
+
+    const session = loadSession();
+    if (!session) return;
+
+    // Don't attempt rejoin if we're already in a room/game
+    if (state.room) return;
+
+    console.log('[GameState] Found saved session, attempting to rejoin game:', session.gameId);
+    dispatch({ type: 'SET_RECONNECTING', isReconnecting: true });
+
+    socket.emit('rejoinGame', {
+      gameId: session.gameId,
+      playerId: session.playerId,
+      roomCode: session.roomCode,
+    });
+  }, [socket, isConnected, state.room]);
+
+  // Save session when game starts
+  useEffect(() => {
+    if (state.gameId && state.playerId && state.room?.code) {
+      saveSession(state.gameId, state.playerId, state.room.code);
+      console.log('[GameState] Session saved:', state.gameId);
+    }
+  }, [state.gameId, state.playerId, state.room?.code]);
+
+  // Clear session when game ends or player leaves
+  useEffect(() => {
+    if (state.gamePhase === 'finished' || state.gamePhase === 'lobby') {
+      if (state.gameId === null) {
+        clearSession();
+      }
+    }
+  }, [state.gamePhase, state.gameId]);
 
   // Actions
   const createRoom = useCallback(
@@ -758,6 +887,7 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
     if (socket && isConnected) {
       socket.emit('leaveRoom');
     }
+    clearSession();
     dispatch({ type: 'LEAVE_ROOM' });
   }, [socket, isConnected]);
 
@@ -874,6 +1004,10 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
     // Round info
     roundNumber: state.roundNumber,
     currentStarterIndex: state.currentStarterIndex,
+
+    // Connection state
+    isReconnecting: state.isReconnecting,
+    disconnectedPlayers: state.disconnectedPlayers,
 
     // Actions
     createRoom,

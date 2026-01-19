@@ -23,14 +23,24 @@ import {
   createScoringState,
 } from '@heyhey/shared';
 
+interface DisconnectedPlayer {
+  playerId: string;
+  playerName: string;
+  disconnectedAt: number;
+}
+
 interface ActiveGame {
   gameId: string;
   roomCode: string;
   stateManager: StateManager;
   playerSockets: Map<string, string>; // playerId -> socketId
+  disconnectedPlayers: Map<string, DisconnectedPlayer>; // playerId -> DisconnectedPlayer
   sequence: number; // Global sequence number for foundation moves
   scoringState: ScoringState; // Accumulated scores across rounds
 }
+
+/** Reconnection timeout in milliseconds (5 minutes) */
+const RECONNECT_TIMEOUT_MS = 5 * 60 * 1000;
 
 export type BroadcastFn = (roomCode: string, update: StateUpdate) => void;
 export type RejectFn = (socketId: string, rejection: MoveRejection) => void;
@@ -159,6 +169,7 @@ export class GameManager {
       roomCode,
       stateManager,
       playerSockets,
+      disconnectedPlayers: new Map(),
       sequence: 0,
       scoringState,
     });
@@ -567,26 +578,177 @@ export class GameManager {
   }
 
   /**
-   * Handle player disconnect
+   * Handle player disconnect - mark as disconnected for potential rejoin
    */
-  handleDisconnect(socketId: string): { gameId?: string; roomCode?: string } {
+  handleDisconnect(socketId: string): {
+    inActiveGame: boolean;
+    gameId?: string;
+    roomCode?: string;
+    playerId?: string;
+    playerName?: string;
+  } {
     const roomCode = this.socketToRoom.get(socketId);
-    if (!roomCode) return {};
+    if (!roomCode) return { inActiveGame: false };
 
     const game = this.games.get(roomCode);
-    if (!game) return {};
+    if (!game) return { inActiveGame: false };
 
-    // Find and remove the player
+    // Find the player
+    let disconnectedPlayerId: string | undefined;
     for (const [playerId, sId] of game.playerSockets.entries()) {
       if (sId === socketId) {
-        game.playerSockets.delete(playerId);
+        disconnectedPlayerId = playerId;
         break;
       }
     }
 
+    if (!disconnectedPlayerId) return { inActiveGame: false };
+
+    // Get player name from state (using playerId as name for now)
+    const playerName = disconnectedPlayerId;
+
+    // Mark player as disconnected (don't remove yet - allow reconnection)
+    game.disconnectedPlayers.set(disconnectedPlayerId, {
+      playerId: disconnectedPlayerId,
+      playerName,
+      disconnectedAt: Date.now(),
+    });
+
+    // Remove socket mapping but keep player in game
+    game.playerSockets.delete(disconnectedPlayerId);
     this.socketToRoom.delete(socketId);
 
-    return { gameId: game.gameId, roomCode: game.roomCode };
+    // Schedule cleanup after timeout
+    setTimeout(() => {
+      this.cleanupDisconnectedPlayer(roomCode, disconnectedPlayerId!);
+    }, RECONNECT_TIMEOUT_MS);
+
+    return {
+      inActiveGame: true,
+      gameId: game.gameId,
+      roomCode: game.roomCode,
+      playerId: disconnectedPlayerId,
+      playerName,
+    };
+  }
+
+  /**
+   * Rejoin a disconnected player to their game
+   */
+  rejoinGame(
+    socketId: string,
+    gameId: string,
+    playerId: string,
+    roomCode: string
+  ): {
+    success: true;
+    playerName: string;
+    room: import('@heyhey/shared').RoomState;
+    gamePhase: import('@heyhey/shared').GamePhase;
+    roundNumber: number;
+    currentStarterIndex: number;
+    foundations: FoundationPile[];
+  } | {
+    success: false;
+    reason: 'game_not_found' | 'player_not_found' | 'game_ended' | 'invalid_credentials';
+  } {
+    const game = this.games.get(roomCode);
+
+    if (!game) {
+      return { success: false, reason: 'game_not_found' };
+    }
+
+    if (game.gameId !== gameId) {
+      return { success: false, reason: 'invalid_credentials' };
+    }
+
+    // Check if player is in disconnected list
+    const disconnectedPlayer = game.disconnectedPlayers.get(playerId);
+
+    // Also check if player is still in the game state
+    const state = game.stateManager.getState();
+    const playerInGame = state.players.some(p => p.playerId === playerId);
+
+    if (!disconnectedPlayer && !playerInGame) {
+      return { success: false, reason: 'player_not_found' };
+    }
+
+    // Check if game has ended
+    if (state.phase === 'finished') {
+      return { success: false, reason: 'game_ended' };
+    }
+
+    // Restore player connection
+    game.playerSockets.set(playerId, socketId);
+    game.disconnectedPlayers.delete(playerId);
+    this.socketToRoom.set(socketId, roomCode);
+
+    const playerName = disconnectedPlayer?.playerName ?? playerId;
+
+    // Build RoomState from game state
+    const players = state.players.map(p => ({
+      id: p.playerId,
+      name: p.playerId, // Using playerId as name for now
+      isHost: false, // Not tracking host in game state
+    }));
+
+    const room: import('@heyhey/shared').RoomState = {
+      code: roomCode,
+      players,
+      settings: state.config,
+      hostId: players[0]?.id ?? '',
+    };
+
+    return {
+      success: true,
+      playerName,
+      room,
+      gamePhase: state.phase,
+      roundNumber: state.roundNumber,
+      currentStarterIndex: state.currentStarterIndex,
+      foundations: state.foundations,
+    };
+  }
+
+  /**
+   * Clean up a disconnected player after timeout
+   */
+  private cleanupDisconnectedPlayer(roomCode: string, playerId: string): void {
+    const game = this.games.get(roomCode);
+    if (!game) return;
+
+    const disconnectedPlayer = game.disconnectedPlayers.get(playerId);
+    if (!disconnectedPlayer) return; // Player reconnected
+
+    // Check if still disconnected after timeout
+    const now = Date.now();
+    if (now - disconnectedPlayer.disconnectedAt >= RECONNECT_TIMEOUT_MS) {
+      // Remove player from game entirely
+      game.disconnectedPlayers.delete(playerId);
+
+      // If no connected or disconnected players, clean up game
+      if (game.playerSockets.size === 0 && game.disconnectedPlayers.size === 0) {
+        this.games.delete(roomCode);
+      }
+    }
+  }
+
+  /**
+   * Check if a player can rejoin a game
+   */
+  canRejoin(roomCode: string, playerId: string): boolean {
+    const game = this.games.get(roomCode);
+    if (!game) return false;
+
+    // Check if player is in disconnected list
+    if (game.disconnectedPlayers.has(playerId)) return true;
+
+    // Check if player is in game state but not connected
+    const state = game.stateManager.getState();
+    const playerInGame = state.players.some(p => p.playerId === playerId);
+    const playerConnected = game.playerSockets.has(playerId);
+
+    return playerInGame && !playerConnected;
   }
 
   /**

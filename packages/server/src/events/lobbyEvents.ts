@@ -12,6 +12,7 @@ import type {
   MoveRejection,
   FoundationMovePayload,
   OpponentStateUpdatePayload,
+  RejoinGamePayload,
 } from '@heyhey/shared';
 import { LobbyManager } from './LobbyManager.js';
 import { SetupManager } from './SetupManager.js';
@@ -439,11 +440,70 @@ export function registerLobbyEvents(io: TypedServer): void {
       }
     });
 
+    // Rejoin Game - reconnect to an active game after disconnect
+    socket.on('rejoinGame', (payload: RejoinGamePayload) => {
+      const manager = getOrCreateGameManager(io);
+      const result = manager.rejoinGame(
+        socket.id,
+        payload.gameId,
+        payload.playerId,
+        payload.roomCode
+      );
+
+      if (!result.success) {
+        socket.emit('rejoinGameFailed', {
+          reason: result.reason,
+          message: getRejoinErrorMessage(result.reason),
+        });
+        return;
+      }
+
+      // Join socket.io room for broadcasts
+      socket.join(payload.roomCode);
+
+      // Re-register with lobby manager (update socket mapping)
+      lobbyManager.registerReconnectedPlayer(
+        socket.id,
+        payload.roomCode,
+        result.playerName
+      );
+
+      // Send success with current game state
+      socket.emit('rejoinGameSuccess', {
+        room: result.room,
+        playerId: socket.id,
+        gamePhase: result.gamePhase,
+        roundNumber: result.roundNumber,
+        currentStarterIndex: result.currentStarterIndex,
+        foundations: result.foundations,
+      });
+
+      // Notify other players that this player has reconnected
+      socket.to(payload.roomCode).emit('playerReconnected', {
+        playerId: socket.id,
+        playerName: result.playerName,
+      });
+
+      console.log(`Player ${result.playerName} (${socket.id}) rejoined game ${payload.gameId}`);
+    });
+
     // Handle disconnect
     socket.on('disconnect', () => {
+      const roomCode = lobbyManager.getRoomCode(socket.id);
+      const playerInfo = lobbyManager.getPlayerInfo(socket.id);
+
       // Handle game disconnect
       const manager = getOrCreateGameManager(io);
-      manager.handleDisconnect(socket.id);
+      const disconnectResult = manager.handleDisconnect(socket.id);
+
+      // If player was in an active game, notify others they disconnected but can reconnect
+      if (disconnectResult.inActiveGame && roomCode && playerInfo) {
+        io.to(roomCode).emit('playerDisconnected', {
+          playerId: socket.id,
+          playerName: playerInfo.playerName,
+          canReconnect: true,
+        });
+      }
 
       handleLeaveRoom(io, socket);
       console.log(`Client disconnected: ${socket.id}`);
@@ -571,6 +631,21 @@ function getReadyErrorMessage(error: string): string {
       return 'You are not in this game.';
     default:
       return 'Failed to mark ready.';
+  }
+}
+
+function getRejoinErrorMessage(reason: string): string {
+  switch (reason) {
+    case 'game_not_found':
+      return 'Game not found or has ended.';
+    case 'player_not_found':
+      return 'You were not a player in this game.';
+    case 'game_ended':
+      return 'The game has already ended.';
+    case 'invalid_credentials':
+      return 'Invalid reconnection credentials.';
+    default:
+      return 'Failed to rejoin game.';
   }
 }
 
