@@ -64,7 +64,7 @@ describe('ScoringEngine', () => {
     });
 
     it('has correct nertz penalty per card', () => {
-      expect(NERTZ_PENALTY_PER_CARD).toBe(2);
+      expect(NERTZ_PENALTY_PER_CARD).toBe(1);
     });
   });
 
@@ -160,7 +160,7 @@ describe('ScoringEngine', () => {
       const score = calculatePlayerRoundScore(state, 'player1');
       expect(score.foundationCards).toBe(3);
       expect(score.nertzPenalty).toBe(2);
-      expect(score.roundScore).toBe(3 - (2 * 2)); // 3 - 4 = -1
+      expect(score.roundScore).toBe(3 - 2); // 3 - 2 = 1
     });
 
     it('can have negative score', () => {
@@ -187,7 +187,7 @@ describe('ScoringEngine', () => {
       const score = calculatePlayerRoundScore(state, 'player1');
       expect(score.foundationCards).toBe(1);
       expect(score.nertzPenalty).toBe(5);
-      expect(score.roundScore).toBe(1 - (5 * 2)); // 1 - 10 = -9
+      expect(score.roundScore).toBe(1 - 5); // 1 - 5 = -4
     });
 
     it('returns zero score for non-existent player', () => {
@@ -226,7 +226,7 @@ describe('ScoringEngine', () => {
       const p2Score = result.playerScores.find(s => s.playerId === 'player2');
       expect(p2Score?.foundationCards).toBe(1);
       expect(p2Score?.nertzPenalty).toBe(1);
-      expect(p2Score?.roundScore).toBe(-1); // 1 - 2
+      expect(p2Score?.roundScore).toBe(0); // 1 - 1
     });
 
     it('throws when no player called Nertz', () => {
@@ -266,7 +266,7 @@ describe('ScoringEngine', () => {
         calledBy: 'p1',
         playerScores: [
           { playerId: 'p1', foundationCards: 10, nertzPenalty: 0, roundScore: 10 },
-          { playerId: 'p2', foundationCards: 5, nertzPenalty: 2, roundScore: 1 },
+          { playerId: 'p2', foundationCards: 5, nertzPenalty: 2, roundScore: 3 }, // 5 - 2 = 3
         ],
         timestamp: Date.now(),
       };
@@ -274,7 +274,7 @@ describe('ScoringEngine', () => {
       const { scoringState: newState, gameOver, winner } = applyRoundResult(scoringState, roundResult);
       expect(newState.rounds).toHaveLength(1);
       expect(newState.totalScores.find(s => s.playerId === 'p1')?.total).toBe(10);
-      expect(newState.totalScores.find(s => s.playerId === 'p2')?.total).toBe(1);
+      expect(newState.totalScores.find(s => s.playerId === 'p2')?.total).toBe(3);
       expect(gameOver).toBe(false);
       expect(winner).toBeUndefined();
     });
@@ -314,7 +314,7 @@ describe('ScoringEngine', () => {
         calledBy: 'p1',
         playerScores: [
           { playerId: 'p1', foundationCards: 15, nertzPenalty: 0, roundScore: 15 },
-          { playerId: 'p2', foundationCards: 10, nertzPenalty: 3, roundScore: 4 },
+          { playerId: 'p2', foundationCards: 10, nertzPenalty: 3, roundScore: 7 }, // 10 - 3 = 7
         ],
         timestamp: Date.now(),
       };
@@ -326,15 +326,15 @@ describe('ScoringEngine', () => {
         roundNumber: 2,
         calledBy: 'p2',
         playerScores: [
-          { playerId: 'p1', foundationCards: 8, nertzPenalty: 5, roundScore: -2 },
+          { playerId: 'p1', foundationCards: 8, nertzPenalty: 5, roundScore: 3 }, // 8 - 5 = 3
           { playerId: 'p2', foundationCards: 20, nertzPenalty: 0, roundScore: 20 },
         ],
         timestamp: Date.now(),
       };
 
       ({ scoringState } = applyRoundResult(scoringState, round2));
-      expect(scoringState.totalScores.find(s => s.playerId === 'p1')?.total).toBe(13); // 15 + (-2)
-      expect(scoringState.totalScores.find(s => s.playerId === 'p2')?.total).toBe(24); // 4 + 20
+      expect(scoringState.totalScores.find(s => s.playerId === 'p1')?.total).toBe(18); // 15 + 3
+      expect(scoringState.totalScores.find(s => s.playerId === 'p2')?.total).toBe(27); // 7 + 20
       expect(scoringState.rounds).toHaveLength(2);
     });
   });

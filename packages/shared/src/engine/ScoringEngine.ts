@@ -16,7 +16,7 @@ export const FOUNDATION_CARD_POINTS = 1;
 /**
  * Penalty per card remaining in nertz pile
  */
-export const NERTZ_PENALTY_PER_CARD = 2;
+export const NERTZ_PENALTY_PER_CARD = 1;
 
 /**
  * Count cards belonging to a specific player (by deckId) in all foundations
