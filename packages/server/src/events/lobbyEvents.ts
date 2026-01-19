@@ -325,7 +325,9 @@ export function registerLobbyEvents(io: TypedServer): void {
       }
 
       const manager = getOrCreateGameManager(io);
-      const result = manager.processFoundationMove(roomCode, socket.id, payload);
+      // Look up the original playerId from socket.id (handles reconnection case)
+      const originalPlayerId = manager.getPlayerIdForSocket(roomCode, socket.id) || socket.id;
+      const result = manager.processFoundationMove(roomCode, originalPlayerId, payload);
 
       if (result.success) {
         // Broadcast foundation update to ALL players in room (including sender)
@@ -509,6 +511,7 @@ export function registerLobbyEvents(io: TypedServer): void {
       socket.emit('rejoinGameSuccess', {
         room: result.room,
         playerId: payload.playerId, // Use original playerId, not new socket.id
+        gameId: payload.gameId, // Include gameId for navigation
         gamePhase: result.gamePhase,
         roundNumber: result.roundNumber,
         currentStarterIndex: result.currentStarterIndex,

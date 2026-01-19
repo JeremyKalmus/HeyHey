@@ -436,6 +436,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         ...state,
         room: action.payload.room,
         playerId: action.payload.playerId,
+        gameId: action.payload.gameId,
         gamePhase: action.payload.gamePhase,
         roundNumber: action.payload.roundNumber,
         currentStarterIndex: action.payload.currentStarterIndex,

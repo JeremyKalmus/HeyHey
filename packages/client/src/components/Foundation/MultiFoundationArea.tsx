@@ -359,9 +359,12 @@ function PlayerFoundationRow({
           const pileKey = `${group.playerId}-${suit}`;
           const isReceiving = animatingPile === pileKey;
 
-          // Get fly-from position if this pile is receiving
-          const flyFromX = flyingCard?.targetPile === pileKey ? flyingCard.flyFromX : 0;
-          const flyFromY = flyingCard?.targetPile === pileKey ? flyingCard.flyFromY : 0;
+          // Get fly-from position and animation key if this pile is receiving
+          const isTargetPile = flyingCard?.targetPile === pileKey;
+          const flyFromX = isTargetPile ? flyingCard.flyFromX : 0;
+          const flyFromY = isTargetPile ? flyingCard.flyFromY : 0;
+          // Animation key forces Card remount to trigger CSS animation
+          const animationKey = isTargetPile ? flyingCard.key : undefined;
 
           return (
             <DroppableFoundationPile
@@ -377,6 +380,7 @@ function PlayerFoundationRow({
               isReceiving={isReceiving}
               flyFromX={flyFromX}
               flyFromY={flyFromY}
+              animationKey={animationKey}
               getOwnerColor={getOwnerColor}
               onPileClick={onPileClick}
             />
@@ -405,6 +409,8 @@ interface DroppableFoundationPileProps {
   flyFromX: number;
   /** CSS custom property for fly-from Y position (px) */
   flyFromY: number;
+  /** Unique key that changes on animation to force Card remount */
+  animationKey?: string;
   getOwnerColor: (card: CardType) => PlayerColor | undefined;
   onPileClick?: (playerId: string, suit: Suit, globalIndex: number) => void;
 }
@@ -421,6 +427,7 @@ function DroppableFoundationPile({
   isReceiving,
   flyFromX,
   flyFromY,
+  animationKey,
   getOwnerColor,
   onPileClick,
 }: DroppableFoundationPileProps) {
@@ -468,6 +475,7 @@ function DroppableFoundationPile({
       >
         {topCard ? (
           <Card
+            key={animationKey ?? `${topCard.suit}-${topCard.rank}`}
             card={topCard}
             faceUp={true}
             ownerColor={getOwnerColor(topCard)}

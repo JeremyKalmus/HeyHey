@@ -205,6 +205,7 @@ export interface RejoinGamePayload {
 export interface RejoinGameSuccessPayload {
   room: RoomState;
   playerId: string;
+  gameId: string;
   gamePhase: GamePhase;
   roundNumber: number;
   currentStarterIndex: number;
