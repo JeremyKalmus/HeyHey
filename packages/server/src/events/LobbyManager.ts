@@ -243,6 +243,20 @@ export class LobbyManager {
     return Array.from(room.players.keys());
   }
 
+  getPlayerInfo(socketId: string): { playerId: string; playerName: string } | undefined {
+    return this.socketToPlayer.get(socketId);
+  }
+
+  registerReconnectedPlayer(
+    socketId: string,
+    roomCode: string,
+    playerName: string
+  ): void {
+    // Update socket-to-room and socket-to-player mappings for the new socket
+    this.socketToRoom.set(socketId, roomCode);
+    this.socketToPlayer.set(socketId, { playerId: socketId, playerName });
+  }
+
   private toRoomState(room: Room, settings: GameConfig): RoomState {
     const players: LobbyPlayer[] = Array.from(room.players.values()).map(
       (p: RoomPlayer) => {

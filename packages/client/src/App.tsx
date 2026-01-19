@@ -5,11 +5,13 @@ import { GameStateProvider } from './context/GameStateContext';
 import { HomePageConnected } from './pages/HomePageConnected';
 import { RoomLobbyConnected } from './pages/RoomLobbyConnected';
 import { GameScreenConnected } from './pages/GameScreenConnected';
+import { ConnectionStatus } from './components/ui/ConnectionStatus';
 
 function App() {
   return (
     <SocketProvider>
       <GameStateProvider>
+        <ConnectionStatus />
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<HomePageConnected />} />

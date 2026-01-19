@@ -98,7 +98,7 @@ export function useSetupController(options: UseSetupControllerOptions): UseSetup
 
   // Interaction lock to prevent rapid clicking
   const [isInteractionDisabled, setIsInteractionDisabled] = useState(false);
-  const interactionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const interactionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Helper to sync state from machine
   const syncState = useCallback(() => {
