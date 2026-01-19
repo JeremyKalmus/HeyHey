@@ -6,11 +6,28 @@
   box-sizing: border-box;
 }
 
+html {
+  /* Use full viewport height including mobile browser chrome */
+  height: 100%;
+  height: -webkit-fill-available;
+}
+
 body {
   font-family: var(--font-family-base);
   background: var(--bg-dark-base);
   color: var(--text-inverse);
   min-height: 100vh;
+  min-height: -webkit-fill-available;
+  /* Prevent pull-to-refresh on mobile */
+  overscroll-behavior-y: contain;
+}
+
+/* Root element fills viewport */
+#root {
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  display: flex;
+  flex-direction: column;
 }
 
 .app {
@@ -25,4 +42,24 @@ body {
 h1 {
   font-size: 3rem;
   margin-bottom: 1rem;
+}
+
+/* =============================================================================
+   MOBILE-SPECIFIC STYLES
+   ============================================================================= */
+
+/* Prevent iOS input zoom by ensuring font-size is at least 16px */
+@media (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Safe area insets for notched devices */
+@supports (padding: max(0px)) {
+  body {
+    padding-left: max(0px, env(safe-area-inset-left));
+    padding-right: max(0px, env(safe-area-inset-right));
+    padding-bottom: max(0px, env(safe-area-inset-bottom));
+  }
 }

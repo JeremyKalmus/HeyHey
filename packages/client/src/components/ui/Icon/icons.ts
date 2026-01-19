@@ -129,3 +129,12 @@ export {
   Club as SuitClubIcon,
   Spade as SuitSpadeIcon,
 } from 'lucide-react';
+
+// Connection Status
+export {
+  Wifi as WifiIcon,
+  WifiOff as WifiOffIcon,
+  Signal as SignalIcon,
+  SignalLow as SignalLowIcon,
+  SignalZero as SignalZeroIcon,
+} from 'lucide-react';

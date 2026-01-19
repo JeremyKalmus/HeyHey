@@ -2,8 +2,35 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Viewport: prevent zoom on iOS input focus, enable smooth scrolling -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <!-- Mobile web app capable -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <!-- Theme color for mobile browser chrome -->
+    <meta name="theme-color" content="#0a0a12" />
+    <!-- Prevent phone number detection on iOS -->
+    <meta name="format-detection" content="telephone=no" />
     <title>HeyHey!</title>
+    <style>
+      /* Prevent overscroll/bounce on iOS */
+      html, body {
+        overscroll-behavior: none;
+        -webkit-overflow-scrolling: touch;
+      }
+      /* Prevent text selection on game elements */
+      body {
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+      }
+      /* Allow text selection in inputs */
+      input, textarea {
+        -webkit-user-select: auto;
+        user-select: auto;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
