@@ -144,10 +144,10 @@ function calculateFlyFromPosition(
   const centerX = segmentWidth * opponentIndex + segmentWidth / 2;
 
   // Convert to offset from center (foundation is roughly in center)
-  const xOffset = (centerX - 50) * 3; // Scale factor for visible motion
+  const xOffset = (centerX - 50) * 4; // Scale factor for visible motion
 
-  // Y is always negative (coming from top)
-  const yOffset = -100 - Math.random() * 50; // Randomize slightly for visual variety
+  // Y is always negative (coming from top) - larger values for more dramatic fly-in
+  const yOffset = -200 - Math.random() * 100; // Randomize slightly for visual variety
 
   return { x: xOffset, y: yOffset };
 }
@@ -210,11 +210,11 @@ export function MultiFoundationArea({
       soundManager.play('opponentMove');
     }
 
-    // Clear animation after it completes (300ms animation + buffer)
+    // Clear animation after it completes (600ms animation + buffer)
     const timer = setTimeout(() => {
       setAnimatingPile(null);
       setFlyingCard(null);
-    }, 350);
+    }, 700);
 
     return () => clearTimeout(timer);
   }, [lastOpponentMove, enableOpponentSounds, opponentRefs, actualFoundationRef]);
