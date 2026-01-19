@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useGameState } from '../context';
 import { RoomLobby } from '../components/Lobby/RoomLobby';
+import { LoadingOverlay, Skeleton } from '../components/ui';
 import type { LobbyPlayer } from '../components/Lobby/PlayerList';
 import type { PlayerCustomizationData } from '../components/Lobby/PlayerCustomization';
 import type { PlayerColor } from '../components/Card/CardBack';
@@ -34,6 +35,7 @@ export function RoomLobbyConnected() {
     leaveRoom,
     error,
     clearError,
+    isReconnecting,
   } = useGameState();
 
   // Player customization state (local until we add server support)
@@ -117,14 +119,31 @@ export function RoomLobbyConnected() {
     navigate('/');
   };
 
-  // Don't render if no room
+  // Show reconnecting overlay if reconnecting
+  if (isReconnecting) {
+    return <LoadingOverlay.Reconnecting />;
+  }
+
+  // Show loading/skeleton if waiting for room data
   if (!room || !playerId) {
-    return null;
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          background: '#0a0a12',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Skeleton.Lobby />
+      </div>
+    );
   }
 
   // Validate room code matches URL
   if (code && room.code !== code) {
-    return null;
+    return <LoadingOverlay.JoiningRoom />;
   }
 
   return (

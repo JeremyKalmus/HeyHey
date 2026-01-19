@@ -1,0 +1,126 @@
+/* Skeleton - Loading placeholder with shimmer animation */
+
+/* Base skeleton styles */
+.skeleton {
+  background: var(--bg-skeleton, #2a2a4a);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Shimmer animation */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animated::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    transparent 100%
+  );
+  animation: shimmer 1.5s infinite ease-in-out;
+}
+
+/* Variant styles */
+.variant-text {
+  height: 1em;
+  border-radius: var(--radius-sm, 4px);
+  margin-bottom: var(--space-xs, 4px);
+}
+
+.variant-rectangular {
+  border-radius: 0;
+}
+
+.variant-circular {
+  border-radius: 50%;
+}
+
+.variant-rounded {
+  border-radius: var(--radius-lg, 8px);
+}
+
+/* Text container */
+.textContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs, 4px);
+}
+
+/* Card skeleton */
+.card {
+  background: var(--bg-panel, #1a1a2e);
+  border: var(--border-width-thick, 4px) solid var(--border-color, #000);
+  border-radius: var(--radius-lg, 8px);
+  overflow: hidden;
+}
+
+.cardContent {
+  padding: var(--space-md, 12px);
+}
+
+/* Game board skeleton */
+.gameBoard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg, 16px);
+  padding: var(--space-lg, 16px);
+  align-items: center;
+}
+
+.foundationArea {
+  display: flex;
+  gap: var(--space-md, 12px);
+  justify-content: center;
+}
+
+.workPilesArea {
+  display: flex;
+  gap: var(--space-md, 12px);
+  justify-content: center;
+}
+
+.bottomArea {
+  display: flex;
+  gap: var(--space-md, 12px);
+  justify-content: center;
+}
+
+/* Lobby skeleton */
+.lobby {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl, 24px);
+  padding: var(--space-xl, 24px);
+  align-items: center;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.playerList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md, 12px);
+  width: 100%;
+}
+
+.playerItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md, 12px);
+  padding: var(--space-sm, 8px);
+  background: var(--bg-panel, #1a1a2e);
+  border-radius: var(--radius-md, 6px);
+}

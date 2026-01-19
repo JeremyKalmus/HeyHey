@@ -15,6 +15,7 @@ import { MultiFoundationArea, type PlayerFoundationGroup } from '../components/F
 import { TableLayout, useOpponentRefs, type OpponentState } from '../components/Game/TableLayout';
 import { SettingsToggle } from '../components/ui/SettingsToggle';
 import { SoundToggle } from '../components/ui/SoundToggle';
+import { LoadingOverlay, Skeleton } from '../components/ui';
 import type { FoundationPile } from '@heyhey/shared';
 import type { PlayerColor } from '../components/Card/CardBack';
 import type { Card, PlayerGameState, GameState, GameConfig, Move, MoveSource } from '@heyhey/shared';
@@ -51,6 +52,7 @@ export function GameScreenConnected() {
     playersReadyForNextRound,
     readyForNextRound,
     opponentFullStates,
+    isReconnecting,
   } = useGameState();
   const { socket } = useSocket();
 
@@ -451,24 +453,15 @@ export function GameScreenConnected() {
   const isStarter = starterPlayer?.id === playerId;
   const starterName = starterPlayer?.name || 'Unknown';
 
+  // Show reconnecting overlay if needed
+  if (isReconnecting) {
+    return <LoadingOverlay.Reconnecting />;
+  }
+
   // Render based on game phase
   switch (gamePhase) {
     case 'setup':
-      return (
-        <div
-          style={{
-            minHeight: '100vh',
-            background: '#1a1a2e',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#fff',
-            fontFamily: 'monospace',
-          }}
-        >
-          <p>Setting up game...</p>
-        </div>
-      );
+      return <LoadingOverlay.StartingGame />;
 
     case 'waiting_for_start':
       return (
@@ -496,14 +489,21 @@ export function GameScreenConnected() {
           <div
             style={{
               minHeight: '100vh',
-              background: '#1a1a2e',
+              background: '#0a0a12',
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#fff',
+              gap: '24px',
             }}
           >
-            <p>Loading game...</p>
+            <Skeleton.GameBoard />
+            <LoadingOverlay
+              message="Loading game..."
+              hint="Preparing your cards"
+              variant="inline"
+              showSpinner={true}
+            />
           </div>
         );
       }
@@ -764,17 +764,11 @@ export function GameScreenConnected() {
     case 'scoring': {
       if (!roundResult) {
         return (
-          <div
-            style={{
-              padding: '2rem',
-              textAlign: 'center',
-              background: '#1a1a2e',
-              minHeight: '100vh',
-              color: '#fff',
-            }}
-          >
-            <p>Calculating scores...</p>
-          </div>
+          <LoadingOverlay
+            message="Calculating scores..."
+            hint="Tallying up the results"
+            variant="fullscreen"
+          />
         );
       }
 
@@ -817,36 +811,21 @@ export function GameScreenConnected() {
 
     case 'finished':
       return (
-        <div
-          style={{
-            padding: '2rem',
-            textAlign: 'center',
-            background: '#1a1a2e',
-            minHeight: '100vh',
-            color: '#fff',
-          }}
-        >
-          <h1>Game Over</h1>
-          <p style={{ color: '#888', marginTop: '1rem' }}>
-            Game finished - winner display will be implemented
-          </p>
-        </div>
+        <LoadingOverlay
+          message="Game Over"
+          hint="Winner display coming soon"
+          variant="fullscreen"
+          showSpinner={false}
+        />
       );
 
     default:
       return (
-        <div
-          style={{
-            padding: '2rem',
-            textAlign: 'center',
-            background: '#1a1a2e',
-            minHeight: '100vh',
-            color: '#fff',
-          }}
-        >
-          <h1>Game: {gameId}</h1>
-          <p>Phase: {gamePhase}</p>
-        </div>
+        <LoadingOverlay
+          message={`Game: ${gameId}`}
+          hint={`Phase: ${gamePhase}`}
+          variant="fullscreen"
+        />
       );
   }
 }
