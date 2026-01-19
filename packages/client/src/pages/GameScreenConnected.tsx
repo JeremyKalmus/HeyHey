@@ -54,6 +54,7 @@ export function GameScreenConnected() {
     opponentFullStates,
     isReconnecting,
     reportState,
+    lastOpponentFoundationMove,
   } = useGameState();
   const { socket } = useSocket();
 
@@ -646,6 +647,7 @@ export function GameScreenConnected() {
                       .filter((t) => t.type === 'foundation')
                       .map((t) => t.index)}
                     opponentRefs={opponentRefs.current}
+                    lastOpponentMove={lastOpponentFoundationMove}
                   />
                 }
                 bottomContent={

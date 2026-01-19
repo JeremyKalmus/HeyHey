@@ -27,6 +27,7 @@ import type {
   ReportStatePayload,
 } from '@heyhey/shared';
 import { saveSession, loadSession, clearSession } from '../utils/sessionStorage';
+import type { OpponentMove } from '../components/Foundation/MultiFoundationArea';
 
 /* =============================================================================
    TYPES
@@ -88,6 +89,10 @@ export interface GameStateContextValue {
   // Player inactivity state
   playerInactivity: Map<string, PlayerInactivityState>;
 
+  // Animation state
+  /** Last opponent foundation move for flying card animation */
+  lastOpponentFoundationMove: OpponentMove | null;
+
   // Actions
   createRoom: (playerName: string) => void;
   joinRoom: (roomCode: string, playerName: string) => void;
@@ -134,6 +139,8 @@ interface GameState {
   disconnectedPlayers: string[];
   /** Player inactivity states from server */
   playerInactivity: Map<string, PlayerInactivityState>;
+  /** Last opponent foundation move for flying card animation */
+  lastOpponentFoundationMove: OpponentMove | null;
 }
 
 type GameAction =
@@ -195,6 +202,7 @@ const initialState: GameState = {
   isReconnecting: false,
   disconnectedPlayers: [],
   playerInactivity: new Map(),
+  lastOpponentFoundationMove: null,
 };
 
 function gameReducer(state: GameState, action: GameAction): GameState {
@@ -308,15 +316,28 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     case 'FOUNDATION_UPDATED': {
       const newFoundations = [...state.foundations];
       const foundationIndex = action.foundationIndex;
-      if (newFoundations[foundationIndex]) {
+      const foundation = newFoundations[foundationIndex];
+      if (foundation) {
         newFoundations[foundationIndex] = {
-          ...newFoundations[foundationIndex],
-          cards: [...newFoundations[foundationIndex].cards, action.card],
+          ...foundation,
+          cards: [...foundation.cards, action.card],
         };
       }
+
+      // Track opponent moves for flying card animation (skip our own moves)
+      const isOpponentMove = action.playerId !== state.playerId;
+      const opponentMove: OpponentMove | null = isOpponentMove && foundation ? {
+        playerId: action.playerId,
+        suit: foundation.suit as 'hearts' | 'diamonds' | 'clubs' | 'spades',
+        rank: action.card.rank,
+        timestamp: Date.now(),
+        // opponentIndex and totalOpponents will be calculated in the component
+      } : null;
+
       return {
         ...state,
         foundations: newFoundations,
+        lastOpponentFoundationMove: opponentMove ?? state.lastOpponentFoundationMove,
       };
     }
 
@@ -1064,6 +1085,9 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
 
     // Player inactivity
     playerInactivity: state.playerInactivity,
+
+    // Animation state
+    lastOpponentFoundationMove: state.lastOpponentFoundationMove,
 
     // Actions
     createRoom,
