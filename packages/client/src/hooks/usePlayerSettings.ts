@@ -10,6 +10,10 @@ import { useState, useCallback, useEffect } from 'react';
 export interface PlayerSettings {
   /** Whether to show valid move destination hints (Easy Mode) */
   showMoveHints: boolean;
+  /** Whether sound effects are enabled */
+  soundEnabled: boolean;
+  /** Sound volume (0-1) */
+  soundVolume: number;
 }
 
 export interface UsePlayerSettingsOptions {
@@ -24,6 +28,10 @@ export interface UsePlayerSettingsReturn {
   updateSetting: <K extends keyof PlayerSettings>(key: K, value: PlayerSettings[K]) => void;
   /** Toggle showMoveHints on/off */
   toggleMoveHints: () => void;
+  /** Toggle sound on/off */
+  toggleSound: () => void;
+  /** Set sound volume (0-1) */
+  setSoundVolume: (volume: number) => void;
   /** Reset all settings to defaults */
   resetSettings: () => void;
 }
@@ -36,6 +44,8 @@ const STORAGE_KEY_PREFIX = 'heyhey-settings';
 
 const DEFAULT_SETTINGS: PlayerSettings = {
   showMoveHints: false, // Default: no hints (harder mode)
+  soundEnabled: true, // Default: sounds on
+  soundVolume: 0.5, // Default: 50% volume
 };
 
 /* =============================================================================
@@ -118,6 +128,22 @@ export function usePlayerSettings(
     }));
   }, []);
 
+  // Toggle sound on/off
+  const toggleSound = useCallback(() => {
+    setSettings((prev) => ({
+      ...prev,
+      soundEnabled: !prev.soundEnabled,
+    }));
+  }, []);
+
+  // Set sound volume (clamped to 0-1)
+  const setSoundVolume = useCallback((volume: number) => {
+    setSettings((prev) => ({
+      ...prev,
+      soundVolume: Math.max(0, Math.min(1, volume)),
+    }));
+  }, []);
+
   // Reset to default settings
   const resetSettings = useCallback(() => {
     setSettings({ ...DEFAULT_SETTINGS });
@@ -127,6 +153,8 @@ export function usePlayerSettings(
     settings,
     updateSetting,
     toggleMoveHints,
+    toggleSound,
+    setSoundVolume,
     resetSettings,
   };
 }

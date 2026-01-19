@@ -1,7 +1,17 @@
 // SoundManager - Manages game sound effects using Web Audio API
 // Generates synthetic sounds for card interactions without external audio files
 
-export type SoundType = 'cardSelect' | 'cardPlace' | 'cardFlip' | 'error' | 'heyHey' | 'opponentMove';
+export type SoundType =
+  | 'cardSelect'
+  | 'cardPlace'
+  | 'cardToFoundation'
+  | 'cardDraw'
+  | 'cardFlip'
+  | 'error'
+  | 'heyHey'
+  | 'opponentMove'
+  | 'roundComplete'
+  | 'scoreTally';
 
 interface SoundConfig {
   volume: number;
@@ -86,6 +96,12 @@ class SoundManager {
       case 'cardPlace':
         this.playCardPlace();
         break;
+      case 'cardToFoundation':
+        this.playCardToFoundation();
+        break;
+      case 'cardDraw':
+        this.playCardDraw();
+        break;
       case 'cardFlip':
         this.playCardFlip();
         break;
@@ -97,6 +113,12 @@ class SoundManager {
         break;
       case 'opponentMove':
         this.playOpponentMove();
+        break;
+      case 'roundComplete':
+        this.playRoundComplete();
+        break;
+      case 'scoreTally':
+        this.playScoreTally();
         break;
     }
   }
@@ -325,6 +347,178 @@ class SoundManager {
 
     osc.start(now);
     osc.stop(now + 0.06);
+  }
+
+  /**
+   * Card to foundation sound - Satisfying 'ding' when card lands on foundation
+   * More rewarding than regular card placement since foundation plays are key
+   */
+  private playCardToFoundation(): void {
+    const ctx = this.audioContext!;
+    const now = ctx.currentTime;
+
+    // Main tone - bright, satisfying note
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    // Pleasant mid-high frequency
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, now); // A5
+    osc.frequency.exponentialRampToValueAtTime(440, now + 0.15);
+
+    // Quick attack, medium decay
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(this.config.volume * 0.35, now + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+
+    osc.start(now);
+    osc.stop(now + 0.2);
+
+    // Add a subtle harmonic overtone for richness
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(1760, now); // A6 (octave up)
+    osc2.frequency.exponentialRampToValueAtTime(880, now + 0.1);
+
+    gain2.gain.setValueAtTime(0, now);
+    gain2.gain.linearRampToValueAtTime(this.config.volume * 0.1, now + 0.01);
+    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+    osc2.start(now);
+    osc2.stop(now + 0.12);
+  }
+
+  /**
+   * Card draw sound - Light swipe/flip for drawing cards from stock
+   */
+  private playCardDraw(): void {
+    const ctx = this.audioContext!;
+    const now = ctx.currentTime;
+
+    // Quick whoosh noise
+    const bufferSize = ctx.sampleRate * 0.1;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+
+    // Fill with filtered noise - quick rising pitch
+    for (let i = 0; i < bufferSize; i++) {
+      const t = i / bufferSize;
+      data[i] = (Math.random() * 2 - 1) * (1 - t * 0.8);
+    }
+
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+
+    const filter = ctx.createBiquadFilter();
+    const gain = ctx.createGain();
+
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+
+    // Highpass to bandpass sweep for card flip character
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(1500, now);
+    filter.frequency.exponentialRampToValueAtTime(800, now + 0.1);
+    filter.Q.setValueAtTime(0.8, now);
+
+    // Quick envelope
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(this.config.volume * 0.2, now + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+
+    noise.start(now);
+  }
+
+  /**
+   * Round complete sound - Celebratory fanfare when round ends
+   */
+  private playRoundComplete(): void {
+    const ctx = this.audioContext!;
+    const now = ctx.currentTime;
+
+    // Ascending chord progression with shimmer
+    const notes = [
+      { freq: 392.0, delay: 0 }, // G4
+      { freq: 493.88, delay: 0.1 }, // B4
+      { freq: 587.33, delay: 0.2 }, // D5
+      { freq: 783.99, delay: 0.3 }, // G5
+    ];
+
+    notes.forEach(({ freq, delay }) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + delay);
+
+      gain.gain.setValueAtTime(0, now + delay);
+      gain.gain.linearRampToValueAtTime(this.config.volume * 0.3, now + delay + 0.02);
+      gain.gain.setValueAtTime(this.config.volume * 0.25, now + delay + 0.2);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.5);
+
+      osc.start(now + delay);
+      osc.stop(now + delay + 0.5);
+    });
+
+    // Add sparkle effect on top
+    for (let i = 0; i < 3; i++) {
+      const sparkle = ctx.createOscillator();
+      const sparkleGain = ctx.createGain();
+
+      sparkle.connect(sparkleGain);
+      sparkleGain.connect(ctx.destination);
+
+      sparkle.type = 'triangle';
+      const sparkleDelay = 0.35 + i * 0.08;
+      const sparkleFreq = 1046.5 + i * 200; // C6 and above
+      sparkle.frequency.setValueAtTime(sparkleFreq, now + sparkleDelay);
+
+      sparkleGain.gain.setValueAtTime(0, now + sparkleDelay);
+      sparkleGain.gain.linearRampToValueAtTime(this.config.volume * 0.15, now + sparkleDelay + 0.01);
+      sparkleGain.gain.exponentialRampToValueAtTime(0.001, now + sparkleDelay + 0.15);
+
+      sparkle.start(now + sparkleDelay);
+      sparkle.stop(now + sparkleDelay + 0.15);
+    }
+  }
+
+  /**
+   * Score tally sound - Quick tick for score counting animation
+   */
+  private playScoreTally(): void {
+    const ctx = this.audioContext!;
+    const now = ctx.currentTime;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    // Quick blip
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(1200, now);
+    osc.frequency.exponentialRampToValueAtTime(800, now + 0.03);
+
+    // Very short envelope
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(this.config.volume * 0.15, now + 0.005);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+
+    osc.start(now);
+    osc.stop(now + 0.04);
   }
 
   /**

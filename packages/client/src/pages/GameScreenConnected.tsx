@@ -14,6 +14,7 @@ import { Card as CardComponent } from '../components/Card';
 import { MultiFoundationArea, type PlayerFoundationGroup } from '../components/Foundation';
 import { TableLayout, useOpponentRefs, type OpponentState } from '../components/Game/TableLayout';
 import { SettingsToggle } from '../components/ui/SettingsToggle';
+import { SoundToggle } from '../components/ui/SoundToggle';
 import type { FoundationPile } from '@heyhey/shared';
 import type { PlayerColor } from '../components/Card/CardBack';
 import type { Card, PlayerGameState, GameState, GameConfig, Move, MoveSource } from '@heyhey/shared';
@@ -21,6 +22,7 @@ import { createShuffledDeck } from '@heyhey/shared';
 import { useLocalPlayerState } from '../hooks/useLocalPlayerState';
 import { useDragAndDrop } from '../hooks/useDragAndDrop';
 import { usePlayerSettings } from '../hooks/usePlayerSettings';
+import { soundManager } from '../audio';
 
 const SUITS = ['hearts', 'diamonds', 'clubs', 'spades'] as const;
 
@@ -70,8 +72,14 @@ export function GameScreenConnected() {
   // Foundation piles for all players
   const [playerFoundations, setPlayerFoundations] = useState<Map<string, FoundationPile[]>>(new Map());
 
-  // Player settings (hints toggle)
-  const { settings, toggleMoveHints } = usePlayerSettings({ playerId: playerId || '' });
+  // Player settings (hints and sound toggles)
+  const { settings, toggleMoveHints, toggleSound } = usePlayerSettings({ playerId: playerId || '' });
+
+  // Sync sound settings with audio system
+  useEffect(() => {
+    soundManager.setEnabled(settings.soundEnabled);
+    soundManager.setVolume(settings.soundVolume);
+  }, [settings.soundEnabled, settings.soundVolume]);
 
   // Get current player info
   const currentPlayer = room?.players.find((p) => p.id === playerId);
@@ -557,6 +565,10 @@ export function GameScreenConnected() {
           >
             {/* Controls */}
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <SoundToggle
+                soundEnabled={settings.soundEnabled}
+                onToggleSound={toggleSound}
+              />
               <SettingsToggle
                 showMoveHints={settings.showMoveHints}
                 onToggleHints={toggleMoveHints}

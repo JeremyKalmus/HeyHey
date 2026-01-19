@@ -1,8 +1,10 @@
 // RoundEndScreen - Displays round scoring summary
 // Shows after HeyHey is called and round ends
 
+import { useEffect, useRef } from 'react';
 import type { RoundResult, PlayerRoundScore } from '@heyhey/shared';
 import { Button } from '../Lobby/Button';
+import { useAudio } from '../../audio';
 import styles from './RoundEndScreen.module.css';
 
 export interface RoundEndScreenProps {
@@ -40,6 +42,17 @@ export function RoundEndScreen({
   onContinue,
   className,
 }: RoundEndScreenProps) {
+  const { play } = useAudio();
+  const hasPlayedSound = useRef(false);
+
+  // Play round complete sound when screen appears
+  useEffect(() => {
+    if (!hasPlayedSound.current) {
+      play('roundComplete');
+      hasPlayedSound.current = true;
+    }
+  }, [play]);
+
   const classNames = [styles.container, className].filter(Boolean).join(' ');
 
   // Get player name helper

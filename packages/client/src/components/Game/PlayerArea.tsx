@@ -156,17 +156,26 @@ export function PlayerArea({
 
   const handleDragEnd = useCallback(
     (event: Parameters<typeof dragDrop.handleDragEnd>[0]) => {
+      // Determine destination type
+      const isFoundation = event.over?.id.toString().includes('foundation') ?? false;
+      const destType = isFoundation ? 'foundation' : 'work';
+      const destIndex = parseInt(event.over?.id.toString().split('-').pop() || '0', 10);
+
       // Check if drop is valid before calling handler
       const wasValid = event.over && dragDrop.isValidDropTarget({
-        type: event.over.id.toString().includes('foundation') ? 'foundation' : 'work',
-        index: parseInt(event.over.id.toString().split('-').pop() || '0', 10),
+        type: destType,
+        index: destIndex,
       });
 
       dragDrop.handleDragEnd(event);
 
-      // Play appropriate sound
+      // Play appropriate sound based on destination
       if (wasValid) {
-        playSound('cardPlace');
+        if (isFoundation) {
+          playSound('cardToFoundation');
+        } else {
+          playSound('cardPlace');
+        }
       } else if (event.over) {
         playSound('error');
       }
