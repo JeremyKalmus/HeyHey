@@ -954,6 +954,24 @@ playerActivity,
   }
 
   /**
+   * Get the original playerId for a given socketId
+   * Used to handle reconnection where socketId changes but playerId stays the same
+   */
+  getPlayerIdForSocket(roomCode: string, socketId: string): string | null {
+    const game = this.games.get(roomCode);
+    if (!game) return null;
+
+    // playerSockets maps playerId -> socketId
+    // We need to find the playerId that maps to this socketId
+    for (const [playerId, mappedSocketId] of game.playerSockets.entries()) {
+      if (mappedSocketId === socketId) {
+        return playerId;
+      }
+    }
+    return null;
+  }
+
+  /**
    * Broadcast a player's visible state to all opponents (ADR-009)
    * Called after moves, draws, and flip stock actions
    */

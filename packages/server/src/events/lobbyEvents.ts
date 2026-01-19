@@ -364,9 +364,13 @@ export function registerLobbyEvents(io: TypedServer): void {
         return; // Silently ignore if not in a room
       }
 
+      // Get the original playerId for this socket (handles reconnection case)
+      const manager = getOrCreateGameManager(io);
+      const originalPlayerId = manager.getPlayerIdForSocket(roomCode, socket.id);
+
       // Build opponent state update payload
       const opponentPayload: OpponentStateUpdatePayload = {
-        playerId: socket.id,
+        playerId: originalPlayerId || socket.id, // Use original playerId if found, else socket.id
         stockCount: payload.stockCount,
         wasteTopCard: payload.wasteTopCard,
         nertzCount: payload.nertzCount,
@@ -501,9 +505,10 @@ export function registerLobbyEvents(io: TypedServer): void {
       );
 
       // Send success with current game state
+      // Use the original playerId (from session) for consistency with game state
       socket.emit('rejoinGameSuccess', {
         room: result.room,
-        playerId: socket.id,
+        playerId: payload.playerId, // Use original playerId, not new socket.id
         gamePhase: result.gamePhase,
         roundNumber: result.roundNumber,
         currentStarterIndex: result.currentStarterIndex,
@@ -511,8 +516,9 @@ export function registerLobbyEvents(io: TypedServer): void {
       });
 
       // Notify other players that this player has reconnected
+      // Use original playerId so other clients can match it to their opponent lists
       socket.to(payload.roomCode).emit('playerReconnected', {
-        playerId: socket.id,
+        playerId: payload.playerId, // Use original playerId
         playerName: result.playerName,
       });
 
