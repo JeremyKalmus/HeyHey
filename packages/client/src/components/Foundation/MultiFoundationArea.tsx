@@ -113,8 +113,8 @@ export function MultiFoundationArea({
 }: MultiFoundationAreaProps) {
   // Track which foundation index is animating, when, and what color
   const [animatingIndex, setAnimatingIndex] = useState<number | null>(null);
-  const [animationTimestamp, setAnimationTimestamp] = useState<number>(0);
   const [animatingColor, setAnimatingColor] = useState<PlayerColor | null>(null);
+  const [animationTimestamp, setAnimationTimestamp] = useState<number>(0);
   const lastMoveTimestamp = useRef<number>(0);
   // Internal ref for foundation area
   const internalFoundationRef = useRef<HTMLDivElement>(null);
@@ -131,8 +131,8 @@ export function MultiFoundationArea({
     console.log('Opponent move detected:', lastOpponentMove.foundationIndex, 'color:', playerColor, lastOpponentMove);
     lastMoveTimestamp.current = lastOpponentMove.timestamp;
     setAnimatingIndex(lastOpponentMove.foundationIndex);
-    setAnimationTimestamp(lastOpponentMove.timestamp);
     setAnimatingColor(playerColor);
+    setAnimationTimestamp(lastOpponentMove.timestamp);
 
     // Play sound
     if (enableOpponentSounds) {
@@ -217,8 +217,8 @@ export function MultiFoundationArea({
             getGlobalIndex={getGlobalIndex}
             onPileClick={onPileClick}
             animatingIndex={animatingIndex}
-            animationTimestamp={animationTimestamp}
             animatingColor={animatingColor}
+            animationTimestamp={animationTimestamp}
           />
         ))}
       </div>
@@ -244,8 +244,8 @@ interface PlayerFoundationRowProps {
   getGlobalIndex: (playerIndex: number, suitIndex: number) => number;
   onPileClick?: (playerId: string, suit: Suit, globalIndex: number) => void;
   animatingIndex: number | null;
-  animationTimestamp: number;
   animatingColor: PlayerColor | null;
+  animationTimestamp: number;
 }
 
 function PlayerFoundationRow({
@@ -259,8 +259,8 @@ function PlayerFoundationRow({
   getGlobalIndex,
   onPileClick,
   animatingIndex,
-  animationTimestamp,
   animatingColor,
+  animationTimestamp,
 }: PlayerFoundationRowProps) {
   // Create a map for easy lookup
   const pileMap = new Map(group.piles.map((p) => [p.suit, p]));
@@ -295,8 +295,8 @@ function PlayerFoundationRow({
               isHighlighted={isHighlighted}
               isClickable={isClickable}
               isReceiving={isReceiving}
-              animationKey={animationKey}
               highlightColor={isReceiving ? animatingColor : null}
+              animationKey={animationKey}
               getOwnerColor={getOwnerColor}
               onPileClick={onPileClick}
             />
@@ -321,15 +321,15 @@ interface DroppableFoundationPileProps {
   isHighlighted: boolean;
   isClickable: boolean;
   isReceiving: boolean;
+  /** Player color to highlight with when receiving (temporary flash that fades) */
+  highlightColor?: PlayerColor | null;
   /** Unique key that changes on animation to force Card remount */
   animationKey?: string;
-  /** Player color to highlight with when receiving */
-  highlightColor?: PlayerColor | null;
   getOwnerColor: (card: CardType) => PlayerColor | undefined;
   onPileClick?: (playerId: string, suit: Suit, globalIndex: number) => void;
 }
 
-// Map player colors to hex values
+// Map player colors to hex values for CSS variable
 const PLAYER_COLOR_HEX: Record<PlayerColor, string> = {
   red: '#FF1744',
   blue: '#2979FF',
@@ -351,8 +351,8 @@ function DroppableFoundationPile({
   isHighlighted,
   isClickable,
   isReceiving,
-  animationKey,
   highlightColor,
+  animationKey,
   getOwnerColor,
   onPileClick,
 }: DroppableFoundationPileProps) {
@@ -377,7 +377,7 @@ function DroppableFoundationPile({
     }
   };
 
-  // Get the hex color for the highlight
+  // Get the hex color for the highlight (used as CSS variable)
   const highlightHex = highlightColor ? PLAYER_COLOR_HEX[highlightColor] : null;
 
   return (
@@ -420,4 +420,3 @@ function DroppableFoundationPile({
     </div>
   );
 }
-

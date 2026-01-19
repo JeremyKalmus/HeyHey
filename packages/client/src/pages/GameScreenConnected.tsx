@@ -24,6 +24,7 @@ import { useLocalPlayerState } from '../hooks/useLocalPlayerState';
 import { useDragAndDrop } from '../hooks/useDragAndDrop';
 import { usePlayerSettings } from '../hooks/usePlayerSettings';
 import { soundManager } from '../audio';
+import { hasValidSession } from '../utils/sessionStorage';
 
 const SUITS = ['hearts', 'diamonds', 'clubs', 'spades'] as const;
 
@@ -138,12 +139,20 @@ export function GameScreenConnected() {
     }
   }, [gamePhase]);
 
-  // Redirect to home if no game
+  // Redirect to home if no game (but wait for reconnection to complete)
   useEffect(() => {
+    // Don't redirect if we're still trying to reconnect
+    if (isReconnecting) return;
+
+    // Don't redirect if there's a valid session that might be rejoined
+    // (session exists but rejoin hasn't started yet - waiting for socket connect)
+    if (hasValidSession()) return;
+
+    // Only redirect if there's no game ID in context and no session to rejoin
     if (!gameId && routeGameId) {
       navigate('/');
     }
-  }, [gameId, routeGameId, navigate]);
+  }, [gameId, routeGameId, navigate, isReconnecting]);
 
   // Auto-complete server setup phase
   useEffect(() => {
@@ -478,8 +487,8 @@ export function GameScreenConnected() {
   const isStarter = starterPlayer?.id === playerId;
   const starterName = starterPlayer?.name || 'Unknown';
 
-  // Show reconnecting overlay if needed
-  if (isReconnecting) {
+  // Show reconnecting overlay if needed (or if waiting for socket to connect with valid session)
+  if (isReconnecting || (!gameId && hasValidSession())) {
     return <LoadingOverlay.Reconnecting />;
   }
 
@@ -744,6 +753,7 @@ export function GameScreenConnected() {
                   isDragging={false}
                   validDragFoundations={[]}
                   opponentRefs={opponentRefs.current}
+                  lastOpponentMove={lastOpponentFoundationMove}
                 />
               }
               bottomContent={

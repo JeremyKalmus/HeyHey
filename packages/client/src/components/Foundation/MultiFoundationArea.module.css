@@ -207,6 +207,7 @@
               box-shadow var(--transition-fast, 0.1s ease-out);
   border-radius: var(--radius-md, 4px);
   padding: var(--space-xs, 4px);
+  position: relative; /* Required for color glow pseudo-element */
 }
 
 .pileWrapper.clickable {
@@ -229,12 +230,25 @@
   transform: scale(1.05);
 }
 
-/* Animation state - pile just received a card */
+/* Color glow fade animation - uses CSS variable for dynamic color */
+@keyframes colorGlowFade {
+  0% {
+    box-shadow: 0 0 0 4px var(--highlight-color, #FFD23F),
+                0 0 20px 8px var(--highlight-color, #FFD23F);
+  }
+  50% {
+    box-shadow: 0 0 0 4px var(--highlight-color, #FFD23F),
+                0 0 20px 8px var(--highlight-color, #FFD23F);
+  }
+  100% {
+    box-shadow: 0 0 0 0px transparent,
+                0 0 0px 0px transparent;
+  }
+}
+
 /* Animation state - pile just received a card from opponent */
 .pileWrapper.receiving {
-  animation: pileReceive 0.5s ease-out forwards;
-  box-shadow: 0 0 0 4px var(--highlight-color, #FFD23F),
-              0 0 20px var(--highlight-color, #FFD23F);
+  animation: pileReceive 0.5s ease-out, colorGlowFade 0.8s ease-out forwards;
 }
 
 /* Animation state - card flying in */
