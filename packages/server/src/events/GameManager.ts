@@ -13,6 +13,9 @@ import type {
   ScoringState,
   RoundResult,
   OpponentStateUpdatePayload,
+  InactivityStatus,
+  InactivityConfig,
+  PlayerInactivityUpdatePayload,
 } from '@heyhey/shared';
 import {
   StateManager,
@@ -21,12 +24,19 @@ import {
   calculateRoundResult,
   applyRoundResult,
   createScoringState,
+  DEFAULT_INACTIVITY_CONFIG,
 } from '@heyhey/shared';
 
 interface DisconnectedPlayer {
   playerId: string;
   playerName: string;
   disconnectedAt: number;
+}
+
+interface PlayerActivityState {
+  lastActivityTimestamp: number;
+  status: InactivityStatus;
+  playerName: string;
 }
 
 interface ActiveGame {
@@ -37,14 +47,20 @@ interface ActiveGame {
   disconnectedPlayers: Map<string, DisconnectedPlayer>; // playerId -> DisconnectedPlayer
   sequence: number; // Global sequence number for foundation moves
   scoringState: ScoringState; // Accumulated scores across rounds
+  playerActivity: Map<string, PlayerActivityState>; // playerId -> activity state
+  inactivityConfig: InactivityConfig; // Configurable thresholds
 }
 
 /** Reconnection timeout in milliseconds (5 minutes) */
 const RECONNECT_TIMEOUT_MS = 5 * 60 * 1000;
 
+/** Inactivity check interval in milliseconds (5 seconds) */
+const INACTIVITY_CHECK_INTERVAL_MS = 5_000;
+
 export type BroadcastFn = (roomCode: string, update: StateUpdate) => void;
 export type RejectFn = (socketId: string, rejection: MoveRejection) => void;
 export type BroadcastOpponentStateFn = (roomCode: string, payload: OpponentStateUpdatePayload, excludePlayerId: string) => void;
+export type BroadcastInactivityFn = (roomCode: string, payload: PlayerInactivityUpdatePayload) => void;
 
 export type FoundationMoveResult =
   | {
@@ -112,11 +128,127 @@ export class GameManager {
   private broadcast: BroadcastFn;
   private reject: RejectFn;
   private broadcastOpponentStateFn: BroadcastOpponentStateFn;
+  private broadcastInactivityFn: BroadcastInactivityFn;
+  private inactivityCheckInterval: ReturnType<typeof setInterval> | null = null;
 
-  constructor(broadcast?: BroadcastFn, reject?: RejectFn, broadcastOpponentState?: BroadcastOpponentStateFn) {
+  constructor(
+    broadcast?: BroadcastFn,
+    reject?: RejectFn,
+    broadcastOpponentState?: BroadcastOpponentStateFn,
+    broadcastInactivity?: BroadcastInactivityFn
+  ) {
     this.broadcast = broadcast ?? (() => {});
     this.reject = reject ?? (() => {});
     this.broadcastOpponentStateFn = broadcastOpponentState ?? (() => {});
+    this.broadcastInactivityFn = broadcastInactivity ?? (() => {});
+
+    // Start inactivity check interval
+    this.startInactivityChecker();
+  }
+
+  /**
+   * Start the periodic inactivity checker
+   */
+  private startInactivityChecker(): void {
+    if (this.inactivityCheckInterval) return;
+
+    this.inactivityCheckInterval = setInterval(() => {
+      this.checkAllGamesInactivity();
+    }, INACTIVITY_CHECK_INTERVAL_MS);
+  }
+
+  /**
+   * Stop the inactivity checker (for cleanup)
+   */
+  stopInactivityChecker(): void {
+    if (this.inactivityCheckInterval) {
+      clearInterval(this.inactivityCheckInterval);
+      this.inactivityCheckInterval = null;
+    }
+  }
+
+  /**
+   * Check inactivity for all active games
+   */
+  private checkAllGamesInactivity(): void {
+    const now = Date.now();
+
+    for (const [roomCode, game] of this.games.entries()) {
+      // Only check inactivity during playing phase
+      const state = game.stateManager.getState();
+      if (state.phase !== 'playing') continue;
+
+      for (const [playerId, activity] of game.playerActivity.entries()) {
+        const timeSinceActivity = now - activity.lastActivityTimestamp;
+        let newStatus: InactivityStatus = 'active';
+
+        // Determine new status based on time thresholds
+        if (timeSinceActivity >= game.inactivityConfig.disconnectedThresholdMs) {
+          newStatus = 'disconnected';
+        } else if (timeSinceActivity >= game.inactivityConfig.inactiveThresholdMs) {
+          newStatus = 'inactive';
+        } else if (timeSinceActivity >= game.inactivityConfig.warningThresholdMs) {
+          newStatus = 'warning';
+        }
+
+        // Only broadcast if status changed
+        if (newStatus !== activity.status) {
+          activity.status = newStatus;
+
+          this.broadcastInactivityFn(roomCode, {
+            playerId,
+            playerName: activity.playerName,
+            status: newStatus,
+            lastActivityTimestamp: activity.lastActivityTimestamp,
+          });
+        }
+      }
+    }
+  }
+
+  /**
+   * Update player activity timestamp (call this when player takes any action)
+   */
+  updatePlayerActivity(roomCode: string, playerId: string): void {
+    const game = this.games.get(roomCode);
+    if (!game) return;
+
+    const activity = game.playerActivity.get(playerId);
+    if (!activity) return;
+
+    const wasInactive = activity.status !== 'active';
+    activity.lastActivityTimestamp = Date.now();
+
+    // If player was inactive, mark them active and broadcast
+    if (wasInactive) {
+      activity.status = 'active';
+      this.broadcastInactivityFn(roomCode, {
+        playerId,
+        playerName: activity.playerName,
+        status: 'active',
+        lastActivityTimestamp: activity.lastActivityTimestamp,
+      });
+    }
+  }
+
+  /**
+   * Get inactivity status for a player
+   */
+  getPlayerInactivityStatus(roomCode: string, playerId: string): InactivityStatus | null {
+    const game = this.games.get(roomCode);
+    if (!game) return null;
+
+    const activity = game.playerActivity.get(playerId);
+    return activity?.status ?? null;
+  }
+
+  /**
+   * Get all player inactivity states for a room
+   */
+  getPlayerInactivityStates(roomCode: string): Map<string, PlayerActivityState> | null {
+    const game = this.games.get(roomCode);
+    if (!game) return null;
+    return game.playerActivity;
   }
 
   /**
@@ -164,6 +296,17 @@ export class GameManager {
     // Initialize scoring state
     const scoringState = createScoringState(playerIds, initialState.config.targetScore);
 
+    // Initialize player activity tracking
+    const playerActivity = new Map<string, PlayerActivityState>();
+    const now = Date.now();
+    for (const playerId of playerIds) {
+      playerActivity.set(playerId, {
+        lastActivityTimestamp: now,
+        status: 'active',
+        playerName: playerId, // Using playerId as name for now
+      });
+    }
+
     this.games.set(roomCode, {
       gameId,
       roomCode,
@@ -172,6 +315,8 @@ export class GameManager {
       disconnectedPlayers: new Map(),
       sequence: 0,
       scoringState,
+      playerActivity,
+      inactivityConfig: { ...DEFAULT_INACTIVITY_CONFIG },
     });
   }
 
@@ -221,6 +366,9 @@ export class GameManager {
     // Create sequenced update and broadcast to all players
     const update = game.stateManager.createUpdate(result.delta);
     this.broadcast(game.roomCode, update);
+
+    // Update player activity
+    this.updatePlayerActivity(roomCode, move.playerId);
 
     return { success: true };
   }
@@ -295,6 +443,9 @@ export class GameManager {
     foundation.cards.push(move.card);
     game.sequence++;
 
+    // Update player activity
+    this.updatePlayerActivity(roomCode, playerId);
+
     return {
       success: true,
       foundationIndex: move.foundationIndex,
@@ -341,6 +492,9 @@ export class GameManager {
     // Broadcast the nertz call
     const update = game.stateManager.createUpdate(result.delta);
     this.broadcast(game.roomCode, update);
+
+    // Update player activity
+    this.updatePlayerActivity(roomCode, playerId);
 
     return { success: true };
   }

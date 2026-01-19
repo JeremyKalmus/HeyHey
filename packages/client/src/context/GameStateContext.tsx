@@ -22,6 +22,8 @@ import type {
   RejoinGameFailedPayload,
   PlayerReconnectedPayload,
   PlayerDisconnectedPayload,
+  InactivityStatus,
+  PlayerInactivityUpdatePayload,
 } from '@heyhey/shared';
 import { saveSession, loadSession, clearSession } from '../utils/sessionStorage';
 
@@ -39,6 +41,14 @@ export interface OpponentFullState {
   workPiles: Card[][];
   /** Timestamp of last update */
   lastUpdate: number;
+}
+
+/** Player inactivity state for UI display */
+export interface PlayerInactivityState {
+  playerId: string;
+  playerName: string;
+  status: InactivityStatus;
+  lastActivityTimestamp: number;
 }
 
 export interface GameStateContextValue {
@@ -73,6 +83,9 @@ export interface GameStateContextValue {
   // Connection state
   isReconnecting: boolean;
   disconnectedPlayers: string[];
+
+  // Player inactivity state
+  playerInactivity: Map<string, PlayerInactivityState>;
 
   // Actions
   createRoom: (playerName: string) => void;
@@ -117,6 +130,8 @@ interface GameState {
   playersReadyForNextRound: string[];
   isReconnecting: boolean;
   disconnectedPlayers: string[];
+  /** Player inactivity states from server */
+  playerInactivity: Map<string, PlayerInactivityState>;
 }
 
 type GameAction =
@@ -148,7 +163,8 @@ type GameAction =
   | { type: 'REJOIN_SUCCESS'; payload: RejoinGameSuccessPayload }
   | { type: 'REJOIN_FAILED'; reason: string }
   | { type: 'PLAYER_RECONNECTED'; playerId: string }
-  | { type: 'PLAYER_DISCONNECTED'; playerId: string; canReconnect: boolean };
+  | { type: 'PLAYER_DISCONNECTED'; playerId: string; canReconnect: boolean }
+  | { type: 'PLAYER_INACTIVITY_UPDATE'; payload: PlayerInactivityUpdatePayload };
 
 /* =============================================================================
    REDUCER
@@ -176,6 +192,7 @@ const initialState: GameState = {
   playersReadyForNextRound: [],
   isReconnecting: false,
   disconnectedPlayers: [],
+  playerInactivity: new Map(),
 };
 
 function gameReducer(state: GameState, action: GameAction): GameState {
@@ -429,6 +446,21 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         };
       }
       return state;
+
+    case 'PLAYER_INACTIVITY_UPDATE': {
+      const { payload } = action;
+      const newInactivity = new Map(state.playerInactivity);
+      newInactivity.set(payload.playerId, {
+        playerId: payload.playerId,
+        playerName: payload.playerName,
+        status: payload.status,
+        lastActivityTimestamp: payload.lastActivityTimestamp,
+      });
+      return {
+        ...state,
+        playerInactivity: newInactivity,
+      };
+    }
 
     default:
       return state;
@@ -764,6 +796,13 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
       console.log('[GameState] Player disconnected:', payload.playerName, payload.canReconnect ? '(can reconnect)' : '(cannot reconnect)');
     };
 
+    const onPlayerInactivityUpdate = (payload: PlayerInactivityUpdatePayload) => {
+      dispatch({ type: 'PLAYER_INACTIVITY_UPDATE', payload });
+      if (payload.status !== 'active') {
+        console.log('[GameState] Player inactivity update:', payload.playerName, payload.status);
+      }
+    };
+
     // Attach listeners
     socket.on('roomCreated', onRoomCreated);
     socket.on('roomJoined', onRoomJoined);
@@ -791,6 +830,7 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
     socket.on('rejoinGameFailed', onRejoinGameFailed);
     socket.on('playerReconnected', onPlayerReconnected);
     socket.on('playerDisconnected', onPlayerDisconnected);
+    socket.on('playerInactivityUpdate', onPlayerInactivityUpdate);
 
     // Cleanup
     return () => {
@@ -820,6 +860,7 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
       socket.off('rejoinGameFailed', onRejoinGameFailed);
       socket.off('playerReconnected', onPlayerReconnected);
       socket.off('playerDisconnected', onPlayerDisconnected);
+      socket.off('playerInactivityUpdate', onPlayerInactivityUpdate);
     };
   }, [socket]);
 
@@ -1008,6 +1049,9 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
     // Connection state
     isReconnecting: state.isReconnecting,
     disconnectedPlayers: state.disconnectedPlayers,
+
+    // Player inactivity
+    playerInactivity: state.playerInactivity,
 
     // Actions
     createRoom,

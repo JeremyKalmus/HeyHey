@@ -4,7 +4,7 @@
 // Uses React.memo for performance
 
 import { memo, forwardRef } from 'react';
-import type { Card as CardType } from '@heyhey/shared';
+import type { Card as CardType, InactivityStatus } from '@heyhey/shared';
 import { Card, CardStack } from '../Card';
 import type { PlayerColor } from '../Card/CardBack';
 import { Avatar, type AvatarString, DEFAULT_AVATAR } from '../ui/Avatar';
@@ -40,6 +40,8 @@ export interface OpponentPlayAreaProps {
   position?: OpponentPlayAreaPosition;
   /** Whether this opponent is currently active (recent move indicator) */
   isActive?: boolean;
+  /** Inactivity status for this player */
+  inactivityStatus?: InactivityStatus;
   /** Additional CSS class */
   className?: string;
 }
@@ -64,6 +66,7 @@ export const OpponentPlayArea = memo(forwardRef<HTMLDivElement, OpponentPlayArea
       scale = 'sm',
       position = 'top',
       isActive = false,
+      inactivityStatus = 'active',
       className,
     },
     ref
@@ -78,6 +81,20 @@ export const OpponentPlayArea = memo(forwardRef<HTMLDivElement, OpponentPlayArea
     // Work pile offset based on scale - compressed for mini view
     const workPileOffset = scale === 'xs' ? 6 : scale === 'sm' ? 8 : 10;
 
+    // Determine inactivity class
+    const inactivityClass =
+      inactivityStatus === 'warning' ? styles.inactivityWarning :
+      inactivityStatus === 'inactive' ? styles.inactivityInactive :
+      inactivityStatus === 'disconnected' ? styles.inactivityDisconnected :
+      '';
+
+    // Inactivity label text
+    const inactivityLabel =
+      inactivityStatus === 'warning' ? 'Idle' :
+      inactivityStatus === 'inactive' ? 'Inactive' :
+      inactivityStatus === 'disconnected' ? 'Disconnected' :
+      null;
+
     return (
       <div
         ref={ref}
@@ -87,12 +104,20 @@ export const OpponentPlayArea = memo(forwardRef<HTMLDivElement, OpponentPlayArea
           ${styles[`position-${position}`]}
           ${styles[playerColor]}
           ${isActive ? styles.active : ''}
+          ${inactivityClass}
           ${className ?? ''}
         `}
-        aria-label={`${playerName}'s play area`}
+        aria-label={`${playerName}'s play area${inactivityLabel ? ` - ${inactivityLabel}` : ''}`}
       >
         {/* Activity indicator pulse */}
         {isActive && <div className={styles.activityPulse} />}
+
+        {/* Inactivity overlay/indicator */}
+        {inactivityLabel && (
+          <div className={styles.inactivityBadge}>
+            <span className={styles.inactivityText}>{inactivityLabel}</span>
+          </div>
+        )}
 
         {/* Player identity badge - inline */}
         <div className={styles.identity}>

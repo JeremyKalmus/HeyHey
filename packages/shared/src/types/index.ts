@@ -76,6 +76,7 @@ export interface ServerToClientEvents {
   rejoinGameFailed: (payload: RejoinGameFailedPayload) => void;
   playerReconnected: (payload: PlayerReconnectedPayload) => void;
   playerDisconnected: (payload: PlayerDisconnectedPayload) => void;
+  playerInactivityUpdate: (payload: PlayerInactivityUpdatePayload) => void;
 }
 
 // Event Payloads - Client to Server
@@ -455,3 +456,42 @@ export interface RoundScoredPayload {
  */
 export interface AllClientToServerEvents extends ClientToServerEvents, GameClientToServerEvents {}
 export interface AllServerToClientEvents extends ServerToClientEvents, GameServerToClientEvents {}
+
+// === Player Inactivity Types ===
+
+/** Inactivity status for a player */
+export type InactivityStatus = 'active' | 'warning' | 'inactive' | 'disconnected';
+
+/** Inactivity configuration */
+export interface InactivityConfig {
+  /** Time in ms before showing warning (default: 30000 = 30s) */
+  warningThresholdMs: number;
+  /** Time in ms before marking as inactive (default: 120000 = 2 min) */
+  inactiveThresholdMs: number;
+  /** Time in ms before marking as disconnected (default: 300000 = 5 min) */
+  disconnectedThresholdMs: number;
+}
+
+/** Default inactivity configuration */
+export const DEFAULT_INACTIVITY_CONFIG: InactivityConfig = {
+  warningThresholdMs: 30_000,      // 30 seconds
+  inactiveThresholdMs: 120_000,    // 2 minutes
+  disconnectedThresholdMs: 300_000, // 5 minutes
+};
+
+/** Player inactivity state */
+export interface PlayerInactivity {
+  playerId: string;
+  status: InactivityStatus;
+  lastActivityTimestamp: number;
+  /** Time remaining before next status change in ms */
+  timeUntilNextStatus?: number;
+}
+
+/** Payload for player inactivity update event */
+export interface PlayerInactivityUpdatePayload {
+  playerId: string;
+  playerName: string;
+  status: InactivityStatus;
+  lastActivityTimestamp: number;
+}

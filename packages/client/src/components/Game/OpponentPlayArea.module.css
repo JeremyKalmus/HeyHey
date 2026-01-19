@@ -358,3 +358,92 @@
     gap: 2px;
   }
 }
+
+/* =============================================================================
+   INACTIVITY STATES
+   ============================================================================= */
+
+/* Warning state - player idle for 30+ seconds */
+.inactivityWarning {
+  opacity: 0.85;
+  filter: brightness(0.9);
+}
+
+.inactivityWarning .inactivityBadge {
+  background: rgba(255, 193, 7, 0.9);
+  color: #000;
+}
+
+/* Inactive state - player inactive for 2+ minutes */
+.inactivityInactive {
+  opacity: 0.6;
+  filter: grayscale(30%) brightness(0.7);
+}
+
+.inactivityInactive .inactivityBadge {
+  background: rgba(255, 87, 34, 0.9);
+  color: #fff;
+}
+
+/* Disconnected state - player inactive for 5+ minutes */
+.inactivityDisconnected {
+  opacity: 0.4;
+  filter: grayscale(60%) brightness(0.5);
+}
+
+.inactivityDisconnected .inactivityBadge {
+  background: rgba(244, 67, 54, 0.9);
+  color: #fff;
+  animation: disconnectedPulse 2s ease-in-out infinite;
+}
+
+@keyframes disconnectedPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* Inactivity badge - positioned at top right */
+.inactivityBadge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  z-index: 10;
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 2px solid #000;
+  box-shadow: 2px 2px 0 #000;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.inactivityText {
+  display: block;
+}
+
+.scale-xxs .inactivityBadge {
+  font-size: 6px;
+  padding: 1px 3px;
+  top: -4px;
+  right: -4px;
+}
+
+.scale-xs .inactivityBadge {
+  font-size: 7px;
+  padding: 1px 4px;
+  top: -5px;
+  right: -5px;
+}
+
+.scale-md .inactivityBadge {
+  font-size: 10px;
+  padding: 3px 8px;
+  top: -8px;
+  right: -8px;
+}
