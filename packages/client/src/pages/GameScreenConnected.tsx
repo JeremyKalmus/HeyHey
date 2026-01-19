@@ -78,6 +78,15 @@ export function GameScreenConnected() {
   // Foundation piles for all players
   const [playerFoundations, setPlayerFoundations] = useState<Map<string, FoundationPile[]>>(new Map());
 
+  // Local animation state - triggers immediately for ALL foundation moves (local and remote)
+  const [lastFoundationMove, setLastFoundationMove] = useState<{
+    playerId: string;
+    foundationIndex: number;
+    suit: 'hearts' | 'diamonds' | 'clubs' | 'spades';
+    rank: number;
+    timestamp: number;
+  } | null>(null);
+
   // Player settings (hints and sound toggles)
   const { settings, toggleMoveHints, toggleSound } = usePlayerSettings({ playerId: playerId || '' });
 
@@ -197,6 +206,7 @@ export function GameScreenConnected() {
       // Calculate which player/suit this foundation belongs to
       const playerIndex = Math.floor(payload.foundationIndex / 4);
       const suitIndex = payload.foundationIndex % 4;
+      const suits: Array<'hearts' | 'diamonds' | 'clubs' | 'spades'> = ['hearts', 'diamonds', 'clubs', 'spades'];
       const players = room.players;
       const targetPlayerId = players[playerIndex]?.id;
       if (!targetPlayerId) return;
@@ -215,13 +225,24 @@ export function GameScreenConnected() {
         }
         return newMap;
       });
+
+      // Trigger animation for REMOTE moves only (local moves animate immediately in handleFoundationMove)
+      if (payload.playerId !== playerId) {
+        setLastFoundationMove({
+          playerId: payload.playerId,
+          foundationIndex: payload.foundationIndex,
+          suit: suits[suitIndex] ?? 'hearts',
+          rank: payload.card.rank,
+          timestamp: Date.now(),
+        });
+      }
     };
 
     socket.on('foundationUpdated', handleFoundationUpdated);
     return () => {
       socket.off('foundationUpdated', handleFoundationUpdated);
     };
-  }, [socket, room]);
+  }, [socket, room, playerId]);
 
   // Handle stock click during setup - deals cards
   const handleSetupStockClick = useCallback(() => {
@@ -430,6 +451,16 @@ export function GameScreenConnected() {
           newMap.set(targetPlayerId, newPiles);
         }
         return newMap;
+      });
+
+      // Trigger animation immediately for local moves
+      const suits: Array<'hearts' | 'diamonds' | 'clubs' | 'spades'> = ['hearts', 'diamonds', 'clubs', 'spades'];
+      setLastFoundationMove({
+        playerId,
+        foundationIndex,
+        suit: suits[suitIndex] ?? 'hearts',
+        rank: card.rank,
+        timestamp: Date.now(),
       });
 
       // Emit to server for other players
@@ -684,7 +715,7 @@ export function GameScreenConnected() {
                       .filter((t) => t.type === 'foundation')
                       .map((t) => t.index)}
                     opponentRefs={opponentRefs.current}
-                    lastOpponentMove={lastOpponentFoundationMove}
+                    lastOpponentMove={lastFoundationMove}
                   />
                 }
                 bottomContent={
@@ -781,7 +812,7 @@ export function GameScreenConnected() {
                   isDragging={false}
                   validDragFoundations={[]}
                   opponentRefs={opponentRefs.current}
-                  lastOpponentMove={lastOpponentFoundationMove}
+                  lastOpponentMove={lastFoundationMove}
                 />
               }
               bottomContent={
