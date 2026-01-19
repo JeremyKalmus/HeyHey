@@ -128,7 +128,6 @@ export function MultiFoundationArea({
     const playerGroup = playerGroups.find(g => g.playerId === lastOpponentMove.playerId);
     const playerColor = playerGroup?.playerColor ?? 'blue';
 
-    console.log('Opponent move detected:', lastOpponentMove.foundationIndex, 'color:', playerColor, lastOpponentMove);
     lastMoveTimestamp.current = lastOpponentMove.timestamp;
     setAnimatingIndex(lastOpponentMove.foundationIndex);
     setAnimatingColor(playerColor);
@@ -280,10 +279,6 @@ function PlayerFoundationRow({
           const isClickable = canPlace && !!selectedCard;
           // Simple animation: is this the pile that's animating?
           const isReceiving = animatingIndex === globalIndex;
-          // Debug: log when animation check happens
-          if (animatingIndex !== null) {
-            console.log(`[Animation] Checking pile: playerIndex=${playerIndex}, suitIndex=${suitIndex}, globalIndex=${globalIndex}, animatingIndex=${animatingIndex}, isReceiving=${isReceiving}`);
-          }
           // Use timestamp as key to force remount and trigger animation
           const animationKey = isReceiving ? `anim-${animationTimestamp}` : undefined;
 

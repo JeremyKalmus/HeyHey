@@ -273,19 +273,24 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         },
       };
 
-    case 'GAME_STARTED':
+    case 'GAME_STARTED': {
+      // Initialize foundations for ALL players (4 piles per player)
+      // This is critical for animation to work on all foundation indices
+      const playerCount = state.room?.players.length ?? 1;
+      const suits: Array<'hearts' | 'diamonds' | 'clubs' | 'spades'> = ['hearts', 'diamonds', 'clubs', 'spades'];
+      const foundations: FoundationPile[] = [];
+      for (let p = 0; p < playerCount; p++) {
+        for (const suit of suits) {
+          foundations.push({ suit, cards: [], ownerId: 'system' });
+        }
+      }
       return {
         ...state,
         gameId: action.gameId,
         gamePhase: 'setup',
-        // Initialize empty foundations (4 piles, one per suit)
-        foundations: [
-          { suit: 'hearts', cards: [], ownerId: 'system' },
-          { suit: 'diamonds', cards: [], ownerId: 'system' },
-          { suit: 'clubs', cards: [], ownerId: 'system' },
-          { suit: 'spades', cards: [], ownerId: 'system' },
-        ],
+        foundations,
       };
+    }
 
     case 'PLAYER_SETUP_COMPLETE':
       // Could track which players are ready here
