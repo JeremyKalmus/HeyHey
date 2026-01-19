@@ -56,6 +56,7 @@ export function GameScreenConnected() {
     isReconnecting,
     reportState,
     lastOpponentFoundationMove,
+    foundations: contextFoundations,
   } = useGameState();
   const { socket } = useSocket();
 
@@ -108,14 +109,37 @@ export function GameScreenConnected() {
         wastePile: [],
       });
 
-      // Initialize foundations for all players
+      // Initialize foundations - use context foundations if available (from rejoin)
+      // or initialize empty ones for new game
+      const hasExistingFoundations = contextFoundations && contextFoundations.length > 0 &&
+        contextFoundations.some(f => f.cards.length > 0);
+
       const foundations = new Map<string, FoundationPile[]>();
-      room.players.forEach((player) => {
-        foundations.set(
-          player.id,
-          SUITS.map((suit) => ({ suit, cards: [], ownerId: player.id }))
-        );
-      });
+      if (hasExistingFoundations) {
+        // Rejoin case: use server foundation state
+        // Foundations are stored as flat array: 4 piles per player
+        console.log('[GameScreen] Using existing foundations from server (rejoin):', contextFoundations.length);
+        room.players.forEach((player, playerIndex) => {
+          const playerPiles = contextFoundations.slice(playerIndex * 4, (playerIndex + 1) * 4);
+          if (playerPiles.length === 4) {
+            foundations.set(player.id, playerPiles);
+          } else {
+            // Fallback: create empty piles
+            foundations.set(
+              player.id,
+              SUITS.map((suit) => ({ suit, cards: [], ownerId: player.id }))
+            );
+          }
+        });
+      } else {
+        // New game: initialize empty foundations
+        room.players.forEach((player) => {
+          foundations.set(
+            player.id,
+            SUITS.map((suit) => ({ suit, cards: [], ownerId: player.id }))
+          );
+        });
+      }
       setPlayerFoundations(foundations);
 
       // Reset setup state
@@ -124,7 +148,7 @@ export function GameScreenConnected() {
       setNertzFlipped(false);
       setWorkDealt(0);
     }
-  }, [gamePhase, deck.length, playerId, room]);
+  }, [gamePhase, deck.length, playerId, room, contextFoundations]);
 
   // Reset state when entering waiting phase (new round)
   useEffect(() => {
