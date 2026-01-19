@@ -1,7 +1,7 @@
 // GameStateContext - Game state management and socket event handling
 // Manages room, players, game phase, local player state
 
-import { createContext, useContext, useCallback, useReducer, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useCallback, useReducer, useEffect, useRef, type ReactNode } from 'react';
 import { useSocket } from './SocketContext';
 import type {
   RoomState,
@@ -702,6 +702,17 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
   const { socket, isConnected } = useSocket();
   const [state, dispatch] = useReducer(gameReducer, initialState);
 
+  // Track if we've ever had a game in this session (to distinguish initial mount from real leave)
+  // This prevents clearing the session on initial page load before rejoin can happen
+  const hasHadGameRef = useRef(false);
+
+  // Update ref when we get a game
+  useEffect(() => {
+    if (state.gameId) {
+      hasHadGameRef.current = true;
+    }
+  }, [state.gameId]);
+
   // Compute derived state
   const isHost = state.room?.hostId === state.playerId;
 
@@ -917,10 +928,14 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
     }
   }, [state.gameId, state.playerId, state.room?.code]);
 
-  // Clear session when game ends or player leaves
+  // Clear session when game ends or player leaves (but not on initial mount)
   useEffect(() => {
+    // Skip on initial mount - don't clear session before rejoin can attempt
+    if (!hasHadGameRef.current) return;
+
     if (state.gamePhase === 'finished' || state.gamePhase === 'lobby') {
       if (state.gameId === null) {
+        console.log('[GameState] Clearing session - game ended or left');
         clearSession();
       }
     }
