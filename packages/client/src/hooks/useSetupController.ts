@@ -10,9 +10,10 @@ import {
   type SetupProgress,
   type SetupConfig,
 } from '@heyhey/shared';
+import { type SoundType } from '../audio';
 
 /** Sound effect types that can be triggered during setup */
-export type SetupSoundType = 'cardSelect' | 'cardPlace' | 'cardFlip' | 'error';
+export type SetupSoundType = Extract<SoundType, 'cardSelect' | 'cardPlace' | 'cardFlip' | 'error'>;
 
 export interface UseSetupControllerOptions {
   /** Player's deck ID for card identification */
