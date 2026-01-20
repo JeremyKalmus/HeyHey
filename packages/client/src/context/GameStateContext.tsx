@@ -488,16 +488,31 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           });
         }
       }
+
+      // Check if playerState is included in payload (from server-side state persistence)
+      // Cast payload to access optional playerState field (added by he-ma7m.1)
+      const payloadWithState = action.payload as RejoinGameSuccessPayload & {
+        playerState?: PlayerGameState;
+      };
+      const restoredPlayerState = payloadWithState.playerState ?? null;
+
+      // If player state is restored, skip setup and go directly to playing phase
+      // Otherwise use the game phase from server (may be 'setup' requiring re-deal)
+      const effectiveGamePhase = restoredPlayerState
+        ? (action.payload.gamePhase === 'setup' ? 'playing' : action.payload.gamePhase)
+        : action.payload.gamePhase;
+
       return {
         ...state,
         room: action.payload.room,
         playerId: action.payload.playerId,
         gameId: action.payload.gameId,
-        gamePhase: action.payload.gamePhase,
+        gamePhase: effectiveGamePhase,
         roundNumber: action.payload.roundNumber,
         currentStarterIndex: action.payload.currentStarterIndex,
         foundations: action.payload.foundations,
         opponentFullStates: rejoinOpponentStates,
+        playerState: restoredPlayerState,
         isReconnecting: false,
         error: null,
       };
@@ -923,7 +938,13 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
     // Reconnection events
     const onRejoinGameSuccess = (payload: RejoinGameSuccessPayload) => {
       dispatch({ type: 'REJOIN_SUCCESS', payload });
-      console.log('[GameState] Successfully rejoined game');
+      // Check if player state was included in payload
+      const payloadWithState = payload as RejoinGameSuccessPayload & { playerState?: PlayerGameState };
+      if (payloadWithState.playerState) {
+        console.log('[GameState] Successfully rejoined game with restored player state');
+      } else {
+        console.log('[GameState] Successfully rejoined game (no player state - may need re-deal)');
+      }
     };
 
     const onRejoinGameFailed = (payload: RejoinGameFailedPayload) => {
