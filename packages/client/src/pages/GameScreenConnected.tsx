@@ -55,7 +55,7 @@ export function GameScreenConnected() {
     opponentFullStates,
     isReconnecting,
     reportState,
-    lastOpponentFoundationMove,
+    lastOpponentFoundationMove: _lastOpponentFoundationMove,
     foundations: contextFoundations,
   } = useGameState();
   const { socket } = useSocket();
