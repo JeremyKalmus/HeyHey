@@ -50,6 +50,8 @@ export interface ClientToServerEvents {
   readyForNextRound: () => void; // Player is ready to proceed to next round
   rejoinGame: (payload: RejoinGamePayload) => void; // Reconnect to active game
   reportState: (payload: ReportStatePayload) => void; // Client reports its visible state to server for relay
+  callDraw: () => void; // Player proposes a draw
+  respondToDraw: (payload: RespondToDrawPayload) => void; // Player responds to a draw proposal
 }
 
 // Socket Event Types - Server to Client
@@ -81,6 +83,10 @@ export interface ServerToClientEvents {
   playerInactivityUpdate: (payload: PlayerInactivityUpdatePayload) => void;
   /** Server requests client to broadcast their current state (used after opponent reconnects) */
   requestStateReport: () => void;
+  drawProposed: (payload: DrawProposedPayload) => void; // A player proposed a draw
+  drawResponse: (payload: DrawResponsePayload) => void; // A player responded to draw proposal
+  drawAgreed: (payload: DrawAgreedPayload) => void; // All players agreed to draw
+  drawRejected: (payload: DrawRejectedPayload) => void; // Draw proposal was rejected
 }
 
 // Event Payloads - Client to Server
@@ -101,6 +107,10 @@ export interface UpdatePlayerPayload {
   name?: string;
   color?: string;
   avatar?: string;
+}
+
+export interface RespondToDrawPayload {
+  accept: boolean;
 }
 
 // Event Payloads - Server to Client
@@ -146,6 +156,29 @@ export interface HostChangedPayload {
 export interface RoomExpiredPayload {
   roomCode: string;
   reason: 'inactivity' | 'empty' | 'game_abandoned';
+}
+
+// Draw Payloads
+export interface DrawProposedPayload {
+  proposerId: string;
+  proposerName: string;
+  timeout: number; // Time in ms to respond (default: 30000)
+}
+
+export interface DrawResponsePayload {
+  responderId: string;
+  responderName: string;
+  accepted: boolean;
+}
+
+export interface DrawAgreedPayload {
+  roundNumber: number;
+}
+
+export interface DrawRejectedPayload {
+  rejectedBy: string;
+  rejectedByName: string;
+  reason: 'declined' | 'timeout';
 }
 
 // Round Start Payloads
@@ -377,6 +410,7 @@ export type StateDelta =
   | { type: 'cardsDrawn'; playerId: string; cards: Card[] }
   | { type: 'stockFlipped'; playerId: string }
   | { type: 'nertzCalled'; playerId: string }
+  | { type: 'drawCalled'; playerId: string }
   | { type: 'phaseChanged'; phase: GamePhase }
   | { type: 'playerJoinedGame'; player: PlayerGameState }
   | { type: 'playerLeftGame'; playerId: string }
@@ -450,6 +484,7 @@ export interface RoundResult {
   calledBy: string; // Player who called Nertz
   playerScores: PlayerRoundScore[];
   timestamp: number;
+  isDraw?: boolean; // True if round ended by draw agreement
 }
 
 /**
