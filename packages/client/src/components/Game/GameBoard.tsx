@@ -6,7 +6,7 @@ import type { Card as CardType, OpponentPlayerState } from '@heyhey/shared';
 import { NertzPile } from './NertzPile';
 import { WorkPiles, type SelectedCard } from './WorkPiles';
 import { HeyHeyButton } from './HeyHeyButton';
-import { OpponentArea } from './OpponentArea';
+import { OpponentBadge } from './OpponentBadge';
 import { FoundationArea, type FoundationPile } from '../Foundation';
 import { StockPile } from '../Player/StockPile';
 import { WastePile } from '../Player/WastePile';
@@ -208,7 +208,7 @@ export function GameBoard({
       {opponentCount > 0 && (
         <div className={styles.opponentArea}>
           {opponents.map((opponent) => (
-            <OpponentArea
+            <OpponentBadge
               key={opponent.playerId}
               opponentState={opponent.state}
               name={opponent.name}

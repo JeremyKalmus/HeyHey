@@ -1,6 +1,12 @@
 export { WorkPiles, type WorkPilesProps, type SelectedCard } from './WorkPiles';
 export { NertzPile, type NertzPileProps } from './NertzPile';
-export { OpponentMini, type OpponentMiniProps } from './OpponentMini';
+export {
+  OpponentBadge,
+  OpponentBadge as OpponentMini,
+  type OpponentBadgeProps,
+  type OpponentBadgeProps as OpponentMiniProps,
+  type OpponentBadgeScale,
+} from './OpponentBadge';
 export { HeyHeyButton, type HeyHeyButtonProps } from './HeyHeyButton';
 export { GameBoard, type GameBoardProps } from './GameBoard';
 export { PlayerArea, type PlayerAreaProps } from './PlayerArea';

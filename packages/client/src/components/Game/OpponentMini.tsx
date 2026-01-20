@@ -1,12 +1,15 @@
-// OpponentMini - Re-export from OpponentArea for backwards compatibility
-// Use OpponentArea directly for new code
+// OpponentMini - Re-export from OpponentBadge for backwards compatibility
+// Use OpponentBadge directly for new code
 
 export {
-  OpponentArea,
-  OpponentArea as OpponentMini,
-  type OpponentAreaProps,
-  type OpponentAreaProps as OpponentMiniProps,
-  type OpponentAreaScale,
-} from './OpponentArea';
+  OpponentBadge,
+  OpponentBadge as OpponentArea,
+  OpponentBadge as OpponentMini,
+  type OpponentBadgeProps,
+  type OpponentBadgeProps as OpponentAreaProps,
+  type OpponentBadgeProps as OpponentMiniProps,
+  type OpponentBadgeScale,
+  type OpponentBadgeScale as OpponentAreaScale,
+} from './OpponentBadge';
 
-export { default } from './OpponentArea';
+export { default } from './OpponentBadge';

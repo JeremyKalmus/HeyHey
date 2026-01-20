@@ -1,4 +1,4 @@
-// OpponentArea - Scalable display of opponent's game state
+// OpponentBadge - Scalable badge display of opponent's game state
 // Shows card counts (not actual cards) with emphasis on Nertz pile
 // Neobrutalist styling with arcade score display
 // Supports multiple scale sizes for different layout contexts
@@ -8,11 +8,11 @@ import type { PlayerGameState, OpponentPlayerState } from '@heyhey/shared';
 import type { PlayerColor } from '../Card/CardBack';
 import { Avatar, type AvatarString, DEFAULT_AVATAR } from '../ui/Avatar';
 import { LayersIcon, InboxIcon, LayoutGridIcon } from '../ui/Icon';
-import styles from './OpponentArea.module.css';
+import styles from './OpponentBadge.module.css';
 
-export type OpponentAreaScale = 'xs' | 'sm' | 'md' | 'lg';
+export type OpponentBadgeScale = 'xs' | 'sm' | 'md' | 'lg';
 
-export interface OpponentAreaProps {
+export interface OpponentBadgeProps {
   /** Opponent's game state (full PlayerGameState) */
   playerState?: PlayerGameState;
   /** Opponent's lightweight state (for real-time updates) */
@@ -24,7 +24,7 @@ export interface OpponentAreaProps {
   /** Opponent's deck color */
   color: PlayerColor;
   /** Scale/size variant for different layouts */
-  scale?: OpponentAreaScale;
+  scale?: OpponentBadgeScale;
   /** Whether this opponent recently made a move (activity indicator) */
   isActive?: boolean;
   /** Additional CSS class */
@@ -32,11 +32,11 @@ export interface OpponentAreaProps {
 }
 
 /**
- * OpponentArea displays a compact view of an opponent's game state.
+ * OpponentBadge displays a compact badge view of an opponent's game state.
  * Supports both full PlayerGameState and lightweight OpponentPlayerState.
  * Uses React.memo to prevent unnecessary re-renders.
  */
-export const OpponentArea = memo(function OpponentArea({
+export const OpponentBadge = memo(function OpponentBadge({
   playerState,
   opponentState,
   name,
@@ -45,7 +45,7 @@ export const OpponentArea = memo(function OpponentArea({
   scale = 'md',
   isActive = false,
   className,
-}: OpponentAreaProps) {
+}: OpponentBadgeProps) {
   // Extract counts from either state format
   let nertzCount: number;
   let stockCount: number;
@@ -123,8 +123,9 @@ export const OpponentArea = memo(function OpponentArea({
   );
 });
 
-// Re-export the old name for backwards compatibility
-export { OpponentArea as OpponentMini };
-export type { OpponentAreaProps as OpponentMiniProps };
+// Re-export old names for backwards compatibility
+export { OpponentBadge as OpponentArea, OpponentBadge as OpponentMini };
+export type { OpponentBadgeProps as OpponentAreaProps, OpponentBadgeProps as OpponentMiniProps };
+export type { OpponentBadgeScale as OpponentAreaScale };
 
-export default OpponentArea;
+export default OpponentBadge;
