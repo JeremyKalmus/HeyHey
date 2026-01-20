@@ -1,6 +1,46 @@
-// HeyHey! Game Manager
-// Manages active game sessions with state synchronization
-// Includes foundation conflict resolution (first-received-wins)
+/**
+ * HeyHey! Game Manager
+ * Manages active game sessions with state synchronization.
+ * Includes foundation conflict resolution (first-received-wins).
+ *
+ * ## Activity Tracking Architecture
+ *
+ * This module owns **game-level** and **player-level** activity tracking.
+ * Activity tracking exists at three levels across the server:
+ *
+ * | Level   | Owner        | Purpose                      | Timeouts                    |
+ * |---------|--------------|------------------------------|------------------------------|
+ * | Room    | LobbyManager | Lobby room garbage collection| Empty: 5m, Inactive: 30m    |
+ * | Game    | GameManager  | Abandoned game cleanup       | Disconnect: 5m, Inactive: 30m|
+ * | Player  | GameManager  | In-game UI feedback          | Configurable thresholds      |
+ *
+ * ### GameManager Responsibilities (this module):
+ *
+ * **Game-level activity** (ActiveGame.lastActivityAt):
+ * - Track when the game last had any move/action
+ * - Clean up abandoned games after 30 minutes inactivity
+ * - Handle player disconnection with 5 minute reconnect window
+ * - Methods: updateGameActivity(), cleanupAbandonedGames(), isGameAbandoned()
+ *
+ * **Player-level activity** (PlayerActivityState):
+ * - Track individual player inactivity during gameplay
+ * - Broadcast status changes to other players (warning → inactive → disconnected)
+ * - Allows UI to show "Player X is inactive" indicators
+ * - Methods: updatePlayerActivity(), getPlayerInactivityStatus(), checkAllGamesInactivity()
+ *
+ * ### Coordination with LobbyManager:
+ * - When game starts: LobbyManager.markRoomHasGame(code, true) - prevents room cleanup
+ * - When game abandoned: Cleanup sweep calls LobbyManager.markRoomHasGame(code, false)
+ * - This ensures only ONE manager is responsible for cleanup at any time
+ *
+ * ### Cleanup Flow:
+ * 1. Periodic cleanup sweep runs every 5 minutes (lobbyEvents.ts)
+ * 2. LobbyManager.cleanupExpiredRooms() handles lobby rooms (skips rooms with games)
+ * 3. GameManager.cleanupAbandonedGames() handles active games
+ * 4. If game is abandoned → lobbyEvents.ts calls markRoomHasGame(false)
+ *
+ * @see LobbyManager for room-level activity tracking
+ */
 
 import type {
   Card,
@@ -34,12 +74,31 @@ interface DisconnectedPlayer {
   disconnectedAt: number;
 }
 
+/**
+ * Player-level activity state for in-game inactivity tracking.
+ *
+ * This is separate from game-level activity (ActiveGame.lastActivityAt).
+ * Player activity tracks INDIVIDUAL player actions to show UI indicators
+ * like "Player X is inactive" to other players.
+ *
+ * Status transitions: active → warning → inactive → disconnected
+ * Each transition triggers a broadcast to all players via broadcastInactivityFn.
+ *
+ * @see LobbyManager.RoomActivity - For room-level activity (pre-game)
+ * @see ActiveGame.lastActivityAt - For game-level activity (cleanup trigger)
+ */
 interface PlayerActivityState {
+  /** Timestamp of player's last action (move, foundation play, etc.) */
   lastActivityTimestamp: number;
+  /** Current inactivity status, broadcasted to other players on change */
   status: InactivityStatus;
+  /** Player's display name for broadcast messages */
   playerName: string;
 }
 
+/**
+ * Active game state including both game-level and player-level activity tracking.
+ */
 interface ActiveGame {
   gameId: string;
   roomCode: string;
@@ -48,11 +107,24 @@ interface ActiveGame {
   disconnectedPlayers: Map<string, DisconnectedPlayer>; // playerId -> DisconnectedPlayer
   sequence: number; // Global sequence number for foundation moves
   scoringState: ScoringState; // Accumulated scores across rounds
-  playerActivity: Map<string, PlayerActivityState>; // playerId -> activity state
+
+  // === Player-level activity tracking (for UI feedback) ===
+  /** Per-player activity state for inactivity indicators. @see PlayerActivityState */
+  playerActivity: Map<string, PlayerActivityState>;
+  /** Configurable thresholds for warning/inactive/disconnected status */
+  inactivityConfig: InactivityConfig;
+
+  // === Game-level activity tracking (for cleanup) ===
+  /** When the game was created (for debugging/monitoring) */
+  createdAt: number;
+  /**
+   * Last game-level activity timestamp. Updated on any move/action.
+   * Used by cleanupAbandonedGames() - games inactive for 30 min are cleaned up.
+   * Note: This is SEPARATE from playerActivity which tracks individual players.
+   */
+  lastActivityAt: number;
+
   playerNertzCounts: Map<string, number>; // playerId -> last reported nertz pile count (for scoring)
-  inactivityConfig: InactivityConfig; // Configurable thresholds
-  createdAt: number; // When the game was created
-  lastActivityAt: number; // Last move or action timestamp
 }
 
 /** Reconnection timeout in milliseconds (5 minutes) */
@@ -215,7 +287,22 @@ export class GameManager {
   }
 
   /**
-   * Update player activity timestamp (call this when player takes any action)
+   * Update player activity timestamp (call this when player takes any action).
+   *
+   * This is **player-level** activity tracking for UI feedback.
+   * Updates the individual player's activity state and broadcasts status changes
+   * to other players (e.g., "Player X is now active").
+   *
+   * Called from:
+   * - processMove() - after successful move
+   * - processFoundationMove() - after successful foundation play
+   * - processNertzCall() - after nertz call
+   *
+   * Note: This also implicitly updates game-level activity (lastActivityAt)
+   * through the calling methods, which handle game-level cleanup timing.
+   *
+   * @see updateGameActivity - For game-level activity (cleanup timing)
+   * @see LobbyManager.updateRoomActivity - For room-level activity (pre-game)
    */
   updatePlayerActivity(roomCode: string, playerId: string): void {
     const game = this.games.get(roomCode);
@@ -1078,7 +1165,20 @@ export class GameManager {
   }
 
   /**
-   * Update activity timestamp for a game (call on any game action)
+   * Update activity timestamp for a game (call on any game action).
+   *
+   * This is **game-level** activity tracking for abandoned game cleanup.
+   * Games inactive for 30 minutes are cleaned up by cleanupAbandonedGames().
+   *
+   * Note: This is SEPARATE from player-level activity which tracks individual
+   * players for UI feedback. A game can be "active" (not abandoned) even if
+   * individual players are showing as "inactive" in the UI.
+   *
+   * Typically called automatically by processMove(), processFoundationMove(),
+   * etc. - you rarely need to call this directly.
+   *
+   * @see updatePlayerActivity - For player-level activity (UI feedback)
+   * @see LobbyManager.updateRoomActivity - For room-level activity (pre-game)
    */
   updateGameActivity(roomCode: string): void {
     const game = this.games.get(roomCode);
@@ -1095,8 +1195,20 @@ export class GameManager {
   }
 
   /**
-   * Clean up abandoned games (all players disconnected or inactive for 30 minutes)
-   * Returns list of cleaned up game info
+   * Clean up abandoned games (all players disconnected or inactive for 30 minutes).
+   * Called periodically from lobbyEvents.ts cleanup interval.
+   *
+   * **Important**: After cleaning up a game, the caller (lobbyEvents.ts) should
+   * call LobbyManager.markRoomHasGame(roomCode, false) to allow room-level cleanup.
+   *
+   * Cleanup rules:
+   * - All players disconnected AND past reconnect timeout (5 min): Cleaned up
+   * - Game inactive for 30 minutes (GAME_INACTIVITY_TIMEOUT_MS): Cleaned up
+   *
+   * Note: Individual player inactivity (warning/inactive status) does NOT
+   * trigger game cleanup - that's for UI feedback only.
+   *
+   * @returns List of cleaned up games with their reasons for cleanup
    */
   cleanupAbandonedGames(): Array<{
     roomCode: string;

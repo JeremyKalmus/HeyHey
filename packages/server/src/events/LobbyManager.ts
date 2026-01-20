@@ -1,4 +1,35 @@
-// Lobby Manager - extends RoomManager with settings and socket tracking
+/**
+ * Lobby Manager - extends RoomManager with settings and socket tracking
+ *
+ * ## Activity Tracking Architecture
+ *
+ * This module owns **room-level** activity tracking for lobby garbage collection.
+ * Activity tracking exists at three levels across the server:
+ *
+ * | Level   | Owner        | Purpose                      | Timeouts                    |
+ * |---------|--------------|------------------------------|------------------------------|
+ * | Room    | LobbyManager | Lobby room garbage collection| Empty: 5m, Inactive: 30m    |
+ * | Game    | GameManager  | Abandoned game cleanup       | Disconnect: 5m, Inactive: 30m|
+ * | Player  | GameManager  | In-game UI feedback          | Configurable thresholds      |
+ *
+ * ### LobbyManager Responsibilities (this module):
+ * - Track when rooms were created and last had activity
+ * - Clean up empty rooms after 5 minutes
+ * - Clean up inactive rooms (no game) after 30 minutes
+ * - **Skip** rooms with active games (defers to GameManager)
+ *
+ * ### Coordination with GameManager:
+ * - `markRoomHasGame(code, true)` - Called when game starts, prevents LobbyManager cleanup
+ * - `markRoomHasGame(code, false)` - Called when game is abandoned, allows LobbyManager cleanup
+ *
+ * ### Cleanup Flow:
+ * 1. Periodic cleanup sweep runs every 5 minutes (lobbyEvents.ts)
+ * 2. LobbyManager.cleanupExpiredRooms() handles lobby rooms (skips rooms with games)
+ * 3. GameManager.cleanupAbandonedGames() handles active games
+ * 4. If game is abandoned → markRoomHasGame(false) → room becomes eligible for LobbyManager cleanup
+ *
+ * @see GameManager for game-level and player-level activity tracking
+ */
 import { RoomManager, Room, RoomPlayer } from '@heyhey/shared';
 import type { GameConfig, LobbyPlayer, RoomState } from '@heyhey/shared';
 import { SocketRegistry } from '../services/SocketRegistry.js';
@@ -8,10 +39,20 @@ export interface LobbyRoom {
   settings: GameConfig;
 }
 
-/** Room activity tracking for garbage collection */
+/**
+ * Room activity tracking for garbage collection.
+ * Tracks room-level activity to determine when to clean up idle lobby rooms.
+ *
+ * Note: This is separate from GameManager's activity tracking which handles:
+ * - Game-level activity (for abandoned game cleanup)
+ * - Player-level activity (for in-game inactivity UI feedback)
+ */
 interface RoomActivity {
+  /** When the room was created (for debugging/monitoring) */
   createdAt: number;
+  /** Last activity timestamp - updated on joins, settings changes, etc. */
   lastActivityAt: number;
+  /** If true, room has an active game and cleanup is deferred to GameManager */
   hasActiveGame: boolean;
 }
 
@@ -309,7 +350,20 @@ export class LobbyManager {
   }
 
   /**
-   * Update room activity timestamp (call on any room activity)
+   * Update room activity timestamp (call on any lobby room activity).
+   *
+   * This resets the inactivity timer for room-level cleanup.
+   * Called from lobbyEvents.ts when:
+   * - Player joins room
+   * - Settings are updated
+   * - Player customization changes
+   * - Player leaves (room still has players)
+   *
+   * Note: Once a game starts, GameManager takes over activity tracking.
+   * Room-level activity is only relevant for pre-game lobby state.
+   *
+   * @see GameManager.updateGameActivity - For game-level activity
+   * @see GameManager.updatePlayerActivity - For player-level activity during gameplay
    */
   updateRoomActivity(roomCode: string): void {
     const activity = this.roomActivity.get(roomCode);
@@ -319,7 +373,14 @@ export class LobbyManager {
   }
 
   /**
-   * Mark a room as having an active game (prevents inactivity cleanup)
+   * Mark a room as having an active game (prevents inactivity cleanup).
+   *
+   * This is the coordination point between LobbyManager and GameManager:
+   * - `markRoomHasGame(code, true)` - Called when game starts, LobbyManager defers to GameManager
+   * - `markRoomHasGame(code, false)` - Called when game is abandoned, LobbyManager resumes cleanup duty
+   *
+   * While hasActiveGame is true, cleanupExpiredRooms() will skip this room.
+   * GameManager.cleanupAbandonedGames() handles the cleanup instead.
    */
   markRoomHasGame(roomCode: string, hasGame: boolean): void {
     const activity = this.roomActivity.get(roomCode);
@@ -344,8 +405,18 @@ export class LobbyManager {
   }
 
   /**
-   * Clean up expired rooms based on inactivity or empty status
-   * Returns list of cleaned up room codes with their reasons
+   * Clean up expired rooms based on inactivity or empty status.
+   * Called periodically from lobbyEvents.ts cleanup interval.
+   *
+   * **Important**: Rooms with hasActiveGame=true are SKIPPED.
+   * Those rooms are managed by GameManager.cleanupAbandonedGames() instead.
+   *
+   * Cleanup rules:
+   * - Empty rooms (0 players): Cleaned after 5 minutes (EMPTY_ROOM_TIMEOUT_MS)
+   * - Inactive rooms (no game): Cleaned after 30 minutes (ROOM_INACTIVITY_TIMEOUT_MS)
+   * - Rooms with active games: Skipped (deferred to GameManager)
+   *
+   * @returns List of cleaned up room codes with their reasons and affected socket IDs
    */
   cleanupExpiredRooms(): Array<{
     roomCode: string;
