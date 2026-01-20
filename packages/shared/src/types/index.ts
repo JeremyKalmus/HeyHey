@@ -61,7 +61,7 @@ export interface ServerToClientEvents {
   playerUpdated: (payload: PlayerUpdatedPayload) => void;
   settingsUpdated: (payload: SettingsUpdatedPayload) => void;
   gameStarted: (payload: GameStartedPayload) => void;
-  error: (payload: ErrorPayload) => void;
+  socketError: (payload: ErrorPayload) => void;
   hostChanged: (payload: HostChangedPayload) => void;
   roomExpired: (payload: RoomExpiredPayload) => void;
   allPlayersReady: (payload: { gameId: string }) => void;
@@ -410,7 +410,7 @@ export interface GameClientToServerEvents {
  * Game play socket events - Server to Client
  */
 export interface GameServerToClientEvents {
-  stateUpdate: (payload: StateUpdate) => void;
+  stateUpdated: (payload: StateUpdate) => void;
   moveRejected: (payload: MoveRejection) => void;
   gameEnded: (payload: GameEndedPayload) => void;
   roundScored: (payload: RoundScoredPayload) => void;

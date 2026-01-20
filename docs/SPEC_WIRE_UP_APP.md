@@ -195,12 +195,12 @@ Client (Host)                   Server
 ```
 Client                          Server
   |-- makeMove({move}) ---------->|
-  |<-- stateUpdate({delta}) ------|  (broadcast)
+  |<-- stateUpdated({delta}) ------|  (broadcast)
   |   OR                          |
   |<-- moveRejected({error}) -----|  (individual)
   |                               |
   |-- callNertz() --------------->|
-  |<-- stateUpdate({nertzCalled})-|  (broadcast)
+  |<-- stateUpdated({nertzCalled})-|  (broadcast)
   |<-- roundScored({results}) ----|  (broadcast)
 ```
 

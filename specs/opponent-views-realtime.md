@@ -77,7 +77,7 @@ interface OpponentAreaProps {
 
 Need opponent state in GameStateContext:
 - Currently we only track local player's piles
-- Server broadcasts `stateUpdate` deltas but we may not be storing them
+- Server broadcasts `stateUpdated` deltas but we may not be storing them
 - Add `opponentStates: Map<playerId, OpponentPlayerState>` to context
 
 ```typescript
@@ -96,7 +96,7 @@ Option A: Broadcast full state periodically (heavy)
 Option B: Broadcast deltas for each move (current approach, just need to track on client)
 Option C: New event `opponentStateSnapshot` sent on interval (1-2 Hz)
 
-Recommend **Option B** - we already get `stateUpdate` events. Just need to track opponent state in the reducer.
+Recommend **Option B** - we already get `stateUpdated` events. Just need to track opponent state in the reducer.
 
 ## Feature 2: Real-Time Card Movement
 

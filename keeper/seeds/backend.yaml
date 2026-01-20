@@ -45,7 +45,7 @@ backend:
         - callNertz
         - foundationMove
       server_to_client:
-        - stateUpdate (broadcast)
+        - stateUpdated (broadcast)
         - moveRejected
         - foundationUpdated (broadcast)
         - foundationMoveRejected

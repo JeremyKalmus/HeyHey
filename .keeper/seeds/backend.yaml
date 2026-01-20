@@ -126,7 +126,7 @@ socket_events:
       description: Foundation move was invalid
       # discovered
 
-    - name: stateUpdate
+    - name: stateUpdated
       payload: StateUpdate
       description: Game state delta broadcast
       # discovered
@@ -136,9 +136,9 @@ socket_events:
       description: Move was invalid
       # discovered
 
-    - name: error
+    - name: socketError
       payload: ErrorPayload
-      description: Error occurred
+      description: Socket operation error occurred
       # discovered
 
 managers:

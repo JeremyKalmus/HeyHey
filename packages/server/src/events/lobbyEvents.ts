@@ -34,7 +34,7 @@ function getOrCreateGameManager(io: TypedServer): GameManager {
   if (!gameManager) {
     // Broadcast function: send state updates to all players in a room
     const broadcast = (roomCode: string, update: StateUpdate) => {
-      io.to(roomCode).emit('stateUpdate', update);
+      io.to(roomCode).emit('stateUpdated', update);
     };
 
     // Reject function: send rejection to individual player
@@ -79,7 +79,7 @@ export function registerLobbyEvents(io: TypedServer): void {
       const result = lobbyManager.createRoom(socket.id, payload.playerName);
 
       if (!result.success) {
-        socket.emit('error', {
+        socket.emit('socketError', {
           code: result.error,
           message: `Failed to create room: ${result.error}`,
         });
@@ -106,7 +106,7 @@ export function registerLobbyEvents(io: TypedServer): void {
       );
 
       if (!result.success) {
-        socket.emit('error', {
+        socket.emit('socketError', {
           code: result.error,
           message: getJoinErrorMessage(result.error),
         });
@@ -142,7 +142,7 @@ export function registerLobbyEvents(io: TypedServer): void {
       const result = lobbyManager.updateSettings(socket.id, payload.settings);
 
       if (!result.success) {
-        socket.emit('error', {
+        socket.emit('socketError', {
           code: result.error,
           message: getSettingsErrorMessage(result.error),
         });
@@ -165,7 +165,7 @@ export function registerLobbyEvents(io: TypedServer): void {
       const result = lobbyManager.updatePlayer(socket.id, payload);
 
       if (!result.success) {
-        socket.emit('error', {
+        socket.emit('socketError', {
           code: result.error,
           message: `Failed to update player: ${result.error}`,
         });
@@ -188,7 +188,7 @@ export function registerLobbyEvents(io: TypedServer): void {
       const result = lobbyManager.startGame(socket.id);
 
       if (!result.success) {
-        socket.emit('error', {
+        socket.emit('socketError', {
           code: result.error,
           message: getStartGameErrorMessage(result.error),
         });
@@ -215,7 +215,7 @@ export function registerLobbyEvents(io: TypedServer): void {
       const roomCode = lobbyManager.getRoomCode(socket.id);
 
       if (!roomCode) {
-        socket.emit('error', {
+        socket.emit('socketError', {
           code: 'not_in_room',
           message: 'You are not in a room.',
         });
@@ -225,7 +225,7 @@ export function registerLobbyEvents(io: TypedServer): void {
       const result = setupManager.markPlayerComplete(roomCode, socket.id);
 
       if (!result.success) {
-        socket.emit('error', {
+        socket.emit('socketError', {
           code: result.error,
           message: getSetupErrorMessage(result.error),
         });
@@ -280,7 +280,7 @@ export function registerLobbyEvents(io: TypedServer): void {
     socket.on('callNertz', () => {
       const roomCode = lobbyManager.getRoomCode(socket.id);
       if (!roomCode) {
-        socket.emit('error', {
+        socket.emit('socketError', {
           code: 'not_in_room',
           message: 'You are not in a room.',
         });
@@ -317,7 +317,7 @@ export function registerLobbyEvents(io: TypedServer): void {
       const roomCode = lobbyManager.getRoomCode(socket.id);
 
       if (!roomCode) {
-        socket.emit('error', {
+        socket.emit('socketError', {
           code: 'not_in_room',
           message: 'You are not in a room.',
         });
@@ -393,7 +393,7 @@ export function registerLobbyEvents(io: TypedServer): void {
       const roomCode = lobbyManager.getRoomCode(socket.id);
 
       if (!roomCode) {
-        socket.emit('error', {
+        socket.emit('socketError', {
           code: 'not_in_room',
           message: 'You are not in a room.',
         });
@@ -404,7 +404,7 @@ export function registerLobbyEvents(io: TypedServer): void {
       const result = manager.processStartRound(roomCode, socket.id);
 
       if (!result.success) {
-        socket.emit('error', {
+        socket.emit('socketError', {
           code: result.error,
           message: getStartRoundErrorMessage(result.error),
         });
@@ -440,7 +440,7 @@ export function registerLobbyEvents(io: TypedServer): void {
       const roomCode = lobbyManager.getRoomCode(socket.id);
 
       if (!roomCode) {
-        socket.emit('error', {
+        socket.emit('socketError', {
           code: 'not_in_room',
           message: 'You are not in a room.',
         });
@@ -451,7 +451,7 @@ export function registerLobbyEvents(io: TypedServer): void {
       const result = manager.processPlayerReady(roomCode, socket.id);
 
       if (!result.success) {
-        socket.emit('error', {
+        socket.emit('socketError', {
           code: result.error,
           message: getReadyErrorMessage(result.error),
         });

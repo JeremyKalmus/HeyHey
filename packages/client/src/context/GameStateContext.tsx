@@ -856,8 +856,8 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
     socket.on('playerSetupComplete', onPlayerSetupComplete);
     socket.on('allPlayersReady', onAllPlayersReady);
     socket.on('roundStarted', onRoundStarted);
-    socket.on('error', onError);
-    socket.on('stateUpdate', onStateUpdate);
+    socket.on('socketError', onError);
+    socket.on('stateUpdated', onStateUpdate);
     socket.on('moveRejected', onMoveRejected);
     socket.on('foundationUpdated', onFoundationUpdated);
     socket.on('foundationMoveRejected', onFoundationMoveRejected);
@@ -886,8 +886,8 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
       socket.off('playerSetupComplete', onPlayerSetupComplete);
       socket.off('allPlayersReady', onAllPlayersReady);
       socket.off('roundStarted', onRoundStarted);
-      socket.off('error', onError);
-      socket.off('stateUpdate', onStateUpdate);
+      socket.off('socketError', onError);
+      socket.off('stateUpdated', onStateUpdate);
       socket.off('moveRejected', onMoveRejected);
       socket.off('foundationUpdated', onFoundationUpdated);
       socket.off('foundationMoveRejected', onFoundationMoveRejected);
