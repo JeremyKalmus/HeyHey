@@ -26,6 +26,7 @@ import {
   createScoringState,
   DEFAULT_INACTIVITY_CONFIG,
 } from '@heyhey/shared';
+import { SocketRegistry } from '../services/SocketRegistry.js';
 
 interface DisconnectedPlayer {
   playerId: string;
@@ -128,7 +129,7 @@ export type PlayerReadyResult =
  */
 export class GameManager {
   private games: Map<string, ActiveGame> = new Map(); // roomCode -> ActiveGame
-  private socketToRoom: Map<string, string> = new Map(); // socketId -> roomCode
+  private socketRegistry: SocketRegistry;
   private readyForNextRound: Map<string, Set<string>> = new Map(); // roomCode -> Set of ready playerIds
   private broadcast: BroadcastFn;
   private reject: RejectFn;
@@ -140,12 +141,14 @@ export class GameManager {
     broadcast?: BroadcastFn,
     reject?: RejectFn,
     broadcastOpponentState?: BroadcastOpponentStateFn,
-    broadcastInactivity?: BroadcastInactivityFn
+    broadcastInactivity?: BroadcastInactivityFn,
+    socketRegistry?: SocketRegistry
   ) {
     this.broadcast = broadcast ?? (() => {});
     this.reject = reject ?? (() => {});
     this.broadcastOpponentStateFn = broadcastOpponentState ?? (() => {});
     this.broadcastInactivityFn = broadcastInactivity ?? (() => {});
+    this.socketRegistry = socketRegistry ?? new SocketRegistry();
 
     // Start inactivity check interval
     this.startInactivityChecker();
@@ -323,7 +326,7 @@ export class GameManager {
     // Map player IDs to socket IDs (they're the same in our setup)
     for (const playerId of playerIds) {
       playerSockets.set(playerId, playerId);
-      this.socketToRoom.set(playerId, roomCode);
+      this.socketRegistry.join(playerId, roomCode);
     }
 
     // Initialize scoring state
@@ -360,7 +363,7 @@ export class GameManager {
    * Validates, applies, and broadcasts or rejects
    */
   processMove(socketId: string, move: Move): { success: boolean } {
-    const roomCode = this.socketToRoom.get(socketId);
+    const roomCode = this.socketRegistry.getRoom(socketId);
     if (!roomCode) {
       return { success: false };
     }
@@ -498,7 +501,7 @@ export class GameManager {
    * Process a Nertz call from a player
    */
   processNertzCall(socketId: string): { success: boolean } {
-    const roomCode = this.socketToRoom.get(socketId);
+    const roomCode = this.socketRegistry.getRoom(socketId);
     if (!roomCode) {
       return { success: false };
     }
@@ -794,7 +797,7 @@ export class GameManager {
     playerId?: string;
     playerName?: string;
   } {
-    const roomCode = this.socketToRoom.get(socketId);
+    const roomCode = this.socketRegistry.getRoom(socketId);
     if (!roomCode) return { inActiveGame: false };
 
     const game = this.games.get(roomCode);
@@ -823,7 +826,7 @@ export class GameManager {
 
     // Remove socket mapping but keep player in game
     game.playerSockets.delete(disconnectedPlayerId);
-    this.socketToRoom.delete(socketId);
+    this.socketRegistry.leave(socketId);
 
     // Schedule cleanup after timeout
     setTimeout(() => {
@@ -888,7 +891,7 @@ export class GameManager {
     // Restore player connection
     game.playerSockets.set(playerId, socketId);
     game.disconnectedPlayers.delete(playerId);
-    this.socketToRoom.set(socketId, roomCode);
+    this.socketRegistry.join(socketId, roomCode);
 
     const playerName = disconnectedPlayer?.playerName ?? playerId;
 
@@ -966,7 +969,7 @@ export class GameManager {
     if (!game) return;
 
     game.playerSockets.delete(playerId);
-    this.socketToRoom.delete(playerId);
+    this.socketRegistry.leave(playerId);
 
     // If no players left, clean up the game
     if (game.playerSockets.size === 0) {
@@ -983,7 +986,7 @@ export class GameManager {
 
     // Remove all socket mappings
     for (const socketId of game.playerSockets.values()) {
-      this.socketToRoom.delete(socketId);
+      this.socketRegistry.leave(socketId);
     }
 
     this.games.delete(roomCode);

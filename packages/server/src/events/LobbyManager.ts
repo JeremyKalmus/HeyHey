@@ -1,6 +1,7 @@
 // Lobby Manager - extends RoomManager with settings and socket tracking
 import { RoomManager, Room, RoomPlayer } from '@heyhey/shared';
 import type { GameConfig, LobbyPlayer, RoomState } from '@heyhey/shared';
+import { SocketRegistry } from '../services/SocketRegistry.js';
 
 export interface LobbyRoom {
   room: Room;
@@ -28,12 +29,16 @@ const DEFAULT_SETTINGS: GameConfig = {
 export class LobbyManager {
   private roomManager = new RoomManager();
   private roomSettings: Map<string, GameConfig> = new Map();
-  private socketToRoom: Map<string, string> = new Map();
+  private socketRegistry: SocketRegistry;
   private socketToPlayer: Map<string, { playerId: string; playerName: string }> =
     new Map();
   private playerCustomization: Map<string, { color?: string; avatar?: string }> =
     new Map();
   private roomActivity: Map<string, RoomActivity> = new Map();
+
+  constructor(socketRegistry?: SocketRegistry) {
+    this.socketRegistry = socketRegistry ?? new SocketRegistry();
+  }
 
   createRoom(
     socketId: string,
@@ -48,7 +53,7 @@ export class LobbyManager {
     const settings = { ...DEFAULT_SETTINGS };
     const now = Date.now();
     this.roomSettings.set(result.room.code, settings);
-    this.socketToRoom.set(socketId, result.room.code);
+    this.socketRegistry.join(socketId, result.room.code);
     this.socketToPlayer.set(socketId, { playerId: socketId, playerName });
     this.roomActivity.set(result.room.code, {
       createdAt: now,
@@ -76,7 +81,7 @@ export class LobbyManager {
       return { success: false, error: result.error };
     }
 
-    this.socketToRoom.set(socketId, result.room.code);
+    this.socketRegistry.join(socketId, result.room.code);
     this.socketToPlayer.set(socketId, { playerId: socketId, playerName });
     this.updateRoomActivity(result.room.code);
 
@@ -101,7 +106,7 @@ export class LobbyManager {
     roomClosed?: boolean;
     newHostId?: string;
   } {
-    const roomCode = this.socketToRoom.get(socketId);
+    const roomCode = this.socketRegistry.getRoom(socketId);
     if (!roomCode) {
       return { success: false };
     }
@@ -112,7 +117,7 @@ export class LobbyManager {
       return { success: false };
     }
 
-    this.socketToRoom.delete(socketId);
+    this.socketRegistry.leave(socketId);
     this.socketToPlayer.delete(socketId);
     this.playerCustomization.delete(socketId);
 
@@ -136,7 +141,7 @@ export class LobbyManager {
     socketId: string,
     settings: Partial<GameConfig>
   ): { success: true; settings: GameConfig; roomCode: string } | { success: false; error: string } {
-    const roomCode = this.socketToRoom.get(socketId);
+    const roomCode = this.socketRegistry.getRoom(socketId);
     if (!roomCode) {
       return { success: false, error: 'not_in_room' };
     }
@@ -177,7 +182,7 @@ export class LobbyManager {
     socketId: string,
     updates: { name?: string; color?: string; avatar?: string }
   ): { success: true; player: LobbyPlayer; roomCode: string } | { success: false; error: string } {
-    const roomCode = this.socketToRoom.get(socketId);
+    const roomCode = this.socketRegistry.getRoom(socketId);
     if (!roomCode) {
       return { success: false, error: 'not_in_room' };
     }
@@ -226,7 +231,7 @@ export class LobbyManager {
   }
 
   startGame(socketId: string): { success: true; roomCode: string } | { success: false; error: string } {
-    const roomCode = this.socketToRoom.get(socketId);
+    const roomCode = this.socketRegistry.getRoom(socketId);
     if (!roomCode) {
       return { success: false, error: 'not_in_room' };
     }
@@ -250,7 +255,7 @@ export class LobbyManager {
   }
 
   getRoomCode(socketId: string): string | undefined {
-    return this.socketToRoom.get(socketId);
+    return this.socketRegistry.getRoom(socketId);
   }
 
   getRoom(roomCode: string): Room | null {
@@ -277,7 +282,7 @@ export class LobbyManager {
     playerName: string
   ): void {
     // Update socket-to-room and socket-to-player mappings for the new socket
-    this.socketToRoom.set(socketId, roomCode);
+    this.socketRegistry.join(socketId, roomCode);
     this.socketToPlayer.set(socketId, { playerId: socketId, playerName });
   }
 
@@ -406,7 +411,7 @@ export class LobbyManager {
       // Collect all socket IDs for notification
       for (const playerId of room.players.keys()) {
         socketIds.push(playerId);
-        this.socketToRoom.delete(playerId);
+        this.socketRegistry.leave(playerId);
         this.socketToPlayer.delete(playerId);
         this.playerCustomization.delete(playerId);
       }
