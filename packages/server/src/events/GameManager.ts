@@ -163,6 +163,7 @@ export type BroadcastFn = (roomCode: string, update: StateUpdate) => void;
 export type RejectFn = (socketId: string, rejection: MoveRejection) => void;
 export type BroadcastOpponentStateFn = (roomCode: string, payload: OpponentStateUpdatePayload, excludePlayerId: string) => void;
 export type BroadcastInactivityFn = (roomCode: string, payload: PlayerInactivityUpdatePayload) => void;
+export type BroadcastDrawRejectedFn = (roomCode: string, rejectedBy: string, rejectedByName: string, reason: 'declined' | 'timeout') => void;
 
 export type FoundationMoveResult =
   | {
@@ -274,6 +275,7 @@ export class GameManager {
   private reject: RejectFn;
   private broadcastOpponentStateFn: BroadcastOpponentStateFn;
   private broadcastInactivityFn: BroadcastInactivityFn;
+  private broadcastDrawRejectedFn: BroadcastDrawRejectedFn;
   private inactivityCheckInterval: ReturnType<typeof setInterval> | null = null;
 
   constructor(
@@ -281,12 +283,14 @@ export class GameManager {
     reject?: RejectFn,
     broadcastOpponentState?: BroadcastOpponentStateFn,
     broadcastInactivity?: BroadcastInactivityFn,
-    socketRegistry?: SocketRegistry
+    socketRegistry?: SocketRegistry,
+    broadcastDrawRejected?: BroadcastDrawRejectedFn
   ) {
     this.broadcast = broadcast ?? (() => {});
     this.reject = reject ?? (() => {});
     this.broadcastOpponentStateFn = broadcastOpponentState ?? (() => {});
     this.broadcastInactivityFn = broadcastInactivity ?? (() => {});
+    this.broadcastDrawRejectedFn = broadcastDrawRejected ?? (() => {});
     this.socketRegistry = socketRegistry ?? new SocketRegistry();
 
     // Start inactivity check interval
@@ -945,7 +949,7 @@ export class GameManager {
   }
 
   /**
-   * Handle draw timeout - auto-reject the draw proposal
+   * Handle draw timeout - auto-reject the draw proposal and broadcast
    * @private
    */
   private handleDrawTimeout(roomCode: string): {
@@ -962,6 +966,11 @@ export class GameManager {
 
     // Clear draw state
     this.clearDrawState(roomCode);
+
+    // Broadcast draw rejected due to timeout
+    this.broadcastDrawRejectedFn(roomCode, proposerId, proposerName, 'timeout');
+
+    console.log(`Draw proposal by ${proposerName} timed out in room ${roomCode}`);
 
     return {
       timedOut: true,

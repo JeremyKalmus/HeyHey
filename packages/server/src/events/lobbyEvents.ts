@@ -14,6 +14,7 @@ import type {
   OpponentStateUpdatePayload,
   RejoinGamePayload,
   ReportStatePayload,
+  RespondToDrawPayload,
 } from '@heyhey/shared';
 import { LobbyManager } from './LobbyManager.js';
 import { SetupManager } from './SetupManager.js';
@@ -69,8 +70,22 @@ function getOrCreateGameManager(io: TypedServer): GameManager {
       }
     };
 
+    // Broadcast draw rejected (for timeout or decline)
+    const broadcastDrawRejected = (
+      roomCode: string,
+      rejectedBy: string,
+      rejectedByName: string,
+      reason: 'declined' | 'timeout'
+    ) => {
+      io.to(roomCode).emit('drawRejected', {
+        rejectedBy,
+        rejectedByName,
+        reason,
+      });
+    };
+
     // Pass shared SocketRegistry for consistent socket-to-room mappings
-    gameManager = new GameManager(broadcast, reject, broadcastOpponentState, undefined, sharedSocketRegistry);
+    gameManager = new GameManager(broadcast, reject, broadcastOpponentState, undefined, sharedSocketRegistry, broadcastDrawRejected);
   }
   return gameManager;
 }
@@ -313,6 +328,108 @@ export function registerLobbyEvents(io: TypedServer): void {
             `Round ${roundEndResult.roundResult.roundNumber} ended. ` +
             `Game over: ${roundEndResult.gameOver}${roundEndResult.winner ? `, winner: ${roundEndResult.winner}` : ''}`
           );
+        }
+      }
+    });
+
+    // Call Draw - Player proposes a draw (stalemate resolution)
+    socket.on('callDraw', () => {
+      const roomCode = lobbyManager.getRoomCode(socket.id);
+      if (!roomCode) {
+        socket.emit('socketError', {
+          code: 'not_in_room',
+          message: 'You are not in a room.',
+        });
+        return;
+      }
+
+      const manager = getOrCreateGameManager(io);
+      const result = manager.processCallDraw(socket.id);
+
+      if (result.success) {
+        // Broadcast drawProposed to all players in the room
+        io.to(roomCode).emit('drawProposed', {
+          proposerId: result.proposerId,
+          proposerName: result.proposerName,
+          timeout: result.timeout,
+        });
+
+        console.log(`Draw proposed by ${result.proposerName} in room ${roomCode}`);
+      } else {
+        socket.emit('socketError', {
+          code: result.error,
+          message: getCallDrawErrorMessage(result.error),
+        });
+      }
+    });
+
+    // Respond to Draw - Player accepts or rejects a draw proposal
+    socket.on('respondToDraw', (payload: RespondToDrawPayload) => {
+      const roomCode = lobbyManager.getRoomCode(socket.id);
+      if (!roomCode) {
+        socket.emit('socketError', {
+          code: 'not_in_room',
+          message: 'You are not in a room.',
+        });
+        return;
+      }
+
+      const manager = getOrCreateGameManager(io);
+      const result = manager.processRespondToDraw(socket.id, payload.accept);
+
+      if (!result.success) {
+        socket.emit('socketError', {
+          code: result.error,
+          message: getRespondToDrawErrorMessage(result.error),
+        });
+        return;
+      }
+
+      if (result.rejected) {
+        // Draw was rejected - broadcast to all players
+        io.to(roomCode).emit('drawRejected', {
+          rejectedBy: result.rejectedBy!,
+          rejectedByName: result.rejectedByName!,
+          reason: 'declined',
+        });
+
+        console.log(`Draw rejected by ${result.rejectedByName} in room ${roomCode}`);
+      } else {
+        // Broadcast the response to all players
+        io.to(roomCode).emit('drawResponse', {
+          responderId: result.responderId,
+          responderName: result.responderName,
+          accepted: result.accepted,
+        });
+
+        console.log(`Draw ${result.accepted ? 'accepted' : 'rejected'} by ${result.responderName} in room ${roomCode}`);
+
+        if (result.allAccepted) {
+          // All players accepted - process round end as draw
+          const drawState = manager.getDrawState(roomCode);
+          const proposerId = drawState?.proposerId ?? result.responderId;
+
+          const roundEndResult = manager.processDrawRoundEnd(roomCode, proposerId);
+
+          if (roundEndResult.success) {
+            // Broadcast drawAgreed
+            io.to(roomCode).emit('drawAgreed', {
+              roundNumber: roundEndResult.roundResult.roundNumber,
+            });
+
+            // Broadcast roundEnded with scoring
+            io.to(roomCode).emit('roundEnded', {
+              roundResult: roundEndResult.roundResult,
+              totalScores: roundEndResult.totalScores,
+              gameOver: roundEndResult.gameOver,
+              winner: roundEndResult.winner,
+            });
+
+            console.log(
+              `Draw agreed in room ${roomCode}. Round ${roundEndResult.roundResult.roundNumber} ended. ` +
+              `Game over: ${roundEndResult.gameOver}${roundEndResult.winner ? `, winner: ${roundEndResult.winner}` : ''}`
+            );
+          }
         }
       }
     });
@@ -705,6 +822,40 @@ function getRejoinErrorMessage(reason: string): string {
       return 'Invalid reconnection credentials.';
     default:
       return 'Failed to rejoin game.';
+  }
+}
+
+function getCallDrawErrorMessage(error: string): string {
+  switch (error) {
+    case 'not_in_room':
+      return 'You are not in a room.';
+    case 'game_not_found':
+      return 'Game not found.';
+    case 'player_not_in_game':
+      return 'You are not in this game.';
+    case 'not_in_playing_phase':
+      return 'Draw can only be called during play.';
+    case 'draw_already_proposed':
+      return 'A draw has already been proposed.';
+    default:
+      return 'Failed to call draw.';
+  }
+}
+
+function getRespondToDrawErrorMessage(error: string): string {
+  switch (error) {
+    case 'not_in_room':
+      return 'You are not in a room.';
+    case 'game_not_found':
+      return 'Game not found.';
+    case 'player_not_in_game':
+      return 'You are not in this game.';
+    case 'no_active_draw':
+      return 'No active draw proposal to respond to.';
+    case 'already_responded':
+      return 'You have already responded to this draw proposal.';
+    default:
+      return 'Failed to respond to draw.';
   }
 }
 
