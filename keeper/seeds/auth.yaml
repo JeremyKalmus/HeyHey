@@ -1,42 +1,50 @@
-# Auth Seed Vault - HeyHey! (Nertz Card Game)
-# Auto-discovered patterns from codebase
+# Auth Seed Vault - HeyHey
+# Auto-discovered patterns from keeper-plant
 
-auth:
-  model: socket_identity
-  description: Socket.IO connection-based identity (no JWT/session/OAuth)
+auth_model:
+  type: socket_session
+  description: |
+    No traditional auth (JWT/OAuth). Players identified by socket.id.
+    Room access controlled by room codes (6-char alphanumeric).
+  # discovered
 
-  identity:
-    - type: socket_id
-      usage: Primary player identifier
-      persistence: Connection duration only
+identification:
+  method: socket.id
+  persistence: session-only (lost on disconnect)
+  mapping:
+    - socketToRoom: Map<socketId, roomCode>
+    - socketToPlayer: Map<socketId, {playerId, playerName}>
+  location: packages/server/src/events/LobbyManager.ts
+  # discovered
 
-    - type: room_code
-      usage: Room membership verification
-      format: 6-char alphanumeric (HEYHEY prefix + 4 chars)
+room_access:
+  join_method: 6-character room code
+  code_format: uppercase alphanumeric (A-Z, 0-9)
+  code_generation: packages/shared/src/room/RoomManager.ts
+  validation: case-insensitive lookup
+  # discovered
 
-  access_control:
-    room_membership:
-      permits: Participate in game room
-      enforcement: LobbyManager socketToRoom mapping
-      location: packages/server/src/events/LobbyManager.ts
+permissions:
+  host_only_actions:
+    - updateSettings
+    - startGame
+  any_player_actions:
+    - updatePlayer (own customization)
+    - leaveRoom
+    - setupComplete
+    - makeMove
+    - foundationMove
+    - callNertz
+  # discovered
 
-    host_authority:
-      permits: Modify room settings, start game
-      grants_to: Room creator (hostId)
-      enforcement: room.hostId === socketId check
-      error_code: not_host
+host_assignment:
+  initial: Room creator becomes host
+  transfer: First remaining player when host leaves
+  broadcast: hostChanged event
+  location: packages/server/src/events/LobbyManager.ts (leaveRoom)
+  # discovered
 
-    player_action_ownership:
-      permits: Make moves for own player only
-      enforcement: GameManager verifies socketId owns playerId
-      error_code: player_not_found
-
-  roles: none
-  scopes: none
-  tokens: none
-  middleware: none
-
-  notes:
-    - Appropriate for ephemeral real-time game connections
-    - No persistent authentication required
-    - All state in-memory (not persisted)
+# No JWT tokens, OAuth, or traditional scopes/roles
+scopes: []
+roles: []
+middleware: []

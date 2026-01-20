@@ -1,87 +1,229 @@
-# Data Seed Vault - HeyHey! (Nertz Card Game)
-# Auto-discovered patterns from codebase
+# Data Seed Vault - HeyHey
+# Auto-discovered patterns from keeper-plant
 
-data:
-  tables: []  # No database - in-memory state only
+# No database tables - this is a stateless multiplayer game
+# All state is held in memory on the server
+tables: []
 
-  enums:
-    game_core:
-      - name: GamePhase
-        location: packages/shared/src/types/index.ts
-        values: [lobby, setup, playing, scoring, finished]
+types:
+  # Core Game Types
+  - name: Card
+    location: packages/shared/src/types/index.ts
+    definition: |
+      interface Card {
+        suit: 'hearts' | 'diamonds' | 'clubs' | 'spades';
+        rank: number; // 1-13 (Ace=1, King=13)
+        deckId: string; // Unique identifier for the player's deck
+      }
+    # discovered
 
-      - name: Suit
-        location: packages/shared/src/deck/index.ts
-        values: [hearts, diamonds, clubs, spades]
+  - name: Player
+    location: packages/shared/src/types/index.ts
+    definition: |
+      interface Player {
+        id: string;
+        name: string;
+        deckId: string;
+      }
+    # discovered
 
-      - name: MoveSource
-        location: packages/shared/src/types/index.ts
-        values: [nertz, work, waste]
+  - name: LobbyPlayer
+    location: packages/shared/src/types/index.ts
+    definition: |
+      interface LobbyPlayer {
+        id: string;
+        name: string;
+        isHost: boolean;
+        color?: string;
+        avatar?: string;
+      }
+    # discovered
 
-      - name: MoveDestination
-        location: packages/shared/src/types/index.ts
-        values: [work, foundation]
+  - name: RoomState
+    location: packages/shared/src/types/index.ts
+    definition: |
+      interface RoomState {
+        code: string;
+        players: LobbyPlayer[];
+        settings: GameConfig;
+        hostId: string;
+      }
+    # discovered
 
-      - name: SetupState
-        location: packages/shared/src/engine/SetupStateMachine.ts
-        values: [idle, placingNertz, flipNertz, placingWork, complete]
+  - name: GameConfig
+    location: packages/shared/src/types/index.ts
+    definition: |
+      interface GameConfig {
+        nertzPileSize: 10 | 13;
+        drawCount: 1 | 3;
+        targetScore: number;
+      }
+    # discovered
 
-      - name: MoveValidationError
-        location: packages/shared/src/types/index.ts
-        values: [invalid_source, invalid_destination, empty_source, wrong_color_for_work, wrong_rank_for_work, wrong_suit_for_foundation, wrong_rank_for_foundation]
+  - name: PlayerGameState
+    location: packages/shared/src/types/index.ts
+    definition: |
+      interface PlayerGameState {
+        playerId: string;
+        deckId: string;
+        nertzPile: Card[];
+        workPiles: Card[][];
+        stockPile: Card[];
+        wastePile: Card[];
+      }
+    # discovered
 
-    ui:
-      - name: PlayerColor
-        location: packages/client/src/components/Card/CardBack.tsx
-        values: [red, blue, green, yellow, purple, orange, pink, teal]
+  - name: FoundationPile
+    location: packages/shared/src/types/index.ts
+    definition: |
+      interface FoundationPile {
+        suit: Card['suit'];
+        cards: Card[];
+        ownerId: string;
+      }
+    # discovered
 
-      - name: AvatarIcon
-        location: packages/client/src/components/ui/Avatar/types.ts
-        values: [user, smile, ghost, skull, cat, bot, heart, star, zap, flame, sparkles, crown]
+  - name: GameState
+    location: packages/shared/src/types/index.ts
+    definition: |
+      interface GameState {
+        gameId: string;
+        phase: GamePhase;
+        players: PlayerGameState[];
+        foundations: FoundationPile[];
+        config: GameConfig;
+        calledBy?: string;
+      }
+    # discovered
 
-      - name: SoundType
-        location: packages/client/src/audio/SoundManager.ts
-        values: [cardSelect, cardPlace, cardFlip, error, heyHey]
+enums:
+  - name: GamePhase
+    location: packages/shared/src/types/index.ts
+    values: [lobby, setup, playing, scoring, finished]
+    # discovered
 
-  types:
-    core:
-      - name: Card
-        location: packages/shared/src/types/index.ts
-        fields: [suit, rank, deckId]
+  - name: Suit
+    location: packages/shared/src/types/index.ts (inline)
+    values: [hearts, diamonds, clubs, spades]
+    # discovered
 
-      - name: GameState
-        location: packages/shared/src/types/index.ts
-        fields: [gameId, phase, players, foundations, config, calledBy]
+  - name: PlayerColor
+    location: packages/client/src/components/Card/CardBack.tsx
+    values: [red, blue, green, yellow, purple, orange, pink, teal]
+    # discovered
 
-      - name: PlayerGameState
-        location: packages/shared/src/types/index.ts
-        fields: [playerId, deckId, nertzPile, workPiles, stockPile, wastePile]
+  - name: AvatarIcon
+    location: packages/client/src/components/ui/Avatar.tsx
+    values: [user, smile, ghost, skull, cat, bot, heart, zap]
+    # discovered
 
-      - name: FoundationPile
-        location: packages/shared/src/types/index.ts
-        fields: [suit, cards]
+  - name: AvatarShape
+    location: packages/client/src/components/ui/Avatar.tsx
+    values: [circle, square, diamond, hexagon, star, triangle]
+    # discovered
 
-      - name: Move
-        location: packages/shared/src/types/index.ts
-        variants: [CardMove, DrawMove, FlipStockMove]
+  - name: MoveValidationError
+    location: packages/shared/src/types/index.ts
+    values:
+      - invalid_source
+      - invalid_destination
+      - empty_source
+      - no_card_selected
+      - wrong_color_for_work
+      - wrong_rank_for_work
+      - wrong_suit_for_foundation
+      - wrong_rank_for_foundation
+      - work_pile_full
+      - foundation_full
+      - stock_not_empty
+      - waste_empty
+      - player_not_found
+      - invalid_card_count
+    # discovered
 
-      - name: StateDelta
-        location: packages/shared/src/types/index.ts
-        variants: [cardMoved, cardsDrawn, stockFlipped, nertzCalled, phaseChanged]
+move_types:
+  - name: MoveSource
+    location: packages/shared/src/types/index.ts
+    definition: |
+      type MoveSource =
+        | { type: 'nertz' }
+        | { type: 'work'; pileIndex: number; cardIndex?: number }
+        | { type: 'waste' };
+    # discovered
 
-      - name: StateUpdate
-        location: packages/shared/src/types/index.ts
-        fields: [sequence, timestamp, delta, gameId]
+  - name: MoveDestination
+    location: packages/shared/src/types/index.ts
+    definition: |
+      type MoveDestination =
+        | { type: 'work'; pileIndex: number }
+        | { type: 'foundation'; foundationIndex: number };
+    # discovered
 
-    scoring:
-      - name: RoundResult
-        location: packages/shared/src/types/index.ts
-        fields: [roundNumber, calledBy, playerScores, timestamp]
+  - name: Move
+    location: packages/shared/src/types/index.ts
+    definition: "type Move = CardMove | DrawMove | FlipStockMove;"
+    # discovered
 
-      - name: PlayerRoundScore
-        location: packages/shared/src/types/index.ts
-        fields: [playerId, foundationCards, nertzPenalty, roundScore]
+state_sync_types:
+  - name: StateDelta
+    location: packages/shared/src/types/index.ts
+    description: Atomic state changes for game synchronization
+    variants:
+      - cardMoved
+      - cardsDrawn
+      - stockFlipped
+      - nertzCalled
+      - phaseChanged
+      - playerJoinedGame
+      - playerLeftGame
+      - roundScored
+    # discovered
 
-      - name: ScoringState
-        location: packages/shared/src/types/index.ts
-        fields: [rounds, totalScores, targetScore, gameWinner]
+  - name: StateUpdate
+    location: packages/shared/src/types/index.ts
+    definition: |
+      interface StateUpdate {
+        sequence: number;
+        timestamp: number;
+        delta: StateDelta;
+        gameId: string;
+      }
+    # discovered
+
+scoring_types:
+  - name: PlayerRoundScore
+    location: packages/shared/src/types/index.ts
+    definition: |
+      interface PlayerRoundScore {
+        playerId: string;
+        foundationCards: number;
+        nertzPenalty: number;
+        roundScore: number;
+      }
+    # discovered
+
+  - name: RoundResult
+    location: packages/shared/src/types/index.ts
+    definition: |
+      interface RoundResult {
+        roundNumber: number;
+        calledBy: string;
+        playerScores: PlayerRoundScore[];
+        timestamp: number;
+      }
+    # discovered
+
+  - name: ScoringState
+    location: packages/shared/src/types/index.ts
+    definition: |
+      interface ScoringState {
+        rounds: RoundResult[];
+        totalScores: { playerId: string; total: number }[];
+        targetScore: number;
+        gameWinner?: string;
+      }
+    # discovered
+
+validation_schemas:
+  status: not_implemented
+  # No Zod/Yup schemas discovered - validation is inline in managers
