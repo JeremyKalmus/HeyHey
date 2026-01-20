@@ -247,6 +247,8 @@ export interface RejoinGameSuccessPayload {
   foundations: FoundationPile[];
   /** Opponent states for the reconnecting player to see other players' cards */
   opponentStates: OpponentStateUpdatePayload[];
+  /** The reconnecting player's own card state (optional for backwards compatibility) */
+  playerState?: PlayerGameState;
 }
 
 export interface RejoinGameFailedPayload {
