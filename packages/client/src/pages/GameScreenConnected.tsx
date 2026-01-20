@@ -10,6 +10,8 @@ import { WaitingToStart } from '../components/Game/WaitingToStart';
 import { GameBoard } from '../components/Game/GameBoard';
 import { HeyHeyCelebration } from '../components/Game/HeyHeyCelebration';
 import { RoundEndScreen } from '../components/Game/RoundEndScreen';
+import { DrawButton } from '../components/Game/DrawButton';
+import { DrawModal } from '../components/Game/DrawModal';
 import { Card as CardComponent } from '../components/Card';
 import { MultiFoundationArea, type PlayerFoundationGroup } from '../components/Foundation';
 import { TableLayout, useOpponentRefs, type OpponentState } from '../components/Game/TableLayout';
@@ -57,6 +59,9 @@ export function GameScreenConnected() {
     reportState,
     lastOpponentFoundationMove: _lastOpponentFoundationMove,
     foundations: contextFoundations,
+    drawProposal,
+    callDraw,
+    respondToDraw,
   } = useGameState();
   const { socket } = useSocket();
 
@@ -614,6 +619,11 @@ export function GameScreenConnected() {
         );
       }
 
+      // Create player names map for DrawModal
+      const playerNamesMap = new Map(
+        room?.players.map((p) => [p.id, p.name]) || []
+      );
+
       // Convert foundations to PlayerFoundationGroup format
       // IMPORTANT: Must iterate in room.players order to match server's foundation indexing
       // Server sends foundationIndex as: playerIndex * 4 + suitIndex
@@ -666,11 +676,21 @@ export function GameScreenConnected() {
           <div
             style={{
               display: 'flex',
-              justifyContent: 'flex-end',
+              justifyContent: 'space-between',
               alignItems: 'center',
               padding: '4px 8px',
             }}
           >
+            {/* Draw button - less prominent, positioned away from main action */}
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              {isSetupComplete && (
+                <DrawButton
+                  enabled={!drawProposal}
+                  onCallDraw={callDraw}
+                  drawInProgress={!!drawProposal}
+                />
+              )}
+            </div>
             {/* Controls */}
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <SoundToggle
@@ -776,7 +796,7 @@ export function GameScreenConnected() {
                     ? localPlayerState.wastePile.length - 1
                     : undefined
                 }
-                canCallHeyHey={localPlayerState.nertzPile.length === 0}
+                canCallHeyHey={localPlayerState.nertzPile.length === 0 && !drawProposal}
                 onCallHeyHey={callNertz}
                 canRecycleStock={
                   localPlayerState.stockPile.length === 0 && localPlayerState.wastePile.length > 0
@@ -855,6 +875,18 @@ export function GameScreenConnected() {
                   maxPileHeight={280}
                 />
               }
+            />
+          )}
+
+          {/* Draw Proposal Modal */}
+          {drawProposal && playerId && (
+            <DrawModal
+              drawProposal={drawProposal}
+              currentPlayerId={playerId}
+              playerNames={playerNamesMap}
+              totalPlayers={room?.players.length ?? 2}
+              onAccept={() => respondToDraw(true)}
+              onReject={() => respondToDraw(false)}
             />
           )}
 

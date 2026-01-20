@@ -79,7 +79,13 @@ export function RoundEndScreen({
           Round {roundResult.roundNumber} Complete!
         </div>
         <div className={styles.calledBy}>
-          Called by <span className={styles.callerName}>{callerName}</span>
+          {roundResult.isDraw ? (
+            <span className={styles.callerName}>Draw Agreed</span>
+          ) : (
+            <>
+              Called by <span className={styles.callerName}>{callerName}</span>
+            </>
+          )}
         </div>
       </div>
 
@@ -102,7 +108,7 @@ export function RoundEndScreen({
                 score={score}
                 playerName={getPlayerName(score.playerId)}
                 isCurrentPlayer={score.playerId === currentPlayerId}
-                isCaller={score.playerId === roundResult.calledBy}
+                isCaller={!roundResult.isDraw && score.playerId === roundResult.calledBy}
               />
             ))}
           </tbody>

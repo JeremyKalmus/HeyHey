@@ -8,6 +8,8 @@ export {
   type OpponentBadgeScale,
 } from './OpponentBadge';
 export { HeyHeyButton, type HeyHeyButtonProps } from './HeyHeyButton';
+export { DrawButton, type DrawButtonProps } from './DrawButton';
+export { DrawModal, type DrawModalProps } from './DrawModal';
 export { GameBoard, type GameBoardProps } from './GameBoard';
 export { PlayerArea, type PlayerAreaProps } from './PlayerArea';
 export {
