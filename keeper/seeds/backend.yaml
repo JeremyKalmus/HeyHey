@@ -18,15 +18,18 @@ backend:
         - joinRoom
         - leaveRoom
         - updateSettings (host_only)
+        - updatePlayer
         - startGame (host_only)
       server_to_client:
         - roomCreated
         - roomJoined
         - playerJoined (broadcast)
         - playerLeft (broadcast)
+        - playerUpdated (broadcast)
         - settingsUpdated (broadcast)
         - gameStarted (broadcast)
         - hostChanged (broadcast)
+        - roomExpired (broadcast)
         - error
 
     setup_phase:
@@ -48,6 +51,32 @@ backend:
         - foundationMoveRejected
         - roundScored (broadcast)
         - gameEnded (broadcast)
+
+    round_management:
+      client_to_server:
+        - startRound (host_only)
+        - readyForNextRound
+      server_to_client:
+        - roundStarting (broadcast)
+        - roundStarted (broadcast)
+        - roundEnded (broadcast)
+        - playerReadyForNextRound (broadcast)
+        - allReadyForNextRound (broadcast)
+
+    realtime_sync:
+      client_to_server:
+        - reportState
+      server_to_client:
+        - opponentStateUpdate (to_others)
+
+    reconnection:
+      client_to_server:
+        - rejoinGame
+      server_to_client:
+        - rejoinGameSuccess
+        - rejoinGameFailed
+        - playerReconnected (broadcast)
+        - playerDisconnected (broadcast)
 
   services:
     - name: LobbyManager
