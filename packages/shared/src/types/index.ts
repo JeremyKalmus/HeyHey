@@ -476,8 +476,8 @@ export interface GameEndedPayload {
 export interface PlayerRoundScore {
   playerId: string;
   foundationCards: number; // Cards this player played to foundations (+1 each)
-  nertzPenalty: number; // Cards remaining in nertz pile (-2 each)
-  roundScore: number; // Net score: foundationCards - (nertzPenalty * 2)
+  nertzPenalty: number; // Cards remaining in nertz pile (-1 each)
+  roundScore: number; // Net score: foundationCards - nertzPenalty
 }
 
 /**

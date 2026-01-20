@@ -212,7 +212,7 @@ function ScoreRow({ score, playerName, isCurrentPlayer, isCaller }: ScoreRowProp
       </td>
       <td className={styles.numberColumn}>
         {score.nertzPenalty > 0 ? (
-          <span className={styles.negative}>-{score.nertzPenalty * 2}</span>
+          <span className={styles.negative}>-{score.nertzPenalty}</span>
         ) : (
           <span className={styles.zero}>0</span>
         )}
