@@ -25,6 +25,10 @@ import type {
   InactivityStatus,
   PlayerInactivityUpdatePayload,
   ReportStatePayload,
+  DrawProposedPayload,
+  DrawResponsePayload,
+  DrawAgreedPayload,
+  DrawRejectedPayload,
 } from '@heyhey/shared';
 import { saveSession, loadSession, clearSession } from '../utils/sessionStorage';
 import type { OpponentMove } from '../components/Foundation/MultiFoundationArea';
@@ -51,6 +55,23 @@ export interface PlayerInactivityState {
   playerName: string;
   status: InactivityStatus;
   lastActivityTimestamp: number;
+}
+
+/** Individual player's response to a draw proposal */
+export interface DrawResponseState {
+  playerId: string;
+  playerName: string;
+  accepted: boolean;
+}
+
+/** Active draw proposal state */
+export interface DrawProposalState {
+  proposerId: string;
+  proposerName: string;
+  /** Timeout timestamp (when the proposal expires) */
+  timeoutAt: number;
+  /** Responses received so far */
+  responses: Map<string, DrawResponseState>;
 }
 
 export interface GameStateContextValue {
@@ -93,6 +114,9 @@ export interface GameStateContextValue {
   /** Last opponent foundation move for flying card animation */
   lastOpponentFoundationMove: OpponentMove | null;
 
+  // Draw proposal state
+  drawProposal: DrawProposalState | null;
+
   // Actions
   createRoom: (playerName: string) => void;
   joinRoom: (roomCode: string, playerName: string) => void;
@@ -107,6 +131,8 @@ export interface GameStateContextValue {
   foundationMove: (card: PlayerGameState['nertzPile'][0], foundationIndex: number, source: MoveSource) => void;
   readyForNextRound: () => void;
   reportState: (state: ReportStatePayload) => void;
+  callDraw: () => void;
+  respondToDraw: (accept: boolean) => void;
 
   // Errors
   error: string | null;
@@ -141,6 +167,8 @@ interface GameState {
   playerInactivity: Map<string, PlayerInactivityState>;
   /** Last opponent foundation move for flying card animation */
   lastOpponentFoundationMove: OpponentMove | null;
+  /** Active draw proposal state */
+  drawProposal: DrawProposalState | null;
 }
 
 type GameAction =
@@ -173,7 +201,12 @@ type GameAction =
   | { type: 'REJOIN_FAILED'; reason: string }
   | { type: 'PLAYER_RECONNECTED'; playerId: string }
   | { type: 'PLAYER_DISCONNECTED'; playerId: string; canReconnect: boolean }
-  | { type: 'PLAYER_INACTIVITY_UPDATE'; payload: PlayerInactivityUpdatePayload };
+  | { type: 'PLAYER_INACTIVITY_UPDATE'; payload: PlayerInactivityUpdatePayload }
+  | { type: 'DRAW_PROPOSED'; payload: DrawProposedPayload }
+  | { type: 'DRAW_RESPONSE'; payload: DrawResponsePayload }
+  | { type: 'DRAW_AGREED'; payload: DrawAgreedPayload }
+  | { type: 'DRAW_REJECTED'; payload: DrawRejectedPayload }
+  | { type: 'CLEAR_DRAW_PROPOSAL' };
 
 /* =============================================================================
    REDUCER
@@ -203,6 +236,7 @@ const initialState: GameState = {
   disconnectedPlayers: [],
   playerInactivity: new Map(),
   lastOpponentFoundationMove: null,
+  drawProposal: null,
 };
 
 function gameReducer(state: GameState, action: GameAction): GameState {
@@ -362,6 +396,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         gameOver: action.gameOver,
         gameWinner: action.winner ?? null,
         playersReadyForNextRound: [], // Clear ready state when new scoring starts
+        drawProposal: null, // Clear draw proposal when round ends
       };
 
     case 'PLAYER_READY_FOR_NEXT_ROUND':
@@ -508,6 +543,58 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         playerInactivity: newInactivity,
       };
     }
+
+    case 'DRAW_PROPOSED': {
+      const { payload } = action;
+      return {
+        ...state,
+        drawProposal: {
+          proposerId: payload.proposerId,
+          proposerName: payload.proposerName,
+          timeoutAt: Date.now() + payload.timeout,
+          responses: new Map(),
+        },
+      };
+    }
+
+    case 'DRAW_RESPONSE': {
+      const { payload } = action;
+      if (!state.drawProposal) return state;
+      const newResponses = new Map(state.drawProposal.responses);
+      newResponses.set(payload.responderId, {
+        playerId: payload.responderId,
+        playerName: payload.responderName,
+        accepted: payload.accepted,
+      });
+      return {
+        ...state,
+        drawProposal: {
+          ...state.drawProposal,
+          responses: newResponses,
+        },
+      };
+    }
+
+    case 'DRAW_AGREED':
+      // Draw was agreed - round will end via roundScored event
+      // Clear the proposal as the round is ending
+      return {
+        ...state,
+        drawProposal: null,
+      };
+
+    case 'DRAW_REJECTED':
+      // Draw was rejected - clear the proposal
+      return {
+        ...state,
+        drawProposal: null,
+      };
+
+    case 'CLEAR_DRAW_PROPOSAL':
+      return {
+        ...state,
+        drawProposal: null,
+      };
 
     default:
       return state;
@@ -861,6 +948,27 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
       }
     };
 
+    // Draw events
+    const onDrawProposed = (payload: DrawProposedPayload) => {
+      dispatch({ type: 'DRAW_PROPOSED', payload });
+      console.log('[GameState] Draw proposed by:', payload.proposerName);
+    };
+
+    const onDrawResponse = (payload: DrawResponsePayload) => {
+      dispatch({ type: 'DRAW_RESPONSE', payload });
+      console.log('[GameState] Draw response from:', payload.responderName, payload.accepted ? 'accepted' : 'declined');
+    };
+
+    const onDrawAgreed = (payload: DrawAgreedPayload) => {
+      dispatch({ type: 'DRAW_AGREED', payload });
+      console.log('[GameState] Draw agreed for round:', payload.roundNumber);
+    };
+
+    const onDrawRejected = (payload: DrawRejectedPayload) => {
+      dispatch({ type: 'DRAW_REJECTED', payload });
+      console.log('[GameState] Draw rejected by:', payload.rejectedByName, 'reason:', payload.reason);
+    };
+
     // Attach listeners
     socket.on('roomCreated', onRoomCreated);
     socket.on('roomJoined', onRoomJoined);
@@ -889,6 +997,10 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
     socket.on('playerReconnected', onPlayerReconnected);
     socket.on('playerDisconnected', onPlayerDisconnected);
     socket.on('playerInactivityUpdate', onPlayerInactivityUpdate);
+    socket.on('drawProposed', onDrawProposed);
+    socket.on('drawResponse', onDrawResponse);
+    socket.on('drawAgreed', onDrawAgreed);
+    socket.on('drawRejected', onDrawRejected);
 
     // Cleanup
     return () => {
@@ -919,6 +1031,10 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
       socket.off('playerReconnected', onPlayerReconnected);
       socket.off('playerDisconnected', onPlayerDisconnected);
       socket.off('playerInactivityUpdate', onPlayerInactivityUpdate);
+      socket.off('drawProposed', onDrawProposed);
+      socket.off('drawResponse', onDrawResponse);
+      socket.off('drawAgreed', onDrawAgreed);
+      socket.off('drawRejected', onDrawRejected);
     };
   }, [socket]);
 
@@ -962,6 +1078,26 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
       }
     }
   }, [state.gamePhase, state.gameId]);
+
+  // Handle draw timeout countdown - clear proposal when it expires
+  useEffect(() => {
+    if (!state.drawProposal) return;
+
+    const timeRemaining = state.drawProposal.timeoutAt - Date.now();
+    if (timeRemaining <= 0) {
+      // Already expired
+      dispatch({ type: 'CLEAR_DRAW_PROPOSAL' });
+      return;
+    }
+
+    // Set timer to clear when expired
+    const timer = setTimeout(() => {
+      dispatch({ type: 'CLEAR_DRAW_PROPOSAL' });
+      console.log('[GameState] Draw proposal expired on client');
+    }, timeRemaining);
+
+    return () => clearTimeout(timer);
+  }, [state.drawProposal]);
 
   // Actions
   const createRoom = useCallback(
@@ -1052,6 +1188,23 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
     socket.emit('callNertz');
   }, [socket, isConnected]);
 
+  const callDraw = useCallback(() => {
+    if (!socket || !isConnected) {
+      return;
+    }
+    socket.emit('callDraw');
+  }, [socket, isConnected]);
+
+  const respondToDraw = useCallback(
+    (accept: boolean) => {
+      if (!socket || !isConnected) {
+        return;
+      }
+      socket.emit('respondToDraw', { accept });
+    },
+    [socket, isConnected]
+  );
+
   const readyForNextRound = useCallback(() => {
     if (!socket || !isConnected) {
       return;
@@ -1128,6 +1281,9 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
     // Animation state
     lastOpponentFoundationMove: state.lastOpponentFoundationMove,
 
+    // Draw proposal state
+    drawProposal: state.drawProposal,
+
     // Actions
     createRoom,
     joinRoom,
@@ -1142,6 +1298,8 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
     foundationMove,
     readyForNextRound,
     reportState,
+    callDraw,
+    respondToDraw,
 
     // Errors
     error: state.error,
