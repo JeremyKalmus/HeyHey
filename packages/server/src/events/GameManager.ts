@@ -56,6 +56,7 @@ import type {
   InactivityStatus,
   InactivityConfig,
   PlayerInactivityUpdatePayload,
+  PlayerGameState,
 } from '@heyhey/shared';
 import {
   StateManager,
@@ -142,6 +143,10 @@ interface ActiveGame {
   lastActivityAt: number;
 
   playerNertzCounts: Map<string, number>; // playerId -> last reported nertz pile count (for scoring)
+
+  // === Player state storage for reconnection (ADR-010) ===
+  /** Per-player full game state for reconnection recovery */
+  playerStates: Map<string, PlayerGameState>;
 
   // === Draw proposal tracking ===
   /** Active draw proposal state, if any */
@@ -426,6 +431,33 @@ export class GameManager {
   }
 
   /**
+   * Store a player's full game state for reconnection recovery (ADR-010).
+   * Called when client reports state via reportState event.
+   *
+   * @param roomCode The room code
+   * @param playerId The player's ID
+   * @param state The player's full game state
+   */
+  storePlayerState(roomCode: string, playerId: string, state: PlayerGameState): void {
+    const game = this.games.get(roomCode);
+    if (!game) return;
+    game.playerStates.set(playerId, state);
+  }
+
+  /**
+   * Get a player's stored game state for reconnection recovery (ADR-010).
+   *
+   * @param roomCode The room code
+   * @param playerId The player's ID
+   * @returns The player's stored state, or null if not found
+   */
+  getPlayerState(roomCode: string, playerId: string): PlayerGameState | null {
+    const game = this.games.get(roomCode);
+    if (!game) return null;
+    return game.playerStates.get(playerId) ?? null;
+  }
+
+  /**
    * Get inactivity status for a player
    */
   getPlayerInactivityStatus(roomCode: string, playerId: string): InactivityStatus | null {
@@ -510,6 +542,7 @@ export class GameManager {
       scoringState,
       playerActivity,
       playerNertzCounts: new Map(), // Tracks client-reported nertz counts for scoring
+      playerStates: new Map(), // Stores full player state for reconnection (ADR-010)
       inactivityConfig: { ...DEFAULT_INACTIVITY_CONFIG },
       createdAt: now,
       lastActivityAt: now,
