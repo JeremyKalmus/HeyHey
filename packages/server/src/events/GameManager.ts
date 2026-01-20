@@ -1314,6 +1314,7 @@ export class GameManager {
     currentStarterIndex: number;
     foundations: FoundationPile[];
     opponentStates: OpponentStateUpdatePayload[];
+    playerState?: PlayerGameState;
   } | {
     success: false;
     reason: 'game_not_found' | 'player_not_found' | 'game_ended' | 'invalid_credentials';
@@ -1384,6 +1385,9 @@ export class GameManager {
       }
     }
 
+    // Get stored player state for reconnection recovery (ADR-010)
+    const storedPlayerState = game.playerStates.get(playerId);
+
     return {
       success: true,
       playerName,
@@ -1393,6 +1397,7 @@ export class GameManager {
       currentStarterIndex: state.currentStarterIndex,
       foundations: state.foundations,
       opponentStates,
+      playerState: storedPlayerState,
     };
   }
 

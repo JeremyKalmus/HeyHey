@@ -228,6 +228,8 @@ export interface ReportStatePayload {
   nertzCount: number;
   nertzTopCard?: Card;
   workPiles: Card[][]; // All face-up work pile cards
+  /** Full player state for server-side storage (reconnection recovery) */
+  playerState?: PlayerGameState;
 }
 
 // Session Reconnection Payloads
