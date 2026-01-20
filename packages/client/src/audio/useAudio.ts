@@ -2,6 +2,7 @@
 // Provides a simple interface to play sounds in components
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { clamp } from '@heyhey/shared';
 import { soundManager, type SoundType } from './SoundManager';
 
 export interface UseAudioOptions {
@@ -96,8 +97,7 @@ export function useAudio(options: UseAudioOptions = {}): UseAudioReturn {
   }, []);
 
   const setVolume = useCallback((newVolume: number) => {
-    const clamped = Math.max(0, Math.min(1, newVolume));
-    setVolumeState(clamped);
+    setVolumeState(clamp(newVolume, 0, 1));
   }, []);
 
   const setEnabled = useCallback((newEnabled: boolean) => {

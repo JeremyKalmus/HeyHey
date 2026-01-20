@@ -2,6 +2,7 @@
 // Persists settings to localStorage per-player
 
 import { useState, useCallback, useEffect } from 'react';
+import { clamp } from '@heyhey/shared';
 import { createStorageHelper } from '../utils/storageHelper';
 
 /* =============================================================================
@@ -129,7 +130,7 @@ export function usePlayerSettings(
   const setSoundVolume = useCallback((volume: number) => {
     setSettings((prev) => ({
       ...prev,
-      soundVolume: Math.max(0, Math.min(1, volume)),
+      soundVolume: clamp(volume, 0, 1),
     }));
   }, []);
 

@@ -1,6 +1,8 @@
 // SoundManager - Manages game sound effects using Web Audio API
 // Generates synthetic sounds for card interactions without external audio files
 
+import { clamp } from '@heyhey/shared';
+
 export type SoundType =
   | 'cardSelect'
   | 'cardPlace'
@@ -59,7 +61,7 @@ class SoundManager {
    * Set the master volume (0-1).
    */
   setVolume(volume: number): void {
-    this.config.volume = Math.max(0, Math.min(1, volume));
+    this.config.volume = clamp(volume, 0, 1);
   }
 
   /**
