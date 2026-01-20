@@ -5,8 +5,8 @@ import { createStorageHelper } from './storageHelper';
 
 const SESSION_KEY = 'heyhey_session';
 
-/** Maximum session age in milliseconds (5 minutes) */
-const MAX_SESSION_AGE_MS = 5 * 60 * 1000;
+/** Maximum session age in milliseconds (15 minutes) */
+const MAX_SESSION_AGE_MS = 15 * 60 * 1000;
 
 export interface GameSession {
   gameId: string;

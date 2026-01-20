@@ -127,8 +127,8 @@ interface ActiveGame {
   playerNertzCounts: Map<string, number>; // playerId -> last reported nertz pile count (for scoring)
 }
 
-/** Reconnection timeout in milliseconds (5 minutes) */
-const RECONNECT_TIMEOUT_MS = 5 * 60 * 1000;
+/** Reconnection timeout in milliseconds (10 minutes) */
+const RECONNECT_TIMEOUT_MS = 10 * 60 * 1000;
 /** Game inactivity timeout: 30 minutes */
 const GAME_INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000;
 
@@ -945,6 +945,7 @@ export class GameManager {
     roundNumber: number;
     currentStarterIndex: number;
     foundations: FoundationPile[];
+    opponentStates: OpponentStateUpdatePayload[];
   } | {
     success: false;
     reason: 'game_not_found' | 'player_not_found' | 'game_ended' | 'invalid_credentials';
@@ -996,6 +997,25 @@ export class GameManager {
       hostId: players[0]?.id ?? '',
     };
 
+    // Build opponent states for the reconnecting player
+    // Note: Server doesn't have full card data (dealt client-side), but we have
+    // the last reported counts from reportState events stored in playerNertzCounts
+    const opponentStates: OpponentStateUpdatePayload[] = [];
+    for (const playerState of state.players) {
+      if (playerState.playerId !== playerId) {
+        // Use stored nertz count from client reports, fallback to 0
+        const nertzCount = game.playerNertzCounts.get(playerState.playerId) ?? 0;
+        opponentStates.push({
+          playerId: playerState.playerId,
+          stockCount: 0, // Will be updated by opponent's next reportState
+          wasteTopCard: undefined,
+          nertzCount,
+          nertzTopCard: undefined,
+          workPiles: [[], [], [], []], // Will be updated by opponent's next reportState
+        });
+      }
+    }
+
     return {
       success: true,
       playerName,
@@ -1004,6 +1024,7 @@ export class GameManager {
       roundNumber: state.roundNumber,
       currentStarterIndex: state.currentStarterIndex,
       foundations: state.foundations,
+      opponentStates,
     };
   }
 

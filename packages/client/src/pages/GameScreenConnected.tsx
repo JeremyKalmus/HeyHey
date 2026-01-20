@@ -337,6 +337,21 @@ export function GameScreenConnected() {
     }
   }, [isSetupComplete, localPlayerState, reportCurrentState, gamePhase]);
 
+  // Listen for state report requests (when another player reconnects)
+  useEffect(() => {
+    if (!socket || !localPlayerState || !isSetupComplete) return;
+
+    const handleRequestStateReport = () => {
+      console.log('[GameScreen] Received request to report state for reconnecting player');
+      reportCurrentState();
+    };
+
+    socket.on('requestStateReport', handleRequestStateReport);
+    return () => {
+      socket.off('requestStateReport', handleRequestStateReport);
+    };
+  }, [socket, localPlayerState, isSetupComplete, reportCurrentState]);
+
   // Build game state for hooks (only when setup complete)
   const gameState: GameState | null = useMemo(() => {
     if (!localPlayerState || !room || !isSetupComplete) return null;

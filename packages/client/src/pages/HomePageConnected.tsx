@@ -6,14 +6,24 @@ import { HomePage } from '../components/Lobby/HomePage';
 
 export function HomePageConnected() {
   const navigate = useNavigate();
-  const { room, createRoom, joinRoom, error, clearError } = useGameState();
+  const { room, gameId, gamePhase, isReconnecting, createRoom, joinRoom, error, clearError } = useGameState();
 
-  // Navigate to room when successfully joined/created
+  // Navigate based on game state
   useEffect(() => {
-    if (room) {
-      navigate(`/room/${room.code}`);
+    // If actively reconnecting, wait for result
+    if (isReconnecting) return;
+
+    // If we have a gameId and are beyond lobby phase, go to game
+    if (gameId && gamePhase !== 'lobby') {
+      navigate(`/game/${gameId}`, { replace: true });
+      return;
     }
-  }, [room, navigate]);
+
+    // If we have a room, go to lobby
+    if (room) {
+      navigate(`/room/${room.code}`, { replace: true });
+    }
+  }, [room, gameId, gamePhase, isReconnecting, navigate]);
 
   // Clear error on unmount
   useEffect(() => {
@@ -29,6 +39,25 @@ export function HomePageConnected() {
     clearError();
     joinRoom(roomCode.toUpperCase(), playerName);
   };
+
+  // Show loading state while reconnecting
+  if (isReconnecting) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        flexDirection: 'column',
+        gap: '16px',
+        fontFamily: 'monospace',
+        color: '#666',
+      }}>
+        <div style={{ fontSize: '24px' }}>Reconnecting to game...</div>
+        <div style={{ fontSize: '14px' }}>Please wait</div>
+      </div>
+    );
+  }
 
   return (
     <>

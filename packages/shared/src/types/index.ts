@@ -79,6 +79,8 @@ export interface ServerToClientEvents {
   playerReconnected: (payload: PlayerReconnectedPayload) => void;
   playerDisconnected: (payload: PlayerDisconnectedPayload) => void;
   playerInactivityUpdate: (payload: PlayerInactivityUpdatePayload) => void;
+  /** Server requests client to broadcast their current state (used after opponent reconnects) */
+  requestStateReport: () => void;
 }
 
 // Event Payloads - Client to Server
@@ -210,6 +212,8 @@ export interface RejoinGameSuccessPayload {
   roundNumber: number;
   currentStarterIndex: number;
   foundations: FoundationPile[];
+  /** Opponent states for the reconnecting player to see other players' cards */
+  opponentStates: OpponentStateUpdatePayload[];
 }
 
 export interface RejoinGameFailedPayload {

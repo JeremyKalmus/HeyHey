@@ -437,7 +437,22 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         isReconnecting: action.isReconnecting,
       };
 
-    case 'REJOIN_SUCCESS':
+    case 'REJOIN_SUCCESS': {
+      // Build opponent full states from the server response
+      const rejoinOpponentStates = new Map<string, OpponentFullState>();
+      if (action.payload.opponentStates) {
+        for (const oppState of action.payload.opponentStates) {
+          rejoinOpponentStates.set(oppState.playerId, {
+            playerId: oppState.playerId,
+            stockCount: oppState.stockCount,
+            wasteTopCard: oppState.wasteTopCard ?? null,
+            nertzCount: oppState.nertzCount,
+            nertzTopCard: oppState.nertzTopCard ?? null,
+            workPiles: oppState.workPiles,
+            lastUpdate: Date.now(),
+          });
+        }
+      }
       return {
         ...state,
         room: action.payload.room,
@@ -447,9 +462,11 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         roundNumber: action.payload.roundNumber,
         currentStarterIndex: action.payload.currentStarterIndex,
         foundations: action.payload.foundations,
+        opponentFullStates: rejoinOpponentStates,
         isReconnecting: false,
         error: null,
       };
+    }
 
     case 'REJOIN_FAILED':
       // Clear the stored session since rejoin failed

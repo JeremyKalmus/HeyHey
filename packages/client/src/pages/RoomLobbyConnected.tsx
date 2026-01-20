@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useGameState } from '../context';
 import { RoomLobby } from '../components/Lobby/RoomLobby';
 import { LoadingOverlay, Skeleton } from '../components/ui';
+import { hasValidSession } from '../utils/sessionStorage';
 import type { LobbyPlayer } from '../components/Lobby/PlayerList';
 import type { PlayerCustomizationData } from '../components/Lobby/PlayerCustomization';
 import type { PlayerColor } from '../components/Card/CardBack';
@@ -76,17 +77,21 @@ export function RoomLobbyConnected() {
     });
   }, [updatePlayer]);
 
-  // Redirect to home if no room
+  // Redirect to home if no room and no pending reconnection
   useEffect(() => {
+    // Don't redirect if reconnecting or if there's a saved session
+    // (the session might still be reconnecting via GameStateContext)
+    if (isReconnecting || hasValidSession()) return;
+
     if (!room) {
       navigate('/');
     }
-  }, [room, navigate]);
+  }, [room, isReconnecting, navigate]);
 
-  // Navigate to game when game starts
+  // Navigate to game when game starts or if reconnected to a game in progress
   useEffect(() => {
-    if (gameId && (gamePhase === 'setup' || gamePhase === 'playing')) {
-      navigate(`/game/${gameId}`);
+    if (gameId && gamePhase !== 'lobby' && gamePhase !== 'finished') {
+      navigate(`/game/${gameId}`, { replace: true });
     }
   }, [gameId, gamePhase, navigate]);
 

@@ -18,11 +18,15 @@ import type {
 import { LobbyManager } from './LobbyManager.js';
 import { SetupManager } from './SetupManager.js';
 import { GameManager } from './GameManager.js';
+import { SocketRegistry } from '../services/SocketRegistry.js';
 
 type TypedServer = Server<AllClientToServerEvents, AllServerToClientEvents>;
 type TypedSocket = Socket<AllClientToServerEvents, AllServerToClientEvents>;
 
-const lobbyManager = new LobbyManager();
+// Shared SocketRegistry ensures consistent socket-to-room mappings
+// across both LobbyManager and GameManager
+const sharedSocketRegistry = new SocketRegistry();
+const lobbyManager = new LobbyManager(sharedSocketRegistry);
 const setupManager = new SetupManager();
 let gameManager: GameManager | null = null;
 
@@ -65,7 +69,8 @@ function getOrCreateGameManager(io: TypedServer): GameManager {
       }
     };
 
-    gameManager = new GameManager(broadcast, reject, broadcastOpponentState);
+    // Pass shared SocketRegistry for consistent socket-to-room mappings
+    gameManager = new GameManager(broadcast, reject, broadcastOpponentState, undefined, sharedSocketRegistry);
   }
   return gameManager;
 }
@@ -510,7 +515,7 @@ export function registerLobbyEvents(io: TypedServer): void {
         result.playerName
       );
 
-      // Send success with current game state
+      // Send success with current game state including opponent states
       // Use the original playerId (from session) for consistency with game state
       socket.emit('rejoinGameSuccess', {
         room: result.room,
@@ -520,6 +525,7 @@ export function registerLobbyEvents(io: TypedServer): void {
         roundNumber: result.roundNumber,
         currentStarterIndex: result.currentStarterIndex,
         foundations: result.foundations,
+        opponentStates: result.opponentStates, // Include opponent states for immediate visibility
       });
 
       // Notify other players that this player has reconnected
@@ -528,6 +534,10 @@ export function registerLobbyEvents(io: TypedServer): void {
         playerId: payload.playerId, // Use original playerId
         playerName: result.playerName,
       });
+
+      // Request all other players to broadcast their current state
+      // This ensures the reconnecting player gets up-to-date opponent info
+      socket.to(payload.roomCode).emit('requestStateReport');
 
       console.log(`Player ${result.playerName} (${socket.id}) rejoined game ${payload.gameId}`);
     });
