@@ -2,6 +2,7 @@
 // Persists settings to localStorage per-player
 
 import { useState, useCallback, useEffect } from 'react';
+import { createStorageHelper } from '../utils/storageHelper';
 
 /* =============================================================================
    TYPES
@@ -59,30 +60,18 @@ function getStorageKey(playerId?: string): string {
   return STORAGE_KEY_PREFIX;
 }
 
+function getSettingsHelper(playerId?: string) {
+  return createStorageHelper<Partial<PlayerSettings>>(getStorageKey(playerId));
+}
+
 function loadSettings(playerId?: string): PlayerSettings {
-  try {
-    const key = getStorageKey(playerId);
-    const stored = localStorage.getItem(key);
-    if (stored) {
-      const parsed = JSON.parse(stored) as Partial<PlayerSettings>;
-      // Merge with defaults to handle new settings added in future versions
-      return { ...DEFAULT_SETTINGS, ...parsed };
-    }
-  } catch (error) {
-    // localStorage might be unavailable or JSON parse failed
-    console.warn('Failed to load player settings:', error);
-  }
-  return { ...DEFAULT_SETTINGS };
+  const stored = getSettingsHelper(playerId).load();
+  // Merge with defaults to handle new settings added in future versions
+  return { ...DEFAULT_SETTINGS, ...stored };
 }
 
 function saveSettings(settings: PlayerSettings, playerId?: string): void {
-  try {
-    const key = getStorageKey(playerId);
-    localStorage.setItem(key, JSON.stringify(settings));
-  } catch (error) {
-    // localStorage might be unavailable or quota exceeded
-    console.warn('Failed to save player settings:', error);
-  }
+  getSettingsHelper(playerId).save(settings);
 }
 
 /* =============================================================================
