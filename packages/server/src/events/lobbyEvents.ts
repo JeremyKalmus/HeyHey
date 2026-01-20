@@ -496,6 +496,11 @@ export function registerLobbyEvents(io: TypedServer): void {
       // Store the nertz count for scoring (cards are dealt client-side)
       manager.updatePlayerNertzCount(roomCode, playerId, payload.nertzCount);
 
+      // Store full player state for reconnection recovery (ADR-010)
+      if (payload.playerState) {
+        manager.storePlayerState(roomCode, playerId, payload.playerState);
+      }
+
       // Build opponent state update payload
       const opponentPayload: OpponentStateUpdatePayload = {
         playerId, // Use original playerId if found, else socket.id
@@ -643,6 +648,7 @@ export function registerLobbyEvents(io: TypedServer): void {
         currentStarterIndex: result.currentStarterIndex,
         foundations: result.foundations,
         opponentStates: result.opponentStates, // Include opponent states for immediate visibility
+        playerState: result.playerState, // Include stored player state for reconnection recovery (ADR-010)
       });
 
       // Notify other players that this player has reconnected
