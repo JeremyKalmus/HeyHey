@@ -1,0 +1,262 @@
+.container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal {
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  border: 2px solid #3a3a5a;
+  border-radius: 16px;
+  padding: 24px;
+  min-width: 320px;
+  max-width: 400px;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Header */
+.header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.title {
+  margin: 0 0 8px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #e0e0e0;
+}
+
+.proposer {
+  font-size: 0.95rem;
+  color: #a0a0a0;
+}
+
+.proposerName {
+  color: #64b5f6;
+  font-weight: 600;
+}
+
+/* Timer */
+.timerSection {
+  margin-bottom: 20px;
+}
+
+.timerBar {
+  height: 8px;
+  background: #2a2a4a;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.timerProgress {
+  height: 100%;
+  background: linear-gradient(90deg, #f97316, #ea580c);
+  border-radius: 4px;
+  transition: width 0.1s linear;
+}
+
+.timerText {
+  text-align: center;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #f97316;
+}
+
+/* Responses */
+.responsesSection {
+  margin-bottom: 20px;
+}
+
+.responsesTitle {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #c0c0c0;
+}
+
+.responsesList {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  padding: 12px;
+  min-height: 60px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.noResponses {
+  text-align: center;
+  color: #808080;
+  font-style: italic;
+  padding: 12px 0;
+}
+
+.responseItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+
+.responseItem:last-child {
+  margin-bottom: 0;
+}
+
+.responseItem.accepted {
+  background: rgba(76, 175, 80, 0.15);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.responseItem.rejected {
+  background: rgba(244, 67, 54, 0.15);
+  border: 1px solid rgba(244, 67, 54, 0.3);
+}
+
+.responderName {
+  font-weight: 500;
+  color: #e0e0e0;
+}
+
+.responseStatus {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.responseItem.accepted .responseStatus {
+  color: #4caf50;
+}
+
+.responseItem.rejected .responseStatus {
+  color: #f44336;
+}
+
+.responseCount {
+  text-align: center;
+  margin-top: 12px;
+  font-size: 0.85rem;
+  color: #808080;
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 16px;
+}
+
+.waitingMessage,
+.respondedMessage {
+  text-align: center;
+  color: #a0a0a0;
+  font-style: italic;
+  padding: 12px 0;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* =============================================================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================================================= */
+
+/* iPad Portrait (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+  .modal {
+    min-width: 300px;
+    max-width: 380px;
+    padding: 20px;
+  }
+
+  .title {
+    font-size: 1.35rem;
+  }
+}
+
+/* iPad Landscape (1024px - 1366px) */
+@media (min-width: 1024px) and (max-width: 1366px) and (orientation: landscape) {
+  .modal {
+    min-width: 340px;
+    max-width: 420px;
+    padding: 22px;
+  }
+
+  .title {
+    font-size: 1.4rem;
+  }
+}
+
+/* Small screens */
+@media (max-width: 500px) {
+  .modal {
+    min-width: 280px;
+    max-width: 90vw;
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .title {
+    font-size: 1.25rem;
+  }
+
+  .proposer {
+    font-size: 0.9rem;
+  }
+
+  .timerText {
+    font-size: 1.1rem;
+  }
+
+  .responsesSection {
+    margin-bottom: 16px;
+  }
+
+  .responsesList {
+    padding: 10px;
+    max-height: 120px;
+  }
+
+  .responseItem {
+    padding: 6px 10px;
+  }
+
+  .buttonGroup {
+    gap: 12px;
+  }
+}
