@@ -10,8 +10,8 @@ import { findValidWorkPiles } from '@heyhey/shared';
    TYPES
    ============================================================================= */
 
-export type DragSourceType = 'nertz' | 'work' | 'waste';
-export type DropTargetType = 'work' | 'foundation';
+export type DragSourceType = MoveSource['type'];
+export type DropTargetType = MoveDestination['type'];
 
 export interface DragSource {
   type: DragSourceType;
