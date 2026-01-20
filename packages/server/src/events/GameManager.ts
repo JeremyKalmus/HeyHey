@@ -97,6 +97,23 @@ interface PlayerActivityState {
 }
 
 /**
+ * State for tracking an active draw proposal.
+ * A draw is proposed by one player and must be accepted by all others.
+ */
+interface DrawState {
+  /** Player who proposed the draw */
+  proposerId: string;
+  /** Player name for broadcasts */
+  proposerName: string;
+  /** When the draw was proposed */
+  proposedAt: number;
+  /** Map of playerId -> accepted (true/false). Proposer auto-accepts. */
+  responses: Map<string, boolean>;
+  /** Timeout ID for auto-rejection after 30 seconds */
+  timeoutId: ReturnType<typeof setTimeout>;
+}
+
+/**
  * Active game state including both game-level and player-level activity tracking.
  */
 interface ActiveGame {
@@ -125,6 +142,10 @@ interface ActiveGame {
   lastActivityAt: number;
 
   playerNertzCounts: Map<string, number>; // playerId -> last reported nertz pile count (for scoring)
+
+  // === Draw proposal tracking ===
+  /** Active draw proposal state, if any */
+  drawState?: DrawState;
 }
 
 /** Reconnection timeout in milliseconds (10 minutes) */
@@ -134,6 +155,9 @@ const GAME_INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000;
 
 /** Inactivity check interval in milliseconds (5 seconds) */
 const INACTIVITY_CHECK_INTERVAL_MS = 5_000;
+
+/** Draw proposal timeout in milliseconds (30 seconds) */
+const DRAW_TIMEOUT_MS = 30_000;
 
 export type BroadcastFn = (roomCode: string, update: StateUpdate) => void;
 export type RejectFn = (socketId: string, rejection: MoveRejection) => void;
@@ -190,6 +214,49 @@ export type PlayerReadyResult =
       allReady: boolean;
       nextRoundNumber?: number;
       nextStarterId?: string;
+    }
+  | {
+      success: false;
+      error: string;
+    };
+
+export type CallDrawResult =
+  | {
+      success: true;
+      proposerId: string;
+      proposerName: string;
+      timeout: number;
+      roomCode: string;
+    }
+  | {
+      success: false;
+      error: string;
+    };
+
+export type RespondToDrawResult =
+  | {
+      success: true;
+      responderId: string;
+      responderName: string;
+      accepted: boolean;
+      allAccepted: boolean;
+      rejected: boolean;
+      rejectedBy?: string;
+      rejectedByName?: string;
+      roomCode: string;
+    }
+  | {
+      success: false;
+      error: string;
+    };
+
+export type DrawRoundEndResult =
+  | {
+      success: true;
+      roundResult: RoundResult;
+      totalScores: { playerId: string; total: number }[];
+      gameOver: boolean;
+      winner?: string;
     }
   | {
       success: false;
@@ -675,6 +742,264 @@ export class GameManager {
   }
 
   /**
+   * Process a draw proposal from a player.
+   * Creates a new draw state and starts the timeout timer.
+   * The proposer automatically accepts their own draw.
+   */
+  processCallDraw(socketId: string): CallDrawResult {
+    const roomCode = this.socketRegistry.getRoom(socketId);
+    if (!roomCode) {
+      return { success: false, error: 'not_in_room' };
+    }
+
+    const game = this.games.get(roomCode);
+    if (!game) {
+      return { success: false, error: 'game_not_found' };
+    }
+
+    // Find the player ID for this socket
+    let playerId: string | undefined;
+    for (const [pId, sId] of game.playerSockets.entries()) {
+      if (sId === socketId) {
+        playerId = pId;
+        break;
+      }
+    }
+
+    if (!playerId) {
+      return { success: false, error: 'player_not_in_game' };
+    }
+
+    const state = game.stateManager.getState();
+
+    // Verify game is in playing phase
+    if (state.phase !== 'playing') {
+      return { success: false, error: 'not_in_playing_phase' };
+    }
+
+    // Check if there's already an active draw proposal
+    if (game.drawState) {
+      return { success: false, error: 'draw_already_proposed' };
+    }
+
+    // Get player name (using playerId for now)
+    const proposerName = playerId;
+
+    // Create responses map - proposer auto-accepts
+    const responses = new Map<string, boolean>();
+    responses.set(playerId, true);
+
+    // Set up timeout for auto-rejection
+    const timeoutId = setTimeout(() => {
+      this.handleDrawTimeout(roomCode);
+    }, DRAW_TIMEOUT_MS);
+
+    // Create draw state
+    game.drawState = {
+      proposerId: playerId,
+      proposerName,
+      proposedAt: Date.now(),
+      responses,
+      timeoutId,
+    };
+
+    return {
+      success: true,
+      proposerId: playerId,
+      proposerName,
+      timeout: DRAW_TIMEOUT_MS,
+      roomCode,
+    };
+  }
+
+  /**
+   * Process a player's response to a draw proposal.
+   * If rejected by anyone, the draw is cancelled.
+   * If all players accept, the draw is agreed.
+   */
+  processRespondToDraw(socketId: string, accept: boolean): RespondToDrawResult {
+    const roomCode = this.socketRegistry.getRoom(socketId);
+    if (!roomCode) {
+      return { success: false, error: 'not_in_room' };
+    }
+
+    const game = this.games.get(roomCode);
+    if (!game) {
+      return { success: false, error: 'game_not_found' };
+    }
+
+    // Find the player ID for this socket
+    let playerId: string | undefined;
+    for (const [pId, sId] of game.playerSockets.entries()) {
+      if (sId === socketId) {
+        playerId = pId;
+        break;
+      }
+    }
+
+    if (!playerId) {
+      return { success: false, error: 'player_not_in_game' };
+    }
+
+    // Check if there's an active draw proposal
+    if (!game.drawState) {
+      return { success: false, error: 'no_active_draw' };
+    }
+
+    // Check if player already responded
+    if (game.drawState.responses.has(playerId)) {
+      return { success: false, error: 'already_responded' };
+    }
+
+    // Get player name (using playerId for now)
+    const responderName = playerId;
+
+    // Record response
+    game.drawState.responses.set(playerId, accept);
+
+    if (!accept) {
+      // Draw rejected - clear state and return rejection info
+      const rejectedBy = playerId;
+      const rejectedByName = responderName;
+      this.clearDrawState(roomCode);
+
+      return {
+        success: true,
+        responderId: playerId,
+        responderName,
+        accepted: false,
+        allAccepted: false,
+        rejected: true,
+        rejectedBy,
+        rejectedByName,
+        roomCode,
+      };
+    }
+
+    // Check if all players have accepted
+    const allPlayersResponded = game.drawState.responses.size >= game.playerSockets.size;
+    const allAccepted = allPlayersResponded &&
+      Array.from(game.drawState.responses.values()).every(v => v === true);
+
+    if (allAccepted) {
+      // Clear timeout since draw is agreed
+      clearTimeout(game.drawState.timeoutId);
+    }
+
+    return {
+      success: true,
+      responderId: playerId,
+      responderName,
+      accepted: true,
+      allAccepted,
+      rejected: false,
+      roomCode,
+    };
+  }
+
+  /**
+   * Process round end when a draw is agreed.
+   * Similar to processRoundEnd but marks the round as a draw.
+   */
+  processDrawRoundEnd(roomCode: string, proposerId: string): DrawRoundEndResult {
+    const game = this.games.get(roomCode);
+    if (!game) {
+      return { success: false, error: 'game_not_found' };
+    }
+
+    const state = game.stateManager.getState();
+
+    // Inject client-reported nertz counts into state for scoring
+    for (const playerState of state.players) {
+      const reportedCount = game.playerNertzCounts.get(playerState.playerId) ?? 0;
+      playerState.nertzPile = Array.from({ length: reportedCount }, () => ({
+        suit: 'hearts' as const,
+        rank: 1,
+        deckId: playerState.deckId,
+      }));
+    }
+
+    // Set calledBy to the proposer for round result calculation
+    (state as { calledBy?: string }).calledBy = proposerId;
+
+    // Calculate round result
+    const roundResult = calculateRoundResult(state, state.roundNumber);
+
+    // Mark as draw
+    roundResult.isDraw = true;
+
+    // Apply to scoring state
+    const result = applyRoundResult(game.scoringState, roundResult);
+    game.scoringState = result.scoringState;
+
+    // Clear draw state
+    this.clearDrawState(roomCode);
+
+    return {
+      success: true,
+      roundResult,
+      totalScores: result.scoringState.totalScores,
+      gameOver: result.gameOver,
+      winner: result.winner,
+    };
+  }
+
+  /**
+   * Handle draw timeout - auto-reject the draw proposal
+   * @private
+   */
+  private handleDrawTimeout(roomCode: string): {
+    timedOut: boolean;
+    proposerId?: string;
+    proposerName?: string;
+  } {
+    const game = this.games.get(roomCode);
+    if (!game || !game.drawState) {
+      return { timedOut: false };
+    }
+
+    const { proposerId, proposerName } = game.drawState;
+
+    // Clear draw state
+    this.clearDrawState(roomCode);
+
+    return {
+      timedOut: true,
+      proposerId,
+      proposerName,
+    };
+  }
+
+  /**
+   * Clear draw state for a room
+   * @private
+   */
+  private clearDrawState(roomCode: string): void {
+    const game = this.games.get(roomCode);
+    if (!game || !game.drawState) return;
+
+    // Clear timeout if still active
+    clearTimeout(game.drawState.timeoutId);
+    game.drawState = undefined;
+  }
+
+  /**
+   * Get active draw state for a room (for external checks)
+   */
+  getDrawState(roomCode: string): DrawState | undefined {
+    const game = this.games.get(roomCode);
+    return game?.drawState;
+  }
+
+  /**
+   * Check if a draw is currently proposed for a room
+   */
+  hasActiveDrawProposal(roomCode: string): boolean {
+    const game = this.games.get(roomCode);
+    return !!game?.drawState;
+  }
+
+  /**
    * Process a player ready for next round
    * Returns whether all players are now ready
    */
@@ -769,8 +1094,9 @@ export class GameManager {
       suits.map((suit) => ({ suit, cards: [], ownerId: player.playerId }))
     );
 
-    // Clear ready state and nertz counts for new round
+    // Clear ready state, nertz counts, and any lingering draw state for new round
     this.clearReadyState(roomCode);
+    this.clearDrawState(roomCode);
     game.playerNertzCounts.clear();
 
     return true;
