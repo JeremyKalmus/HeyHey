@@ -3,12 +3,11 @@
 // FOR STORYBOOK DEMOS ONLY - not for production use
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { Card, PlayerGameState } from '@heyhey/shared';
+import type { Card, PlayerGameState, Suit } from '@heyhey/shared';
 import type { PlayerColor } from '../components/Card/CardBack';
 import type { FoundationPile } from '../components/Foundation';
 
-const SUITS = ['hearts', 'diamonds', 'clubs', 'spades'] as const;
-type Suit = typeof SUITS[number];
+const SUITS: readonly Suit[] = ['hearts', 'diamonds', 'clubs', 'spades'];
 
 /**
  * Simulated player state for the hook
