@@ -409,7 +409,16 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         playersReadyForNextRound: [...state.playersReadyForNextRound, action.playerId],
       };
 
-    case 'ALL_READY_FOR_NEXT_ROUND':
+    case 'ALL_READY_FOR_NEXT_ROUND': {
+      // Reset foundations for new round (same structure as GAME_STARTED)
+      const playerCount = state.room?.players.length ?? 1;
+      const suits: Array<'hearts' | 'diamonds' | 'clubs' | 'spades'> = ['hearts', 'diamonds', 'clubs', 'spades'];
+      const freshFoundations: FoundationPile[] = [];
+      for (let p = 0; p < playerCount; p++) {
+        for (const suit of suits) {
+          freshFoundations.push({ suit, cards: [], ownerId: 'system' });
+        }
+      }
       return {
         ...state,
         gamePhase: 'waiting_for_start',
@@ -418,7 +427,10 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         roundResult: null,
         playersReadyForNextRound: [],
         nertzCallerId: null,
+        foundations: freshFoundations,
+        opponentFullStates: new Map(), // Clear opponent states for fresh round
       };
+    }
 
     case 'GAME_ENDED':
       return {
