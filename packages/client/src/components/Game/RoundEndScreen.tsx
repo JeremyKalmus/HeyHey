@@ -26,6 +26,10 @@ export interface RoundEndScreenProps {
   onReadyClick?: () => void;
   /** Called when game is over and returning to lobby */
   onContinue: () => void;
+  /** Whether the current player is the host */
+  isHost?: boolean;
+  /** Called when host clicks end game button */
+  onEndGame?: () => void;
   /** Additional CSS class */
   className?: string;
 }
@@ -40,6 +44,8 @@ export function RoundEndScreen({
   playersReady = [],
   onReadyClick,
   onContinue,
+  isHost = false,
+  onEndGame,
   className,
 }: RoundEndScreenProps) {
   const { play } = useAudio();
@@ -169,6 +175,11 @@ export function RoundEndScreen({
               <div className={styles.readyCount}>
                 {playersReady.length} / {totalScores.length} ready
               </div>
+              {isHost && onEndGame && (
+                <Button variant="ghost" size="large" onClick={onEndGame}>
+                  End Game
+                </Button>
+              )}
             </>
           ) : (
             <Button variant="primary" size="large" onClick={onContinue}>

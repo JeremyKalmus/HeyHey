@@ -52,6 +52,7 @@ export interface ClientToServerEvents {
   reportState: (payload: ReportStatePayload) => void; // Client reports its visible state to server for relay
   callDraw: () => void; // Player proposes a draw
   respondToDraw: (payload: RespondToDrawPayload) => void; // Player responds to a draw proposal
+  endGame: () => void; // Host ends the game early (before target score reached)
 }
 
 // Socket Event Types - Server to Client

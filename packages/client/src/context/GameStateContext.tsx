@@ -133,6 +133,7 @@ export interface GameStateContextValue {
   reportState: (state: ReportStatePayload) => void;
   callDraw: () => void;
   respondToDraw: (accept: boolean) => void;
+  endGame: () => void;
 
   // Errors
   error: string | null;
@@ -1238,6 +1239,13 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
     [socket, isConnected]
   );
 
+  const endGame = useCallback(() => {
+    if (!socket || !isConnected || !isHost) {
+      return;
+    }
+    socket.emit('endGame');
+  }, [socket, isConnected, isHost]);
+
   const readyForNextRound = useCallback(() => {
     if (!socket || !isConnected) {
       return;
@@ -1333,6 +1341,7 @@ export function GameStateProvider({ children }: GameStateProviderProps) {
     reportState,
     callDraw,
     respondToDraw,
+    endGame,
 
     // Errors
     error: state.error,

@@ -665,6 +665,78 @@ export function registerLobbyEvents(io: TypedServer): void {
       console.log(`Player ${result.playerName} (${socket.id}) rejoined game ${payload.gameId}`);
     });
 
+    // End Game - host forcibly ends the game
+    socket.on('endGame', () => {
+      const roomCode = lobbyManager.getRoomCode(socket.id);
+      if (!roomCode) {
+        socket.emit('socketError', {
+          code: 'not_in_room',
+          message: 'You are not in a room',
+        });
+        return;
+      }
+
+      const room = lobbyManager.getRoom(roomCode);
+      if (!room) {
+        socket.emit('socketError', {
+          code: 'room_not_found',
+          message: 'Room not found',
+        });
+        return;
+      }
+
+      // Verify the requester is the host
+      if (room.hostId !== socket.id) {
+        socket.emit('socketError', {
+          code: 'not_host',
+          message: 'Only the host can end the game',
+        });
+        return;
+      }
+
+      const manager = getOrCreateGameManager(io);
+      const gameState = manager.getGameState(roomCode);
+
+      if (!gameState) {
+        socket.emit('socketError', {
+          code: 'game_not_found',
+          message: 'No active game found',
+        });
+        return;
+      }
+
+      // Get current scores to determine winner
+      const game = manager.getGame(roomCode);
+      const scoringState = game?.scoringState;
+      let winner: string | undefined;
+      let scores: { playerId: string; score: number }[] = [];
+
+      if (scoringState) {
+        scores = scoringState.totalScores.map(({ playerId, total }) => ({
+          playerId,
+          score: total,
+        }));
+
+        // Find winner (highest score)
+        const sorted = [...scoringState.totalScores].sort((a, b) => b.total - a.total);
+        if (sorted.length > 0) {
+          winner = sorted[0]!.playerId;
+        }
+      }
+
+      // Broadcast game ended to all players
+      io.to(roomCode).emit('gameEnded', {
+        gameId: gameState.gameId,
+        winner: winner ?? '',
+        scores,
+      });
+
+      // Clean up the game
+      manager.cleanupGame(roomCode);
+
+      console.log(`Game ended by host in room ${roomCode}`);
+    });
+
     // Handle disconnect
     socket.on('disconnect', () => {
       const roomCode = lobbyManager.getRoomCode(socket.id);

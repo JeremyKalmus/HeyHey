@@ -41,6 +41,7 @@ export function GameScreenConnected() {
     gamePhase,
     room,
     playerId,
+    isHost,
     setupComplete,
     startRound,
     roundNumber,
@@ -62,6 +63,7 @@ export function GameScreenConnected() {
     drawProposal,
     callDraw,
     respondToDraw,
+    endGame,
   } = useGameState();
   const { socket } = useSocket();
 
@@ -946,6 +948,8 @@ export function GameScreenConnected() {
             playersReady={playersReadyForNextRound}
             onReadyClick={readyForNextRound}
             onContinue={handleContinue}
+            isHost={isHost}
+            onEndGame={endGame}
           />
         </div>
       );
