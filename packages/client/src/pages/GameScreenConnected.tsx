@@ -683,14 +683,43 @@ export function GameScreenConnected() {
               padding: '4px 8px',
             }}
           >
-            {/* Draw button - less prominent, positioned away from main action */}
+            {/* Draw button and End Game button - less prominent, positioned away from main action */}
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               {isSetupComplete && (
-                <DrawButton
-                  enabled={!drawProposal}
-                  onCallDraw={callDraw}
-                  drawInProgress={!!drawProposal}
-                />
+                <>
+                  <DrawButton
+                    enabled={!drawProposal}
+                    onCallDraw={callDraw}
+                    drawInProgress={!!drawProposal}
+                  />
+                  {isHost && (
+                    <button
+                      onClick={endGame}
+                      style={{
+                        background: '#ff4444',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        padding: '8px 16px',
+                        fontSize: '0.875rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        fontFamily: 'inherit',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = '#cc0000';
+                        e.currentTarget.style.transform = 'translateY(-1px)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = '#ff4444';
+                        e.currentTarget.style.transform = 'translateY(0)';
+                      }}
+                    >
+                      ✕ End Game
+                    </button>
+                  )}
+                </>
               )}
             </div>
             {/* Controls */}
@@ -948,8 +977,6 @@ export function GameScreenConnected() {
             playersReady={playersReadyForNextRound}
             onReadyClick={readyForNextRound}
             onContinue={handleContinue}
-            isHost={isHost}
-            onEndGame={endGame}
           />
         </div>
       );
