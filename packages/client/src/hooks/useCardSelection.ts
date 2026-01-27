@@ -15,6 +15,7 @@ import {
   findValidWorkPiles,
   validateMove,
 } from '@heyhey/shared';
+import { hapticsManager } from '../utils/haptics';
 
 /**
  * Represents the source of a selected card
@@ -147,6 +148,7 @@ export function useCardSelection(options: UseCardSelectionOptions): UseCardSelec
       };
       setSelection(newSelection);
       onSelectionChange?.(newSelection);
+      hapticsManager.play('cardSelect');
     },
     [onSelectionChange]
   );
@@ -192,6 +194,9 @@ export function useCardSelection(options: UseCardSelectionOptions): UseCardSelec
         // Clear selection after successful move
         setSelection(null);
         onSelectionChange?.(null);
+        hapticsManager.play('cardPlace');
+      } else {
+        hapticsManager.play('invalidMove');
       }
 
       return validationResult;

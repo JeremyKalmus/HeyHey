@@ -12,6 +12,7 @@ import type {
   GameConfig,
 } from '@heyhey/shared';
 import { useCardSelection, type CardSource, type ValidDestination } from './useCardSelection';
+import { hapticsManager } from '../utils/haptics';
 
 /**
  * A pending optimistic move that may need rollback
@@ -358,6 +359,7 @@ export function useLocalPlayerState(
 
     applyOptimisticMove(move);
     onMove?.(move);
+    hapticsManager.play('stockDraw');
   }, [localState, playerId, applyOptimisticMove, onMove]);
 
   /**
