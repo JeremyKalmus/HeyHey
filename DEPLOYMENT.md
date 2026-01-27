@@ -150,3 +150,103 @@ Both services auto-deploy on push to main:
 For manual redeploy:
 - Vercel: Project → Deployments → Redeploy
 - Railway: Service → Deployments → Redeploy
+
+---
+
+## iOS Build & TestFlight Deployment
+
+### Prerequisites
+
+- macOS with Xcode 16.0+
+- Apple Developer account with signing certificates configured
+- Xcode command line tools: `xcode-select --install`
+
+### Build Pipeline
+
+The iOS build runs in this order:
+
+```
+build:shared → build:client → cap sync → xcodebuild
+```
+
+| Command | Description |
+|---------|-------------|
+| `npm run build:ios` | Full pipeline: build web + Simulator debug build |
+| `npm run build:ios -- release` | Full pipeline: build web + Release archive |
+| `npm run cap:sync -w @heyhey/client` | Sync web assets to iOS project |
+| `npm run cap:open -w @heyhey/client` | Open Xcode project |
+
+### Debug Build (Simulator)
+
+```bash
+npm run build:ios
+```
+
+Builds shared + client web assets, syncs to the iOS project, and compiles a debug build for the iOS Simulator (iPad 10th generation).
+
+### Release Build (TestFlight)
+
+```bash
+npm run build:ios -- release
+```
+
+Runs the full pipeline and produces an `.xcarchive` at `build/ios/HeyHey.xcarchive`, then exports an IPA using `scripts/ExportOptions.plist`.
+
+### Uploading to TestFlight
+
+After a release build:
+
+```bash
+xcrun altool --upload-app \
+  -f build/ios/export/HeyHey.ipa \
+  -t ios \
+  -u YOUR_APPLE_ID \
+  -p @keychain:AC_PASSWORD
+```
+
+Or open `build/ios/HeyHey.xcarchive` in Xcode Organizer and use "Distribute App".
+
+### Syncing Web Assets Only
+
+After changing web code without a full rebuild:
+
+```bash
+npm run build:shared && npm run build:client
+npm run cap:sync -w @heyhey/client
+```
+
+### Build Configurations
+
+| Configuration | Use Case | Optimizations |
+|--------------|----------|---------------|
+| Debug | Development, Simulator | Disabled, testability enabled |
+| Release | TestFlight, App Store | Full optimization |
+
+### iOS Project Structure
+
+```
+packages/client/
+├── ios/
+│   ├── App/
+│   │   ├── App.xcodeproj/           # Xcode project
+│   │   │   └── xcshareddata/xcschemes/
+│   │   │       └── App.xcscheme     # Shared build scheme
+│   │   └── App/
+│   │       ├── AppDelegate.swift
+│   │       ├── Info.plist
+│   │       └── Assets.xcassets/
+│   └── CapApp-SPM/                  # Capacitor SPM deps
+├── capacitor.config.ts
+└── dist/                            # Built web assets (webDir)
+scripts/
+├── build-ios.sh                     # iOS build script
+└── ExportOptions.plist              # TestFlight export config
+```
+
+### iOS Troubleshooting
+
+**"No signing certificate"**: Sign in to Xcode > Settings > Accounts with your Apple Developer account.
+
+**"cap sync" fails**: Ensure web assets are built first: `npm run build:client`
+
+**Simulator not found**: List available simulators with `xcrun simctl list devices available`. Edit `scripts/build-ios.sh` to change the target device.

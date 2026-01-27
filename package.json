@@ -16,6 +16,7 @@
     "build:shared": "npm run build -w @heyhey/shared",
     "build:server": "npm run build -w @heyhey/server",
     "build:client": "npm run build -w @heyhey/client",
+    "build:ios": "npm run build:shared && npm run build:client && npm run cap:sync -w @heyhey/client && ./scripts/build-ios.sh",
     "test": "npm run test --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "clean": "npm run clean --workspaces --if-present && rm -rf node_modules"
