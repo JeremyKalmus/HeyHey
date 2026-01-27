@@ -1,0 +1,84 @@
+keeper_decision:
+  id: ADR-001
+  date: 2026-01-27
+  spec: "Epic hh-0d4: User Feedback: Visual & UX Issues"
+  mode: seeding
+  status: approved
+
+  reuse:
+    frontend:
+      - PlayingCard component (packages/client/src/components/Card/PlayingCard.tsx) — modify club glyph rendering
+      - useLocalPlayerState hook (packages/client/src/hooks/useLocalPlayerState.ts) — setup/gameplay validation
+      - useCardSelection hook — guard empty pile taps
+      - GameScreenConnected (packages/client/src/pages/GameScreenConnected.tsx) — HeyHey button and animation flow
+      - canvas-confetti (already a dependency) — victory animation
+    backend:
+      - callNertz socket event (backend.yaml: playing_phase) — fix to work for any player
+      - roundScored / roundEnded socket events — ensure proper sequencing after animation
+      - RulesEngine (packages/shared/src/engine/RulesEngine.ts) — setup phase validation
+      - GameManager (packages/server/src/events/GameManager.ts) — server-side move validation
+    data:
+      - MoveValidationError enum (data.yaml) — use existing error codes
+      - GamePhase enum — no changes needed
+      - PlayerGameState.workPiles — enforce 1-card-per-pile during setup
+
+  extensions:
+    frontend:
+      PlayingCard:
+        modify: "Adjust clubs suit glyph to be visually distinct from spades (size, weight, or shape)"
+      GameScreenConnected:
+        modify: "Add delay between confetti animation and round end screen transition"
+
+  new_seeds: []
+
+  forbidden:
+    - Do NOT create new components for this epic — all changes are to existing components
+    - Do NOT add auto-play or automation (violates CONSTITUTION.md core principle)
+    - Do NOT change Spades glyph — only adjust Clubs
+    - Do NOT add turn-based logic — Nertz is simultaneous play, no turns
+    - Do NOT skip the confetti animation — it must play before round end screen
+
+  constraints:
+    - "hh-0d4.1 (Clubs visibility): Modify ONLY the club glyph rendering in PlayingCard. Do not alter other suits. Test against Spades for clear differentiation."
+    - "hh-0d4.2 (HeyHey button): callNertz must be callable by ANY player whose nertz pile is empty. Remove any turn-based gating. Confetti animation (canvas-confetti) must complete before transitioning to scoring/round-end phase. Use existing roundScored/roundEnded events."
+    - "hh-0d4.3 (Empty pile tap): Server-side validation through RulesEngine — not just client-side. During setup: enforce exactly 1 card per work pile slot, reject duplicate placements. During gameplay: tapping an empty work pile with nothing selected must be a no-op. Only explicit card selection + placement creates moves."
+
+  verification:
+    test_files:
+      - file: packages/shared/src/engine/RulesEngine.test.ts
+        action: extend
+      - file: packages/client/src/components/Card/PlayingCard.stories.tsx
+        action: extend
+    criteria:
+      - id: AC-1
+        criterion: "Clubs and Spades suit symbols are visually distinguishable at game-play card sizes"
+        test_name: "should render clubs glyph with distinct visual weight from spades"
+      - id: AC-2
+        criterion: "Any player can press HeyHey when their Nertz pile is empty"
+        test_name: "should allow callNertz from any player with empty nertz pile"
+      - id: AC-3
+        criterion: "Confetti animation plays before round end screen appears"
+        test_name: "should show confetti animation before transitioning to scoring phase"
+      - id: AC-4
+        criterion: "Setup phase allows exactly 1 card per work pile"
+        test_name: "should reject second card placement on already-filled work pile during setup"
+      - id: AC-5
+        criterion: "Tapping empty work pile during gameplay is a no-op"
+        test_name: "should not place any card when tapping empty work pile without selection"
+    fixtures:
+      - Mock players array
+      - Mock cards (PlayingCard.stories.tsx patterns)
+    run_command: "npm run test -w @heyhey/shared"
+
+  rationale: |
+    All three tasks are bug fixes or visual adjustments to existing patterns.
+    No new seeds required. All changes extend existing components and use
+    established socket events and validation patterns.
+
+    Key architectural point: HeyHey/Nertz is simultaneous play with no turns.
+    The HeyHey button bug (hh-0d4.2) likely stems from incorrect turn-based
+    gating that should never have existed. The fix must remove this gating
+    entirely, not add exceptions to it.
+
+    The empty pile tap issue (hh-0d4.3) must be validated server-side through
+    the existing RulesEngine to prevent race conditions and ensure consistency.

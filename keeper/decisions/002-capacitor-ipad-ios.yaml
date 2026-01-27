@@ -1,0 +1,132 @@
+keeper_decision:
+  id: ADR-002
+  date: 2026-01-27
+  spec: "Epic hh-lmr: Capacitor: iPad/iOS Native App"
+  mode: seeding
+  status: approved
+
+  reuse:
+    frontend:
+      - SocketContext (packages/client/src/context/SocketContext.tsx) — extend with lifecycle events
+      - useCardSelection hook — wire haptics into existing card interactions
+      - SoundManager pattern (packages/client/src/audio/SoundManager.ts) — follow same integration pattern for haptics
+      - All existing game components (PlayerArea, PlayingCard, CardPile, FoundationPile) — extend with CSS, not replace
+      - GameScreenConnected — no structural changes
+    backend:
+      - rejoinGame / rejoinGameSuccess socket events — reuse for app foreground reconnection
+      - reportState socket event — reuse for state recovery after background
+      - All existing socket events unchanged — server needs zero modifications
+    data:
+      - All existing types unchanged — no schema changes needed
+      - GameConfig — no changes
+      - PlayerGameState — no changes
+
+  extensions:
+    frontend:
+      SocketContext:
+        add: "Capacitor App lifecycle event listeners (background/foreground) to manage socket connection"
+      existing_components:
+        add: "CSS safe area padding using env(safe-area-inset-*) for iOS notch/home indicator"
+    config:
+      package.json:
+        add: "cap:sync, cap:open, cap:build npm scripts"
+      capacitor.config.ts:
+        add: "New config file for Capacitor (server URL, app ID, plugins)"
+
+  new_seeds:
+    - type: dependency
+      name: "@capacitor/core"
+      scope: packages/client
+      justification: "Core Capacitor runtime — required for native iOS shell. Only path to App Store distribution without separate client codebase."
+    - type: dependency
+      name: "@capacitor/cli"
+      scope: packages/client (devDependency)
+      justification: "CLI tooling for cap sync, cap add ios, cap open"
+    - type: dependency
+      name: "@capacitor/ios"
+      scope: packages/client
+      justification: "iOS platform support"
+    - type: dependency
+      name: "@capacitor/haptics"
+      scope: packages/client
+      justification: "Native haptic feedback for card interactions — enhances tactile experience on iPad"
+    - type: dependency
+      name: "@capacitor/app"
+      scope: packages/client
+      justification: "App lifecycle events (background/foreground) — required for socket reconnection on resume"
+    - type: module
+      name: "haptics utility"
+      scope: packages/client/src/utils/haptics.ts
+      justification: "Abstraction layer over @capacitor/haptics with web fallback (no-op). Follows SoundManager pattern."
+    - type: config
+      name: "capacitor.config.ts"
+      scope: packages/client
+      justification: "Capacitor project configuration — required"
+    - type: directory
+      name: "ios/"
+      scope: packages/client/ios/
+      justification: "Generated Xcode project for iOS builds"
+
+  forbidden:
+    - Do NOT create a separate client package — Capacitor wraps the existing packages/client
+    - Do NOT modify the server package — all changes are client-side
+    - Do NOT replace existing components with native equivalents — use WebView rendering
+    - Do NOT add React Native or any non-Capacitor native framework
+    - Do NOT break the existing web build pipeline — iOS is additive
+    - Do NOT create a parallel reconnection system — reuse existing rejoinGame flow
+    - Do NOT add Capacitor plugins beyond core, ios, haptics, and app without a new keeper review
+
+  constraints:
+    - "hh-lmr.1 (Foundation): Install Capacitor in packages/client only. capacitor.config.ts must point webDir to 'dist' (Vite output). Verify app loads in iOS Simulator before marking complete."
+    - "hh-lmr.2 (Touch/Layout): Extend existing components with CSS only. Use env(safe-area-inset-*) for safe areas. Minimum 44pt touch targets per Apple HIG. Do NOT restructure component hierarchy."
+    - "hh-lmr.3 (Haptics): Create haptics.ts utility following SoundManager pattern. Must export functions with web fallback (no-op when Capacitor not available). Wire into useCardSelection, NOT into individual components."
+    - "hh-lmr.4 (Lifecycle): Extend SocketContext with Capacitor App plugin listeners. On background: cache state. On foreground: use existing rejoinGame socket event to resync. Do NOT create new socket events."
+    - "hh-lmr.5 (Assets): Generate all required iOS icon sizes from single 1024x1024 source. Configure Info.plist for landscape orientation. Bundle ID format: com.heyhey.app"
+    - "hh-lmr.6 (Pipeline): Add build:ios script to root package.json. Must run build:shared → build:client → cap sync → xcodebuild. Existing build and build:client scripts must remain unchanged."
+
+  verification:
+    test_files:
+      - file: packages/client/src/utils/haptics.test.ts
+        action: create
+      - file: packages/client/src/context/SocketContext.test.ts
+        action: create
+    criteria:
+      - id: AC-1
+        criterion: "Existing web app loads in iOS Simulator via Capacitor WebView"
+        test_name: "should render HeyHey home screen in Capacitor iOS shell"
+      - id: AC-2
+        criterion: "Card interactions work with touch on iPad"
+        test_name: "should handle touch select and place on card components"
+      - id: AC-3
+        criterion: "Haptic feedback fires on card interactions (iOS) with web fallback"
+        test_name: "should call Haptics.impact on card select when Capacitor available"
+      - id: AC-4
+        criterion: "App reconnects socket after backgrounding and foregrounding"
+        test_name: "should call rejoinGame when app returns to foreground after background"
+      - id: AC-5
+        criterion: "iOS build produces TestFlight-ready archive"
+        test_name: "should complete xcodebuild archive without errors"
+      - id: AC-6
+        criterion: "Existing web build pipeline still works"
+        test_name: "should build web client successfully after Capacitor integration"
+    fixtures:
+      - Mock Capacitor plugins (haptics, app)
+    run_command: "npm run test -w @heyhey/client"
+
+  rationale: |
+    Capacitor is the correct choice for wrapping an existing React/Vite SPA for iOS
+    distribution. It preserves the single-codebase constraint while adding App Store
+    distribution, native haptics, and proper app lifecycle management.
+
+    5 new dependencies are approved (@capacitor/core, cli, ios, haptics, app). These
+    are all from the official Capacitor ecosystem and well-maintained.
+
+    The critical constraint is REUSE: the existing SocketContext reconnection flow
+    (rejoinGame/rejoinGameSuccess) must be used for app lifecycle reconnection.
+    The server package requires ZERO changes.
+
+    The haptics utility follows the established SoundManager pattern — a utility
+    module that abstracts the native API with a web fallback.
+
+    Mode is seeding, so new seeds are approved freely. Once Capacitor is established,
+    future native plugin additions should go through keeper review.
