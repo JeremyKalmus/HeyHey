@@ -3,6 +3,7 @@
 
 import { useCallback, useState } from 'react';
 import { useAudio } from '../../audio/useAudio';
+import { hapticsManager } from '../../utils/haptics';
 import styles from './HeyHeyButton.module.css';
 
 export interface HeyHeyButtonProps {
@@ -26,8 +27,9 @@ export function HeyHeyButton({
     e.stopPropagation(); // Prevent background click handler from firing
     if (!nertzPileEmpty) return;
 
-    // Play triumphant sound
+    // Play triumphant sound and haptic
     play('heyHey');
+    hapticsManager.play('heyHey');
 
     // Trigger press animation
     setIsPressed(true);
