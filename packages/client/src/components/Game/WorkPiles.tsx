@@ -184,9 +184,7 @@ function DroppableWorkPile({
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (disabled) return;
-    // Keyboard placement works for non-empty valid targets only
-    // Empty piles require drag-and-drop to prevent accidental card placement
-    if ((event.key === 'Enter' || event.key === ' ') && pile.length > 0 && isValidTarget) {
+    if ((event.key === 'Enter' || event.key === ' ') && isValidTarget) {
       event.preventDefault();
       onPileClick(pileIndex);
     }
@@ -225,6 +223,7 @@ function DroppableWorkPile({
       ) : (
         <div
           className={`${styles.emptyPile} ${isHighlighted ? styles.emptyHighlight : ''}`}
+          onClick={() => onPileClick(pileIndex)}
         >
           <Icon icon={LayersIcon} size="md" className={styles.emptyIcon} />
           <span className={styles.emptyLabel}>{pileIndex + 1}</span>

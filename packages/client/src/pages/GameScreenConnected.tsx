@@ -984,12 +984,48 @@ export function GameScreenConnected() {
 
     case 'finished':
       return (
-        <LoadingOverlay
-          message="Game Over"
-          hint="Winner display coming soon"
-          variant="fullscreen"
-          showSpinner={false}
-        />
+        <div
+          style={{
+            minHeight: '100vh',
+            background: '#1a1a2e',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '24px',
+          }}
+        >
+          <h1
+            style={{
+              fontFamily: 'var(--font-family-bold, "Inter", sans-serif)',
+              fontWeight: 900,
+              fontSize: '3rem',
+              textTransform: 'uppercase',
+              color: 'var(--arcade-yellow, #FFD600)',
+              textShadow: '4px 4px 0px #000',
+              margin: 0,
+            }}
+          >
+            Game Over
+          </h1>
+          <button
+            onClick={() => navigate('/')}
+            style={{
+              fontFamily: 'var(--font-family-bold, "Inter", sans-serif)',
+              fontWeight: 900,
+              fontSize: '1.25rem',
+              textTransform: 'uppercase',
+              padding: '16px 48px',
+              background: 'var(--arcade-cyan, #00E5FF)',
+              color: '#000',
+              border: '4px solid #000',
+              boxShadow: '4px 4px 0px #000',
+              cursor: 'pointer',
+            }}
+          >
+            Back to Lobby
+          </button>
+        </div>
       );
 
     default:
