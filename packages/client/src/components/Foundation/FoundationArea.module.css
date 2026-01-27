@@ -94,6 +94,11 @@
               box-shadow var(--transition-fast, 0.1s ease-out);
   border-radius: var(--radius-md, 4px);
   padding: var(--space-xs, 4px);
+  /* Apple HIG: minimum 44pt touch targets */
+  min-width: 44px;
+  min-height: 44px;
+  /* Prevent iOS callout on long-press */
+  -webkit-touch-callout: none;
 }
 
 .pileWrapper.clickable {
@@ -127,6 +132,9 @@
 .emptySlot {
   width: 70px;
   height: 100px;
+  /* Apple HIG: minimum 44pt touch targets */
+  min-width: 44px;
+  min-height: 44px;
   border: var(--border-medium, 3px) dashed var(--color-white, #ffffff);
   border-radius: var(--radius-md, 4px);
   background: var(--bg-dark-elevated, #0f3460);

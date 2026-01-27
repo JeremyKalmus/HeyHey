@@ -9,6 +9,9 @@
 
   width: var(--card-width);
   height: var(--card-height);
+  /* Apple HIG: minimum 44pt touch targets */
+  min-width: 44px;
+  min-height: 44px;
   border-radius: var(--card-radius);
   position: relative;
   cursor: pointer;
@@ -16,6 +19,8 @@
   user-select: none;
   /* Prevent touch scroll from blocking drag-and-drop on mobile/tablet */
   touch-action: none;
+  /* Prevent iOS callout on long-press */
+  -webkit-touch-callout: none;
 }
 
 .card:hover {
@@ -202,6 +207,9 @@
 .emptySlot {
   width: var(--card-width);
   height: var(--card-height);
+  /* Apple HIG: minimum 44pt touch targets */
+  min-width: 44px;
+  min-height: 44px;
   border: var(--border-medium, 3px) dashed rgba(255, 255, 255, 0.4);
   border-radius: var(--card-radius);
   background: rgba(0, 0, 0, 0.2);

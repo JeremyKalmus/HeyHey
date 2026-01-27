@@ -9,6 +9,7 @@
 html {
   /* Use full viewport height including mobile browser chrome */
   height: 100%;
+  height: 100dvh;
   height: -webkit-fill-available;
 }
 
@@ -17,14 +18,18 @@ body {
   background: var(--bg-dark-base);
   color: var(--text-inverse);
   min-height: 100vh;
+  min-height: 100dvh;
   min-height: -webkit-fill-available;
   /* Prevent pull-to-refresh on mobile */
   overscroll-behavior-y: contain;
+  /* Prevent iOS long-press callout on game elements */
+  -webkit-touch-callout: none;
 }
 
 /* Root element fills viewport */
 #root {
   min-height: 100vh;
+  min-height: 100dvh;
   min-height: -webkit-fill-available;
   display: flex;
   flex-direction: column;
@@ -36,6 +41,7 @@ body {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
+  min-height: 100dvh;
   padding: 2rem;
 }
 
@@ -55,11 +61,26 @@ h1 {
   }
 }
 
-/* Safe area insets for notched devices */
+/* Safe area insets for notched devices (iPhone X+, iPad with notch) */
 @supports (padding: max(0px)) {
   body {
+    padding-top: max(0px, env(safe-area-inset-top));
     padding-left: max(0px, env(safe-area-inset-left));
     padding-right: max(0px, env(safe-area-inset-right));
     padding-bottom: max(0px, env(safe-area-inset-bottom));
   }
+}
+
+/* =============================================================================
+   IOS TOUCH OPTIMIZATIONS
+   ============================================================================= */
+
+/* Prevent double-tap-to-zoom delay on interactive elements */
+button, [role="button"], a {
+  touch-action: manipulation;
+}
+
+/* Allow text selection in inputs but prevent callout */
+input, textarea {
+  -webkit-touch-callout: default;
 }

@@ -1,6 +1,8 @@
 .heyHeyButton {
   position: relative;
   min-width: 180px;
+  /* Apple HIG: minimum 44pt touch targets */
+  min-height: 44px;
   padding: 20px 40px;
   font-family: inherit;
   font-size: 1.5rem;
@@ -15,6 +17,8 @@
   transition: all 0.2s ease;
   overflow: hidden;
   user-select: none;
+  /* Prevent iOS double-tap zoom delay */
+  touch-action: manipulation;
 }
 
 .heyHeyButton:disabled {

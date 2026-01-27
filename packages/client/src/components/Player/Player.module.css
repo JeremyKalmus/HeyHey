@@ -14,6 +14,11 @@
   cursor: pointer;
   padding: var(--space-xs);
   transition: var(--transition-transform), var(--transition-shadow);
+  /* Apple HIG: minimum 44pt touch targets */
+  min-width: 44px;
+  min-height: 44px;
+  /* Prevent iOS callout on long-press */
+  -webkit-touch-callout: none;
 }
 
 .stockArea.clickable:hover {
@@ -28,6 +33,9 @@
 .stockEmpty {
   width: 70px;
   height: 100px;
+  /* Apple HIG: minimum 44pt touch targets */
+  min-width: 44px;
+  min-height: 44px;
   border: var(--border-thick) dashed var(--color-gray);
   background: rgba(0, 0, 0, 0.05);
   display: flex;
@@ -99,6 +107,9 @@
 .wasteEmpty {
   width: 70px;
   height: 100px;
+  /* Apple HIG: minimum 44pt touch targets */
+  min-width: 44px;
+  min-height: 44px;
   border: var(--border-thick) dashed var(--color-gray);
   background: rgba(0, 0, 0, 0.05);
   display: flex;

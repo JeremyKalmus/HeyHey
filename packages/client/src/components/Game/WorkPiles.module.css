@@ -14,6 +14,8 @@
   padding: var(--space-xs);
   transition: var(--transition-transform), var(--transition-shadow);
   cursor: default;
+  /* Prevent iOS callout on long-press during drag */
+  -webkit-touch-callout: none;
 }
 
 /* Valid destination highlight - neubrutalist style */
@@ -30,6 +32,9 @@
 .emptyPile {
   width: 70px;
   height: 100px;
+  /* Apple HIG: minimum 44pt touch targets */
+  min-width: 44px;
+  min-height: 44px;
   border: var(--border-thick) dashed var(--color-gray);
   background: rgba(0, 0, 0, 0.05);
   display: flex;

@@ -28,6 +28,8 @@
   overflow: hidden;
   /* Prevent touch scroll from blocking drag-and-drop on mobile/tablet */
   touch-action: none;
+  /* Prevent iOS callout menu on long-press during gameplay */
+  -webkit-touch-callout: none;
 }
 
 /* =============================================================================
@@ -216,6 +218,7 @@
     gap: 8px;
     padding: 8px;
     max-height: 40vh;
+    max-height: 40dvh;
   }
 
   .playArea {
@@ -260,6 +263,7 @@
     gap: 10px;
     padding: 8px;
     max-height: 42vh;
+    max-height: 42dvh;
   }
 
   /* Opponent area adjustments for iPad landscape */
@@ -328,6 +332,7 @@
     padding: 4px;
     gap: 8px;
     max-height: 50vh;
+    max-height: 50dvh;
   }
 
   .playArea {

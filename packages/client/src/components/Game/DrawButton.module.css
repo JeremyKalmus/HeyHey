@@ -1,6 +1,8 @@
 .drawButton {
   position: relative;
   min-width: 100px;
+  /* Apple HIG: minimum 44pt touch targets */
+  min-height: 44px;
   padding: 10px 20px;
   font-family: inherit;
   font-size: 0.9rem;
@@ -13,6 +15,8 @@
   cursor: not-allowed;
   transition: all 0.2s ease;
   user-select: none;
+  /* Prevent iOS double-tap zoom delay */
+  touch-action: manipulation;
 }
 
 .drawButton:disabled {
