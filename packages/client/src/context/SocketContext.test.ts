@@ -18,8 +18,10 @@ vi.mock('@capacitor/app', () => ({
       if (!appListeners[event]) appListeners[event] = [];
       appListeners[event].push(callback);
       return { remove: vi.fn(() => {
-        const idx = appListeners[event]?.indexOf(callback) ?? -1;
-        if (idx >= 0) appListeners[event].splice(idx, 1);
+        const list = appListeners[event];
+        if (!list) return;
+        const idx = list.indexOf(callback);
+        if (idx >= 0) list.splice(idx, 1);
       }) };
     }),
   },
@@ -48,17 +50,9 @@ function fireAppEvent(event: string, ...args: unknown[]) {
   appListeners[event]?.forEach((cb) => cb(...args));
 }
 
-// Helper to trigger socket's 'connect' callback
-function triggerSocketConnect() {
-  const connectCall = mockSocket.on.mock.calls.find(
-    (call: unknown[]) => call[0] === 'connect'
-  );
-  if (connectCall) (connectCall[1] as () => void)();
-}
-
 // Wrapper for rendering with SocketProvider
 function wrapper({ children }: { children: ReactNode }) {
-  return createElement(SocketProvider, { serverUrl: 'http://test:3000' }, children);
+  return createElement(SocketProvider, { serverUrl: 'http://test:3000', children });
 }
 
 describe('SocketContext — Capacitor App lifecycle', () => {
