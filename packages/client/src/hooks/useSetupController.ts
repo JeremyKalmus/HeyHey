@@ -118,7 +118,8 @@ export function useSetupController(options: UseSetupControllerOptions): UseSetup
     }, interactionDelay);
   }, [interactionDelay]);
 
-  // Track which work piles have been filled
+  // Track which work piles have been filled (ref for synchronous double-tap prevention)
+  const filledWorkPilesRef = useRef<Set<number>>(new Set());
   const [filledWorkPiles, setFilledWorkPiles] = useState<Set<number>>(new Set());
 
   /**
@@ -216,7 +217,8 @@ export function useSetupController(options: UseSetupControllerOptions): UseSetup
 
     if (currentState !== 'placingWork') return;
     if (deckCards.length === 0) return;
-    if (filledWorkPiles.has(index)) return; // Already has a card
+    // Synchronous check prevents double-tap race condition (async state would miss rapid clicks)
+    if (filledWorkPilesRef.current.has(index)) return;
 
     const placed = machine.placeWorkPile();
     if (!placed) return;
@@ -224,7 +226,8 @@ export function useSetupController(options: UseSetupControllerOptions): UseSetup
     onSound?.('cardPlace');
     if (interactionDelay > 0) disableInteractionsTemporarily();
 
-    // Mark this pile as filled
+    // Mark this pile as filled synchronously (ref) and async (state for re-render)
+    filledWorkPilesRef.current.add(index);
     setFilledWorkPiles(prev => new Set(prev).add(index));
 
     // Move card from deck to this work pile
@@ -255,7 +258,6 @@ export function useSetupController(options: UseSetupControllerOptions): UseSetup
   }, [
     isInteractionDisabled,
     deckCards.length,
-    filledWorkPiles,
     interactionDelay,
     disableInteractionsTemporarily,
     syncState,
@@ -282,6 +284,7 @@ export function useSetupController(options: UseSetupControllerOptions): UseSetup
     setWorkPileCards([[], [], [], []]);
 
     // Reset filled work piles tracking
+    filledWorkPilesRef.current = new Set();
     setFilledWorkPiles(new Set());
 
     // Reset interaction state
