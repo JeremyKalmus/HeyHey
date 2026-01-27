@@ -1,8 +1,11 @@
 // SocketContext - Typed socket.io connection provider
 // Auto-connects on mount, handles reconnection, exposes socket instance and connection state
+// Integrates with Capacitor App lifecycle to manage socket across iOS background/foreground
 
-import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, useCallback, type ReactNode } from 'react';
 import { io, Socket } from 'socket.io-client';
+import { App } from '@capacitor/app';
+import type { PluginListenerHandle } from '@capacitor/core';
 import type { AllClientToServerEvents, AllServerToClientEvents } from '@heyhey/shared';
 
 /* =============================================================================
@@ -119,6 +122,42 @@ export function SocketProvider({ serverUrl, children }: SocketProviderProps) {
       newSocket.disconnect();
     };
   }, [url]);
+
+  // Track whether disconnect was caused by app backgrounding
+  const backgroundedRef = useRef(false);
+
+  // Capacitor App lifecycle: disconnect on background, reconnect on foreground
+  useEffect(() => {
+    if (!socket) return;
+
+    let cancelled = false;
+    const handles: PluginListenerHandle[] = [];
+
+    const setupListeners = async () => {
+      const pauseHandle = await App.addListener('pause', () => {
+        console.log('[Socket] App backgrounded — disconnecting socket');
+        backgroundedRef.current = true;
+        socket.disconnect();
+      });
+      if (cancelled) { pauseHandle.remove(); return; }
+      handles.push(pauseHandle);
+
+      const resumeHandle = await App.addListener('resume', () => {
+        console.log('[Socket] App foregrounded — reconnecting socket');
+        backgroundedRef.current = false;
+        socket.connect();
+      });
+      if (cancelled) { resumeHandle.remove(); return; }
+      handles.push(resumeHandle);
+    };
+
+    setupListeners();
+
+    return () => {
+      cancelled = true;
+      handles.forEach((h) => h.remove());
+    };
+  }, [socket]);
 
   // Manual disconnect
   const disconnect = useCallback(() => {
