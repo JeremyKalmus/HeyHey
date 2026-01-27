@@ -120,7 +120,7 @@ export function useSetupController(options: UseSetupControllerOptions): UseSetup
 
   // Track which work piles have been filled (ref for synchronous double-tap prevention)
   const filledWorkPilesRef = useRef<Set<number>>(new Set());
-  const [filledWorkPiles, setFilledWorkPiles] = useState<Set<number>>(new Set());
+  const [, setFilledWorkPiles] = useState<Set<number>>(new Set());
 
   /**
    * Handle deck click:
