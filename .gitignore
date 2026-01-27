@@ -42,3 +42,8 @@ tmp/
 .runtime/
 AGENTS.md
 .vercel
+
+# Gas Town (added by gt)
+.claude/
+.beads/
+.logs/
