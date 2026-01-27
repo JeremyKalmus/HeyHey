@@ -40,6 +40,9 @@ export function CardFace({ card, className }: CardFaceProps) {
   const SuitIcon = SUIT_ICONS[card.suit];
   const rankLabel = getRankLabel(card.rank);
   const colorClass = isRedSuit(card.suit) ? styles.red : styles.black;
+  // Clubs rendered slightly larger for better distinction from spades
+  const cornerSize = card.suit === 'clubs' ? 11 : 10;
+  const centerSize = card.suit === 'clubs' ? 30 : 28;
 
   return (
     <div className={`${styles.cardFace} ${className ?? ''}`}>
@@ -47,18 +50,18 @@ export function CardFace({ card, className }: CardFaceProps) {
         <div className={`${styles.cornerLabel} ${styles.cornerLabelTop} ${colorClass}`}>
           <span className={styles.rank}>{rankLabel}</span>
           <span className={styles.suitSmall}>
-            <SuitIcon size={10} strokeWidth={2.5} fill="currentColor" />
+            <SuitIcon size={cornerSize} strokeWidth={2.5} fill="currentColor" />
           </span>
         </div>
 
         <div className={`${styles.centerSuit} ${colorClass}`}>
-          <SuitIcon size={28} strokeWidth={2} fill="currentColor" />
+          <SuitIcon size={centerSize} strokeWidth={2} fill="currentColor" />
         </div>
 
         <div className={`${styles.cornerLabel} ${styles.cornerLabelBottom} ${colorClass}`}>
           <span className={styles.rank}>{rankLabel}</span>
           <span className={styles.suitSmall}>
-            <SuitIcon size={10} strokeWidth={2.5} fill="currentColor" />
+            <SuitIcon size={cornerSize} strokeWidth={2.5} fill="currentColor" />
           </span>
         </div>
       </div>
