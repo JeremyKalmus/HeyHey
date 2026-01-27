@@ -126,9 +126,10 @@ export {
 export {
   Heart as SuitHeartIcon,
   Diamond as SuitDiamondIcon,
-  Club as SuitClubIcon,
   Spade as SuitSpadeIcon,
 } from 'lucide-react';
+// Custom club icon with wider lobes for better visibility vs spades
+export { SuitClubIcon } from './SuitClubIcon';
 
 // Connection Status
 export {
