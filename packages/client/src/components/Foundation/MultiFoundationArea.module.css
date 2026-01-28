@@ -331,7 +331,8 @@
   min-height: 80px;
   --card-width: 56px;
   --card-height: 80px;
-  --card-content-scale: 1;
+  --card-rank-size: 12px;
+  --card-center-scale: 1;
   --card-border-width: 4px;
 }
 
@@ -341,7 +342,8 @@
   min-height: 74px;
   --card-width: 52px;
   --card-height: 74px;
-  --card-content-scale: 0.74;
+  --card-rank-size: 11px;
+  --card-center-scale: 0.85;
   --card-border-width: 3px;
 }
 
@@ -351,7 +353,8 @@
   min-height: 62px;
   --card-width: 44px;
   --card-height: 62px;
-  --card-content-scale: 0.62;
+  --card-rank-size: 10px;
+  --card-center-scale: 0.6;
   --card-border-width: 2px;
 }
 
@@ -361,7 +364,8 @@
   min-height: 54px;
   --card-width: 38px;
   --card-height: 54px;
-  --card-content-scale: 0.52;
+  --card-rank-size: 9px;
+  --card-center-scale: 0.45;
   --card-border-width: 2px;
 }
 
@@ -480,7 +484,8 @@
     min-height: 74px;
     --card-width: 52px;
     --card-height: 74px;
-    --card-content-scale: 0.74;
+    --card-rank-size: 11px;
+    --card-center-scale: 0.85;
     --card-border-width: 3px;
   }
 
@@ -518,7 +523,8 @@
     min-height: 80px;
     --card-width: 56px;
     --card-height: 80px;
-    --card-content-scale: 1;
+    --card-rank-size: 12px;
+    --card-center-scale: 1;
     --card-border-width: 4px;
   }
 
@@ -549,7 +555,8 @@
     min-height: 68px;
     --card-width: 48px;
     --card-height: 68px;
-    --card-content-scale: 0.68;
+    --card-rank-size: 10px;
+    --card-center-scale: 0.7;
     --card-border-width: 2px;
   }
 
@@ -578,7 +585,8 @@
     min-height: 60px;
     --card-width: 42px;
     --card-height: 60px;
-    --card-content-scale: 0.58;
+    --card-rank-size: 9px;
+    --card-center-scale: 0.5;
     --card-border-width: 2px;
   }
 
@@ -638,7 +646,8 @@
     min-height: 92px;
     --card-width: 64px;
     --card-height: 92px;
-    --card-content-scale: 1;
+    --card-rank-size: 12px;
+    --card-center-scale: 1;
     --card-border-width: 4px;
   }
 

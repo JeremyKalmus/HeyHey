@@ -55,9 +55,6 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  /* Scale content when card is smaller than default */
-  transform: scale(var(--card-content-scale, 1));
-  transform-origin: center center;
 }
 
 /* Rank and suit in corner */
@@ -78,7 +75,7 @@
 }
 
 .rank {
-  font-size: 12px;
+  font-size: var(--card-rank-size, 12px);
   font-weight: var(--font-weight-black, 900);
   font-family: var(--font-family-base, 'Inter', sans-serif);
   line-height: 1;
@@ -98,6 +95,8 @@
   align-items: center;
   justify-content: center;
   min-height: 0;
+  /* Scale center suit icon for smaller cards */
+  transform: scale(var(--card-center-scale, 1));
 }
 
 /* Suit colors - high contrast */
