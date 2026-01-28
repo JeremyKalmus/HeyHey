@@ -332,8 +332,8 @@
   --card-width: 56px;
   --card-height: 80px;
   --card-rank-size: 12px;
-  --card-corner-scale: 1;
-  --card-center-scale: 1;
+  --card-corner-icon-size: 10px;
+  --card-center-icon-size: 28px;
   --card-border-width: 4px;
   --card-padding: 2px 3px;
 }
@@ -345,8 +345,8 @@
   --card-width: 52px;
   --card-height: 74px;
   --card-rank-size: 11px;
-  --card-corner-scale: 0.9;
-  --card-center-scale: 0.85;
+  --card-corner-icon-size: 9px;
+  --card-center-icon-size: 24px;
   --card-border-width: 3px;
   --card-padding: 2px 2px;
 }
@@ -358,8 +358,8 @@
   --card-width: 44px;
   --card-height: 62px;
   --card-rank-size: 9px;
-  --card-corner-scale: 0.7;
-  --card-center-scale: 0.6;
+  --card-corner-icon-size: 7px;
+  --card-center-icon-size: 18px;
   --card-border-width: 2px;
   --card-padding: 1px 1px;
 }
@@ -371,8 +371,8 @@
   --card-width: 38px;
   --card-height: 54px;
   --card-rank-size: 8px;
-  --card-corner-scale: 0.6;
-  --card-center-scale: 0.45;
+  --card-corner-icon-size: 6px;
+  --card-center-icon-size: 14px;
   --card-border-width: 2px;
   --card-padding: 1px 1px;
 }
@@ -493,8 +493,8 @@
     --card-width: 52px;
     --card-height: 74px;
     --card-rank-size: 11px;
-    --card-corner-scale: 0.9;
-    --card-center-scale: 0.85;
+    --card-corner-icon-size: 9px;
+    --card-center-icon-size: 24px;
     --card-border-width: 3px;
     --card-padding: 2px 2px;
   }
@@ -534,8 +534,8 @@
     --card-width: 56px;
     --card-height: 80px;
     --card-rank-size: 12px;
-    --card-corner-scale: 1;
-    --card-center-scale: 1;
+    --card-corner-icon-size: 10px;
+    --card-center-icon-size: 28px;
     --card-border-width: 4px;
     --card-padding: 2px 3px;
   }
@@ -568,8 +568,8 @@
     --card-width: 48px;
     --card-height: 68px;
     --card-rank-size: 10px;
-    --card-corner-scale: 0.8;
-    --card-center-scale: 0.7;
+    --card-corner-icon-size: 8px;
+    --card-center-icon-size: 20px;
     --card-border-width: 2px;
     --card-padding: 1px 2px;
   }
@@ -600,8 +600,8 @@
     --card-width: 42px;
     --card-height: 60px;
     --card-rank-size: 9px;
-    --card-corner-scale: 0.65;
-    --card-center-scale: 0.5;
+    --card-corner-icon-size: 6px;
+    --card-center-icon-size: 16px;
     --card-border-width: 2px;
     --card-padding: 1px 1px;
   }
@@ -663,8 +663,8 @@
     --card-width: 64px;
     --card-height: 92px;
     --card-rank-size: 12px;
-    --card-corner-scale: 1;
-    --card-center-scale: 1;
+    --card-corner-icon-size: 10px;
+    --card-center-icon-size: 28px;
     --card-border-width: 4px;
     --card-padding: 2px 3px;
   }

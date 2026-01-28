@@ -87,9 +87,12 @@
   align-items: center;
   justify-content: center;
   line-height: 1;
-  /* Scale corner suit icon for smaller cards */
-  transform: scale(var(--card-corner-scale, 1));
-  transform-origin: center top;
+}
+
+/* Override icon size via CSS for proper layout shrinking */
+.suitSmall svg {
+  width: var(--card-corner-icon-size, 10px) !important;
+  height: var(--card-corner-icon-size, 10px) !important;
 }
 
 /* Center suit display */
@@ -99,8 +102,12 @@
   align-items: center;
   justify-content: center;
   min-height: 0;
-  /* Scale center suit icon for smaller cards */
-  transform: scale(var(--card-center-scale, 1));
+}
+
+/* Override center icon size via CSS for proper layout */
+.centerSuit svg {
+  width: var(--card-center-icon-size, 28px) !important;
+  height: var(--card-center-icon-size, 28px) !important;
 }
 
 /* Suit colors - high contrast */
