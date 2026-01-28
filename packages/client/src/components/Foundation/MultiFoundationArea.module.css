@@ -331,14 +331,18 @@
   min-height: 80px;
   --card-width: 56px;
   --card-height: 80px;
+  --card-content-scale: 1;
+  --card-border-width: 4px;
 }
 
-/* 3-4 players: normal card size */
+/* 3-4 players: slightly smaller */
 .fourPlayers .pile {
   min-width: 52px;
   min-height: 74px;
   --card-width: 52px;
   --card-height: 74px;
+  --card-content-scale: 0.93;
+  --card-border-width: 3px;
 }
 
 /* 5-6 players: scaled down */
@@ -347,6 +351,8 @@
   min-height: 62px;
   --card-width: 44px;
   --card-height: 62px;
+  --card-content-scale: 0.78;
+  --card-border-width: 3px;
 }
 
 /* 7-8 players: scaled down more */
@@ -355,6 +361,8 @@
   min-height: 54px;
   --card-width: 38px;
   --card-height: 54px;
+  --card-content-scale: 0.68;
+  --card-border-width: 2px;
 }
 
 /* Empty slots also scale */
@@ -472,6 +480,8 @@
     min-height: 74px;
     --card-width: 52px;
     --card-height: 74px;
+    --card-content-scale: 0.93;
+    --card-border-width: 3px;
   }
 
   .emptySlot {
@@ -508,6 +518,8 @@
     min-height: 80px;
     --card-width: 56px;
     --card-height: 80px;
+    --card-content-scale: 1;
+    --card-border-width: 4px;
   }
 
   .emptySlot {
@@ -537,6 +549,8 @@
     min-height: 68px;
     --card-width: 48px;
     --card-height: 68px;
+    --card-content-scale: 0.86;
+    --card-border-width: 3px;
   }
 
   .emptySlot {
@@ -564,6 +578,8 @@
     min-height: 60px;
     --card-width: 42px;
     --card-height: 60px;
+    --card-content-scale: 0.75;
+    --card-border-width: 2px;
   }
 
   .emptySlot {
@@ -622,6 +638,8 @@
     min-height: 92px;
     --card-width: 64px;
     --card-height: 92px;
+    --card-content-scale: 1;
+    --card-border-width: 4px;
   }
 
   .emptySlot {
