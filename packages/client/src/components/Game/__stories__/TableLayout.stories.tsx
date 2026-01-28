@@ -368,3 +368,147 @@ export const OpponentPlayAreaOnly: Story = {
     );
   },
 };
+
+// Helper for creating very long work piles (K to A, 13 cards)
+function createLongWorkPiles(deckId: string): [CardType[], CardType[], CardType[], CardType[]] {
+  const createFullPile = (startSuit: 'hearts' | 'clubs'): CardType[] =>
+    Array.from({ length: 13 }, (_, i) => {
+      const suit = i % 2 === 0 ? startSuit : (startSuit === 'hearts' ? 'spades' : 'diamonds');
+      return createCard(suit, 13 - i, deckId);
+    });
+
+  return [
+    createFullPile('hearts'),  // 13 cards
+    createFullPile('clubs'),   // 13 cards
+    Array.from({ length: 10 }, (_, i) => createCard(i % 2 === 0 ? 'spades' : 'hearts', 10 - i, deckId)),
+    Array.from({ length: 8 }, (_, i) => createCard(i % 2 === 0 ? 'diamonds' : 'clubs', 8 - i, deckId)),
+  ];
+}
+
+/**
+ * Edge case: 6 players with very long work piles.
+ * Tests that the foundations area doesn't get squeezed and require scrolling.
+ * This is a known layout issue - foundations should always be fully visible.
+ */
+export const SixPlayersLongPiles: Story = {
+  render: () => {
+    const opponents = [
+      createOpponentState('opp-1', 'Alice', 'red', 5, 25),
+      createOpponentState('opp-2', 'Bob', 'green', 8, 30),
+      createOpponentState('opp-3', 'Charlie', 'orange', 12, 38),
+      createOpponentState('opp-4', 'Diana', 'purple', 3, 20),
+      createOpponentState('opp-5', 'Eve', 'pink', 9, 33),
+    ];
+    const players = [
+      { id: 'player-1', name: 'You', color: 'blue' as PlayerColor },
+      ...opponents.map((o) => ({ id: o.playerId, name: o.playerName, color: o.playerColor })),
+    ];
+
+    // Local player has very long work piles
+    const longWorkPiles = createLongWorkPiles('player-1');
+
+    return (
+      <TableLayout
+        opponents={opponents}
+        centerContent={
+          <MultiFoundationArea
+            playerGroups={createFoundationGroups(players)}
+            selectedCard={null}
+            onPileClick={() => {}}
+            canPlace={false}
+            showMoveHints={false}
+            isDragging={false}
+            validDragFoundations={[]}
+          />
+        }
+        bottomContent={
+          <GameBoard
+            nertzPile={localPlayerNertz}
+            workPiles={longWorkPiles}
+            stockPile={localPlayerStock}
+            wastePile={localPlayerWaste}
+            foundationPiles={[]}
+            playerColor="blue"
+            currentRound={1}
+            selectedCard={null}
+            validWorkDestinations={[]}
+            canCallHeyHey={false}
+            canRecycleStock={false}
+            hideFoundation
+            hideTopBar
+            maxPileHeight={140}
+          />
+        }
+      />
+    );
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Edge case: 6 players with full K→A work piles (13 cards each). Tests layout stability - foundations should never require scrolling.',
+      },
+    },
+  },
+};
+
+/**
+ * Edge case: 4 players with extremely long work piles (no compression).
+ * This demonstrates the problem most clearly.
+ */
+export const FourPlayersLongPilesNoCompression: Story = {
+  render: () => {
+    const opponents = [
+      createOpponentState('opp-1', 'Alice', 'red', 5, 25),
+      createOpponentState('opp-2', 'Bob', 'green', 8, 30),
+      createOpponentState('opp-3', 'Charlie', 'orange', 12, 38),
+    ];
+    const players = [
+      { id: 'player-1', name: 'You', color: 'blue' as PlayerColor },
+      ...opponents.map((o) => ({ id: o.playerId, name: o.playerName, color: o.playerColor })),
+    ];
+
+    const longWorkPiles = createLongWorkPiles('player-1');
+
+    return (
+      <TableLayout
+        opponents={opponents}
+        centerContent={
+          <MultiFoundationArea
+            playerGroups={createFoundationGroups(players)}
+            selectedCard={null}
+            onPileClick={() => {}}
+            canPlace={false}
+            showMoveHints={false}
+            isDragging={false}
+            validDragFoundations={[]}
+          />
+        }
+        bottomContent={
+          <GameBoard
+            nertzPile={localPlayerNertz}
+            workPiles={longWorkPiles}
+            stockPile={localPlayerStock}
+            wastePile={localPlayerWaste}
+            foundationPiles={[]}
+            playerColor="blue"
+            currentRound={1}
+            selectedCard={null}
+            validWorkDestinations={[]}
+            canCallHeyHey={false}
+            canRecycleStock={false}
+            hideFoundation
+            hideTopBar
+            // No maxPileHeight - shows the problem
+          />
+        }
+      />
+    );
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Problem demo: 4 players with long piles and NO compression. Foundations area gets squeezed.',
+      },
+    },
+  },
+};

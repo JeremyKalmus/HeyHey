@@ -7,16 +7,34 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-sm, 8px);
-  padding: var(--space-md, 12px);
+  padding: var(--space-sm, 8px);
   background: var(--bg-dark-surface, #16213e);
   border: var(--border-thick, 4px) solid var(--color-white, #ffffff);
   border-radius: var(--radius-md, 4px);
   box-shadow: var(--shadow-neubrutalist, 4px 4px 0px #000000);
   width: 100%;
   max-width: 100%;
-  flex: 1;
-  min-height: 0; /* Allow flex shrinking */
-  overflow: auto;
+  /* Fixed height - never scroll, cards scale instead */
+  flex: 0 0 auto;
+  overflow: hidden;
+}
+
+/* Padding scales with player count */
+.twoPlayers.multiFoundationArea,
+.fourPlayers.multiFoundationArea {
+  padding: var(--space-md, 12px);
+  gap: var(--space-sm, 8px);
+}
+
+.sixPlayers.multiFoundationArea {
+  padding: var(--space-sm, 8px);
+  gap: var(--space-xs, 4px);
+}
+
+.eightPlayers.multiFoundationArea {
+  padding: var(--space-xs, 4px);
+  gap: var(--space-xs, 4px);
+  border-width: 3px;
 }
 
 /* Header with label and status */
@@ -100,46 +118,41 @@
 }
 
 /* =============================================================================
-   PLAYERS GRID - Responsive layout based on player count
+   PLAYERS GRID - Fixed 2-row layout, scales cards based on player count
+   Max 2 rows, columns adapt: 2p=1×2, 3-4p=2×2, 5-6p=2×3, 7-8p=2×4
    ============================================================================= */
 
 .playersGrid {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md, 12px);
-  align-items: center;
+  display: grid;
+  gap: var(--space-sm, 8px);
+  justify-content: center;
+  align-content: center;
   width: 100%;
 }
 
-/* 2 players: horizontal centered */
+/* 2 players: 1 row × 2 columns, normal card size */
 .twoPlayers .playersGrid {
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: center;
+  grid-template-columns: repeat(2, auto);
+  grid-template-rows: auto;
 }
 
-/* 4 players: 2x2 grid centered */
+/* 3-4 players: 2 rows × 2 columns */
 .fourPlayers .playersGrid {
-  display: grid;
   grid-template-columns: repeat(2, auto);
-  gap: var(--space-md, 12px);
-  justify-content: center;
+  grid-template-rows: repeat(2, auto);
 }
 
-/* 6 players: 2x3 grid centered */
+/* 5-6 players: 2 rows × 3 columns, scaled down */
 .sixPlayers .playersGrid {
-  display: grid;
-  grid-template-columns: repeat(2, auto);
-  gap: var(--space-md, 12px);
-  justify-content: center;
+  grid-template-columns: repeat(3, auto);
+  grid-template-rows: repeat(2, auto);
 }
 
-/* 8 players: 2x4 grid centered */
+/* 7-8 players: 2 rows × 4 columns, scaled down more */
 .eightPlayers .playersGrid {
-  display: grid;
-  grid-template-columns: repeat(2, auto);
-  gap: var(--space-sm, 8px);
-  justify-content: center;
+  grid-template-columns: repeat(4, auto);
+  grid-template-rows: repeat(2, auto);
+  gap: var(--space-xs, 4px);
 }
 
 /* =============================================================================
@@ -149,11 +162,29 @@
 .playerRow {
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm, 8px);
-  padding: var(--space-sm, 8px);
+  gap: var(--space-xs, 4px);
+  padding: var(--space-xs, 4px);
   background: var(--bg-dark-elevated, #0f3460);
   border: var(--border-thin, 2px) solid rgba(255, 255, 255, 0.2);
   border-radius: var(--radius-md, 4px);
+}
+
+/* Scale padding for different player counts */
+.twoPlayers .playerRow,
+.fourPlayers .playerRow {
+  padding: var(--space-sm, 8px);
+  gap: var(--space-sm, 8px);
+}
+
+.sixPlayers .playerRow {
+  padding: var(--space-xs, 4px);
+  gap: var(--space-xs, 4px);
+}
+
+.eightPlayers .playerRow {
+  padding: 2px;
+  gap: 2px;
+  border-width: 1px;
 }
 
 /* Player indicator with color badge and name */
@@ -188,9 +219,23 @@
 /* Foundation piles row */
 .pilesRow {
   display: flex;
-  gap: var(--space-sm, 8px);
+  gap: var(--space-xs, 4px);
   justify-content: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap; /* Never wrap - cards scale instead */
+}
+
+/* Scale gaps for different player counts */
+.twoPlayers .pilesRow,
+.fourPlayers .pilesRow {
+  gap: var(--space-sm, 8px);
+}
+
+.sixPlayers .pilesRow {
+  gap: var(--space-xs, 4px);
+}
+
+.eightPlayers .pilesRow {
+  gap: 2px;
 }
 
 /* =============================================================================
@@ -201,13 +246,26 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-xs, 4px);
+  gap: 2px;
   cursor: default;
   transition: transform var(--transition-fast, 0.1s ease-out),
               box-shadow var(--transition-fast, 0.1s ease-out);
   border-radius: var(--radius-md, 4px);
-  padding: var(--space-xs, 4px);
+  padding: 2px;
   position: relative; /* Required for color glow pseudo-element */
+}
+
+/* Scale pileWrapper for different player counts */
+.twoPlayers .pileWrapper,
+.fourPlayers .pileWrapper {
+  padding: var(--space-xs, 4px);
+  gap: var(--space-xs, 4px);
+}
+
+.sixPlayers .pileWrapper,
+.eightPlayers .pileWrapper {
+  padding: 2px;
+  gap: 2px;
 }
 
 .pileWrapper.clickable {
@@ -256,7 +314,7 @@
   animation: cardFlyIn 0.6s ease-out forwards;
 }
 
-/* Pile Area - smaller for multi-player layout */
+/* Pile Area - card dimensions scale based on player count */
 /* Card dimensions set here are inherited by Card component to prevent layout shift */
 .pile {
   position: relative;
@@ -265,6 +323,59 @@
   /* Override card dimensions - Card component inherits these CSS variables */
   --card-width: 56px;
   --card-height: 80px;
+}
+
+/* 2 players: normal card size */
+.twoPlayers .pile {
+  min-width: 56px;
+  min-height: 80px;
+  --card-width: 56px;
+  --card-height: 80px;
+}
+
+/* 3-4 players: normal card size */
+.fourPlayers .pile {
+  min-width: 52px;
+  min-height: 74px;
+  --card-width: 52px;
+  --card-height: 74px;
+}
+
+/* 5-6 players: scaled down */
+.sixPlayers .pile {
+  min-width: 44px;
+  min-height: 62px;
+  --card-width: 44px;
+  --card-height: 62px;
+}
+
+/* 7-8 players: scaled down more */
+.eightPlayers .pile {
+  min-width: 38px;
+  min-height: 54px;
+  --card-width: 38px;
+  --card-height: 54px;
+}
+
+/* Empty slots also scale */
+.twoPlayers .emptySlot {
+  width: 56px;
+  height: 80px;
+}
+
+.fourPlayers .emptySlot {
+  width: 52px;
+  height: 74px;
+}
+
+.sixPlayers .emptySlot {
+  width: 44px;
+  height: 62px;
+}
+
+.eightPlayers .emptySlot {
+  width: 38px;
+  height: 54px;
 }
 
 /* Empty Slot - Neubrutalist dashed */

@@ -2,16 +2,16 @@
 
 /* Base card styles */
 .card {
-  /* Fluid card sizing: 70px default, scales down on smaller screens */
-  --card-width: clamp(54px, 8vw, 70px);
-  --card-height: clamp(77px, 11.4vw, 100px);
+  /* Card sizing: inherit from parent if set, otherwise use fluid defaults */
+  /* Do NOT define --card-width/--card-height here - parent contexts can override */
   --card-radius: var(--radius-md, 4px);
 
-  width: var(--card-width);
-  height: var(--card-height);
-  /* Apple HIG: minimum 44pt touch targets */
-  min-width: 44px;
-  min-height: 44px;
+  width: var(--card-width, clamp(54px, 8vw, 70px));
+  height: var(--card-height, clamp(77px, 11.4vw, 100px));
+  /* Allow smaller sizes when parent explicitly sets them (e.g., many-player foundations) */
+  /* Apple HIG 44pt minimum applies to interactive cards; display-only can be smaller */
+  min-width: var(--card-min-width, 38px);
+  min-height: var(--card-min-height, 54px);
   border-radius: var(--card-radius);
   position: relative;
   cursor: pointer;
@@ -205,11 +205,11 @@
 
 /* Empty slot placeholder - neubrutalist dashed border */
 .emptySlot {
-  width: var(--card-width);
-  height: var(--card-height);
-  /* Apple HIG: minimum 44pt touch targets */
-  min-width: 44px;
-  min-height: 44px;
+  width: var(--card-width, clamp(54px, 8vw, 70px));
+  height: var(--card-height, clamp(77px, 11.4vw, 100px));
+  /* Allow smaller sizes when parent explicitly sets them */
+  min-width: var(--card-min-width, 38px);
+  min-height: var(--card-min-height, 54px);
   border: var(--border-medium, 3px) dashed rgba(255, 255, 255, 0.4);
   border-radius: var(--card-radius);
   background: rgba(0, 0, 0, 0.2);
@@ -217,31 +217,11 @@
 
 /* =============================================================================
    IPAD RESPONSIVE ADJUSTMENTS
+   Note: Card sizing is now controlled by:
+   1. Parent context setting --card-width/--card-height CSS variables
+   2. Fallback clamp() in the width/height properties for responsive defaults
+   Parent contexts (MultiFoundationArea, WorkPiles, etc.) set card sizes as needed.
    ============================================================================= */
-
-/* iPad Portrait (768px - 1024px) */
-@media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
-  .card {
-    --card-width: 64px;
-    --card-height: 91px;
-  }
-}
-
-/* iPad Landscape (1024px - 1366px) */
-@media (min-width: 1024px) and (max-width: 1366px) and (orientation: landscape) {
-  .card {
-    --card-width: 68px;
-    --card-height: 97px;
-  }
-}
-
-/* iPad Pro 12.9" Landscape - larger cards */
-@media (min-width: 1366px) and (max-width: 1400px) {
-  .card {
-    --card-width: 70px;
-    --card-height: 100px;
-  }
-}
 
 /* Dragging state - elevated with larger shadow */
 .dragging {
