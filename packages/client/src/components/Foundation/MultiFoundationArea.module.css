@@ -332,8 +332,10 @@
   --card-width: 56px;
   --card-height: 80px;
   --card-rank-size: 12px;
+  --card-corner-scale: 1;
   --card-center-scale: 1;
   --card-border-width: 4px;
+  --card-padding: 2px 3px;
 }
 
 /* 3-4 players: slightly smaller */
@@ -343,8 +345,10 @@
   --card-width: 52px;
   --card-height: 74px;
   --card-rank-size: 11px;
+  --card-corner-scale: 0.9;
   --card-center-scale: 0.85;
   --card-border-width: 3px;
+  --card-padding: 2px 2px;
 }
 
 /* 5-6 players: scaled down */
@@ -353,9 +357,11 @@
   min-height: 62px;
   --card-width: 44px;
   --card-height: 62px;
-  --card-rank-size: 10px;
+  --card-rank-size: 9px;
+  --card-corner-scale: 0.7;
   --card-center-scale: 0.6;
   --card-border-width: 2px;
+  --card-padding: 1px 1px;
 }
 
 /* 7-8 players: scaled down more */
@@ -364,9 +370,11 @@
   min-height: 54px;
   --card-width: 38px;
   --card-height: 54px;
-  --card-rank-size: 9px;
+  --card-rank-size: 8px;
+  --card-corner-scale: 0.6;
   --card-center-scale: 0.45;
   --card-border-width: 2px;
+  --card-padding: 1px 1px;
 }
 
 /* Empty slots also scale */
@@ -485,8 +493,10 @@
     --card-width: 52px;
     --card-height: 74px;
     --card-rank-size: 11px;
+    --card-corner-scale: 0.9;
     --card-center-scale: 0.85;
     --card-border-width: 3px;
+    --card-padding: 2px 2px;
   }
 
   .emptySlot {
@@ -524,8 +534,10 @@
     --card-width: 56px;
     --card-height: 80px;
     --card-rank-size: 12px;
+    --card-corner-scale: 1;
     --card-center-scale: 1;
     --card-border-width: 4px;
+    --card-padding: 2px 3px;
   }
 
   .emptySlot {
@@ -556,8 +568,10 @@
     --card-width: 48px;
     --card-height: 68px;
     --card-rank-size: 10px;
+    --card-corner-scale: 0.8;
     --card-center-scale: 0.7;
     --card-border-width: 2px;
+    --card-padding: 1px 2px;
   }
 
   .emptySlot {
@@ -586,8 +600,10 @@
     --card-width: 42px;
     --card-height: 60px;
     --card-rank-size: 9px;
+    --card-corner-scale: 0.65;
     --card-center-scale: 0.5;
     --card-border-width: 2px;
+    --card-padding: 1px 1px;
   }
 
   .emptySlot {
@@ -647,8 +663,10 @@
     --card-width: 64px;
     --card-height: 92px;
     --card-rank-size: 12px;
+    --card-corner-scale: 1;
     --card-center-scale: 1;
     --card-border-width: 4px;
+    --card-padding: 2px 3px;
   }
 
   .emptySlot {
